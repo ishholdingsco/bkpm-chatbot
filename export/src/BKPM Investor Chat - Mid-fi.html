@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>BKPM Investor Chat — Mid-fi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="midfi-styles.css" />
+<style>
+  @keyframes blink { 50% { opacity: 0; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+    <rect width="200" height="200" fill="#f6f3ec"/>
+    <rect x="60" y="60" width="80" height="80" rx="14" fill="#1c1a14"/>
+    <path d="M82 122 L82 88 L98 88 L100 100 L102 100 L104 88 L120 88 L120 122" stroke="#b94a1f" stroke-width="5" stroke-linejoin="round" fill="none"/>
+    <circle cx="100" cy="132" r="4" fill="#b94a1f"/>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="midfi-shared.jsx"></script>
+<script type="text/babel" src="midfi-thread.jsx"></script>
+<script type="text/babel" src="midfi-screens.jsx"></script>
+
+<script type="text/babel">
+const { useState } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "canvasMode": "rail",
+  "showPresence": true
+}/*EDITMODE-END*/;
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  // local screen-switch (stays per-render — overlay screens swap in)
+  const [overlay, setOverlay] = useState(null); // null | 'handoff' | 'focus'
+
+  const W = 1280;
+  const H = 820;
+
+  return (
+    <>
+      <DesignCanvas
+        title="BKPM · Investor chat — Mid-fi"
+        subtitle="Hybrid of Classic Split + Analyst-pair. Six moments. Use Tweaks to toggle canvas + presence on the hero."
+      >
+        <DCSection
+          id="hero"
+          title="Hero · Active thread"
+          subtitle="Sidebar (org → projects → threads) · chat with presence ribbon + floating chip · collapsible canvas rail"
+        >
+          <DCArtboard id="thread" label="Active thread (current state)" width={W} height={H}>
+            <ActiveThread
+              canvasMode={t.canvasMode}
+              setCanvasMode={(v) => setTweak('canvasMode', v)}
+              showPresence={t.showPresence}
+              onOpenHandoff={() => {}}
+              onOpenFocus={() => {}}
+            />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="moments"
+          title="Other moments"
+          subtitle="Empty state · Handoff modal · Canvas focus · Notifications · Onboarding"
+        >
+          <DCArtboard id="empty" label="Empty state — new project" width={W} height={H}>
+            <EmptyState />
+          </DCArtboard>
+          <DCArtboard id="handoff" label="Handoff modal — book a call" width={W} height={H}>
+            <HandoffModal />
+          </DCArtboard>
+          <DCArtboard id="focus" label="Canvas focus — artifact full-screen" width={W} height={H}>
+            <CanvasFocus />
+          </DCArtboard>
+          <DCArtboard id="digest" label="Notifications & weekly digest" width={W} height={H}>
+            <NotificationsDigest />
+          </DCArtboard>
+          <DCArtboard id="onboard" label="Onboarding — investor thesis" width={W} height={H}>
+            <Onboarding />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="sys" title="Decisions baked in" subtitle="Read this before review">
+          <DCArtboard id="decisions" label="Design decisions" width={900} height={520} style={{ background: 'var(--surface)' }}>
+            <div style={{ padding: 36, fontFamily: 'Inter, sans-serif', height: '100%', overflow: 'auto' }}>
+              <div className="mono" style={{ fontSize: 10, color: 'var(--ink-3)' }}>SYSTEM</div>
+              <h2 className="serif" style={{ fontSize: 26, fontWeight: 600, margin: '4px 0 14px', letterSpacing: '-0.01em' }}>What's locked in this pass</h2>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, fontSize: 13.5, lineHeight: 1.55 }}>
+                <div>
+                  <div className="label" style={{ marginBottom: 6 }}>IA</div>
+                  Org → Project → Thread (flat threads). Sidebar shows all three; only active project is expanded.
+                </div>
+                <div>
+                  <div className="label" style={{ marginBottom: 6 }}>Analyst presence</div>
+                  Top ribbon (always-on, scannable status) + floating chip (compact, when ribbon scrolled). Both toggleable.
+                </div>
+                <div>
+                  <div className="label" style={{ marginBottom: 6 }}>Handoff</div>
+                  Two paths: (a) AI proactively suggests in-thread when complexity warrants it, (b) "↗ Refer to human" lives in the composer always.
+                </div>
+                <div>
+                  <div className="label" style={{ marginBottom: 6 }}>Canvas rail</div>
+                  Three states: <b>rail</b> (300px), <b>popout</b> (600px, half-screen), <b>hidden</b>. State persists per project.
+                </div>
+                <div>
+                  <div className="label" style={{ marginBottom: 6 }}>Visual language</div>
+                  Inter + Source Serif (titles) + IBM Plex Mono (labels/codes). Warm neutral base, terracotta primary, jade for "human/online", gold for highlights.
+                </div>
+                <div>
+                  <div className="label" style={{ marginBottom: 6 }}>Tone</div>
+                  Project shorts (SULAWESI.NI) feel like deal-room codes; serif headers signal weight on regulation/decisions; mono labels keep dates/citations precise.
+                </div>
+              </div>
+
+              <div className="label" style={{ marginTop: 22, marginBottom: 6, color: 'var(--terracotta)' }}>Open questions for you</div>
+              <ul style={{ fontSize: 13.5, lineHeight: 1.7, paddingLeft: 18, margin: 0 }}>
+                <li>Should the canvas rail's <i>popout</i> state cover the sidebar too (deep-focus), or only push the chat?</li>
+                <li>Onboarding step 2 is shown — should we also do step 1 (org setup) and step 3 (analyst meet)?</li>
+                <li>Notifications: separate page (current), or surface in a sidebar inbox panel?</li>
+                <li>Branding: "Nusantara · BKPM" is a placeholder wordmark — happy to riff if you have a real one in mind.</li>
+              </ul>
+            </div>
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="Hero · canvas rail">
+          <TweakRadio
+            label="Canvas state"
+            value={t.canvasMode}
+            options={[
+              { value: 'rail', label: 'Rail' },
+              { value: 'popout', label: 'Pop out' },
+              { value: 'hidden', label: 'Hidden' },
+            ]}
+            onChange={(v) => setTweak('canvasMode', v)}
+          />
+        </TweakSection>
+        <TweakSection title="Hero · analyst presence">
+          <TweakToggle
+            label="Top ribbon + floating chip"
+            value={t.showPresence}
+            onChange={(v) => setTweak('showPresence', v)}
+          />
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

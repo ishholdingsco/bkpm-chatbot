@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>BKPM Investor Chat — Wireframe Explorations</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="wireframes-1-3.jsx"></script>
+<script type="text/babel" src="wireframes-4-6.jsx"></script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "showAnnotations": true,
+  "density": "comfortable",
+  "scenario": "diligence"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  // hide the sticky annotations on the sketch boards if user wants
+  React.useEffect(() => {
+    const stickies = document.querySelectorAll('.sticky');
+    stickies.forEach(s => { s.style.display = t.showAnnotations ? '' : 'none'; });
+  });
+
+  const W = 1280;
+  const H = 820;
+
+  return (
+    <>
+      <DesignCanvas
+        title="BKPM · investor chat — active thread"
+        subtitle="Same scene, six structural directions. Sketchy + clean mixed. Click any board to focus."
+      >
+        <DCSection
+          id="sketchy"
+          title="Sketchy directions"
+          subtitle="Hand-drawn explorations — focus on structure & flow, not visuals"
+        >
+          <DCArtboard id="w1" label="1 · Classic split — sidebar + chat + canvas rail" width={W} height={H}>
+            <W1ClassicSplit />
+          </DCArtboard>
+          <DCArtboard id="w2" label="2 · Canvas-forward — chat narrates the artifact grid" width={W} height={H}>
+            <W2CanvasForward />
+          </DCArtboard>
+          <DCArtboard id="w5" label="5 · Data room — chat is annotation on docs" width={W} height={H}>
+            <W5DataRoom />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="clean"
+          title="Clean low-fi directions"
+          subtitle="Tighter visual register — closer to a build-able layout"
+        >
+          <DCArtboard id="w3" label="3 · Terminal — Bloomberg-style multipane" width={W} height={H}>
+            <W3Terminal />
+          </DCArtboard>
+          <DCArtboard id="w4" label="4 · Deal pipeline — CRM-style stages, chat per stage" width={W} height={H}>
+            <W4Pipeline />
+          </DCArtboard>
+          <DCArtboard id="w6" label="6 · Analyst-pair — handoff is the hero affordance" width={W} height={H}>
+            <W6AnalystPair />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="notes"
+          title="What I'm trading off across the six"
+          subtitle="Read these before picking a direction to harden"
+        >
+          <DCArtboard id="notes" label="design notes" width={900} height={520} style={{ background: '#fafaf7' }}>
+            <div className="sketch" style={{ padding: 32, height: '100%', overflow: 'auto', fontFamily: 'Kalam, sans-serif' }}>
+              <div className="hand" style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Six directions, same job</div>
+              <div className="hand-mono" style={{ fontSize: 13, color: '#666', marginBottom: 18 }}>
+                The job: an analyst at Khazanah / sovereign / MNC explores Indonesia, deep-dives a project, and pulls in a BKPM human when needed.
+                Org → Project → Thread is shared across all six — the variation is <b>where the chat sits</b> relative to the artifacts and the human.
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, fontSize: 14, lineHeight: 1.45 }}>
+                <div className="box" style={{ padding: 12 }}>
+                  <div className="hand" style={{ fontSize: 18, fontWeight: 700 }}>1 · Classic split</div>
+                  <div>Familiar. Lowest risk. Canvas as a right rail = always-visible but cramped. Best for chat-led use.</div>
+                </div>
+                <div className="box" style={{ padding: 12 }}>
+                  <div className="hand" style={{ fontSize: 18, fontWeight: 700 }}>2 · Canvas-forward</div>
+                  <div>The canvas IS the project. Chat narrates edits. Best when artifacts are the durable output and chat is ephemeral.</div>
+                </div>
+                <div className="box" style={{ padding: 12 }}>
+                  <div className="hand" style={{ fontSize: 18, fontWeight: 700 }}>3 · Terminal</div>
+                  <div>For analysts who live in Bloomberg/Eikon. Highest density, steepest learning curve. Differentiated.</div>
+                </div>
+                <div className="box" style={{ padding: 12 }}>
+                  <div className="hand" style={{ fontSize: 18, fontWeight: 700 }}>4 · Deal pipeline</div>
+                  <div>Frames every project as a deal moving through stages. Great for M&A teams; maybe too transactional for sovereigns.</div>
+                </div>
+                <div className="box" style={{ padding: 12 }}>
+                  <div className="hand" style={{ fontSize: 18, fontWeight: 700 }}>5 · Data room</div>
+                  <div>Docs first; chat is highlight-anchored Q&A. Best when the IM/regulatory pack is the gravity well.</div>
+                </div>
+                <div className="box" style={{ padding: 12, borderColor: '#c8512a', borderWidth: 2 }}>
+                  <div className="hand" style={{ fontSize: 18, fontWeight: 700, color: '#c8512a' }}>6 · Analyst-pair ⭐</div>
+                  <div>Chat-first but humans are visible from turn 1. Most aligned with "AI-first, escalate in" + long-term engagement.</div>
+                </div>
+              </div>
+
+              <div className="hand" style={{ fontSize: 16, marginTop: 22, color: '#444' }}>
+                <span style={{ background: '#fde68a', padding: '2px 6px' }}>Suggested next:</span> harden #6 with a hi-fi pass, and decide whether the canvas should sit inside it (right rail) or be its own surface (à la #2).
+              </div>
+            </div>
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="Display">
+          <TweakToggle
+            label="Sticky annotations"
+            value={t.showAnnotations}
+            onChange={(v) => setTweak('showAnnotations', v)}
+          />
+          <TweakRadio
+            label="Density"
+            value={t.density}
+            options={[
+              { value: 'compact', label: 'Compact' },
+              { value: 'comfortable', label: 'Comfortable' },
+            ]}
+            onChange={(v) => setTweak('density', v)}
+          />
+        </TweakSection>
+        <TweakSection title="Scenario (mock data)">
+          <TweakSelect
+            label="Project stage"
+            value={t.scenario}
+            options={[
+              { value: 'scoping', label: 'Scoping (just exploring)' },
+              { value: 'diligence', label: 'Diligence (current)' },
+              { value: 'structuring', label: 'Structuring (deep)' },
+            ]}
+            onChange={(v) => setTweak('scenario', v)}
+          />
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

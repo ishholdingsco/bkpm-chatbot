@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>BKPM · Map Hero</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="midfi-styles.css" />
+<link rel="stylesheet" href="map-styles.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.5.0/dist/maplibre-gl.css" />
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.css" rel="stylesheet" />
+<style>
+  @keyframes blink { 50% { opacity: 0; } }
+  /* Leaflet tooltip — match BKPM type system */
+  .lf-tip {
+    background: #1a1a2e !important;
+    color: #fff !important;
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(20,20,40,0.18) !important;
+    font: 500 11px/1.3 Inter, system-ui, sans-serif !important;
+    padding: 5px 8px !important;
+    border-radius: 4px !important;
+  }
+  .lf-tip:before { display: none !important; }
+  /* Pulse marker */
+  .lf-pulse-wrap { position: relative; width: 28px; height: 28px; }
+  .lf-pulse-ring {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 2px solid; opacity: 0.6;
+    animation: lf-ping 2.4s cubic-bezier(0,0,0.2,1) infinite;
+  }
+  .lf-pulse-dot {
+    position: absolute; top: 50%; left: 50%; width: 10px; height: 10px;
+    border-radius: 50%; transform: translate(-50%,-50%);
+    box-shadow: 0 0 0 2px #fff;
+  }
+  @keyframes lf-ping {
+    0%   { transform: scale(0.4); opacity: 0.7; }
+    80%  { transform: scale(1.4); opacity: 0;   }
+    100% { transform: scale(1.4); opacity: 0;   }
+  }
+  /* Hide default leaflet zoom focus ring */
+  .leaflet-container { outline: none; font-family: Inter, system-ui, sans-serif; }
+
+  /* Mapbox tooltip — matches Leaflet style */
+  .mapboxgl-popup.mb-tip .mapboxgl-popup-content {
+    background: #fff;
+    color: #1a1a2e;
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 6px 20px rgba(20,20,40,0.16);
+    padding: 8px 11px;
+    border-radius: 8px;
+    font-family: Inter, system-ui, sans-serif;
+  }
+  .mapboxgl-popup.mb-tip .mapboxgl-popup-tip { display: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/maplibre-gl@5.5.0/dist/maplibre-gl.js"></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.js"></script>
+<script>
+  // Mapbox public token + custom Studio style for landing hero
+  window.__MAPBOX_TOKEN = 'pk.eyJ1IjoiZmF3d2F6YW52aWxlbiIsImEiOiJjbW9qeHd2NnUwMnY4Mm9zODdlMWV0ODQyIn0.LuwOf95YTaA_Pyi0QYJCQg';
+  window.__MAPBOX_STYLE = 'mapbox://styles/mapbox/light-v11';
+</script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="midfi-shared.jsx"></script>
+<script type="text/babel" src="midfi-thread.jsx"></script>
+<script type="text/babel" src="midfi-screens.jsx"></script>
+<script type="text/babel" src="map-svg.jsx"></script>
+<script type="text/babel" src="map-leaflet.jsx"></script>
+<script type="text/babel" src="map-globe.jsx"></script>
+<script type="text/babel" src="map-mapbox.jsx"></script>
+<script type="text/babel" src="map-screens.jsx"></script>
+
+<script type="text/babel">
+const { useState } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "hifi": false,
+  "chatOpen": true,
+  "canvasMode": "rail",
+  "showPresence": true
+}/*EDITMODE-END*/;
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [chatOpen, setChatOpen] = useState(t.chatOpen);
+  React.useEffect(() => { setChatOpen(t.chatOpen); }, [t.chatOpen]);
+
+  const W = 1280, H = 820;
+
+  return (
+    <>
+      <DesignCanvas
+        title="Wilaya · BKPM map-led explorer"
+        subtitle="Map is the hero. Chat is contextual. Toggle hi-fi + canvas mode in Tweaks."
+      >
+        <DCSection id="hero" title="Hero · The map" subtitle="Public landing + signed-in map, both on the globe">
+          <DCArtboard id="landing" label="Public landing — light basemap (current)" width={W} height={H}>
+            <Landing hifi={t.hifi} />
+          </DCArtboard>
+          <DCArtboard id="landing-faded" label="Public landing — Mapbox Standard 'faded' theme" width={W} height={H}>
+            <Landing hifi={t.hifi} mapStyle={window.__MAPBOX_STANDARD_FADED} />
+          </DCArtboard>
+          <DCArtboard id="map" label="Map page — chat sidebar contextual to layers" width={W} height={H}>
+            <MapPage hifi={t.hifi} chatOpen={chatOpen} setChatOpen={setChatOpen} />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="flow" title="Flow moments" subtitle="Pin → onboarding → workspace → comparison">
+          <DCArtboard id="onboard-map" label="Onboarding — from a tapped map pin" width={W} height={H}>
+            <OnboardingFromMap />
+          </DCArtboard>
+          <DCArtboard id="compare" label="Comparison — 3 projects head-to-head" width={W} height={H}>
+            <CompareView hifi={t.hifi} />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="workspace" title="Workspace · Active thread" subtitle="Once they're inside a project — chat + canvas rail + analyst presence. Pulled from the Mid-fi explorations and harmonized with the BKPM blue/green palette.">
+          <DCArtboard id="thread" label="Active thread — chat with analyst presence + canvas rail" width={W} height={H}>
+            <ActiveThread
+              canvasMode={t.canvasMode}
+              setCanvasMode={(v) => setTweak('canvasMode', v)}
+              showPresence={t.showPresence}
+              onOpenHandoff={() => {}}
+              onOpenFocus={() => {}}
+            />
+          </DCArtboard>
+          <DCArtboard id="empty" label="Empty state — start a new project thread" width={W} height={H}>
+            <EmptyState />
+          </DCArtboard>
+          <DCArtboard id="handoff" label="Handoff — book a call with an analyst" width={W} height={H}>
+            <HandoffModal />
+          </DCArtboard>
+          <DCArtboard id="canvas-focus" label="Canvas focus — artifact full-screen" width={W} height={H}>
+            <CanvasFocus />
+          </DCArtboard>
+          <DCArtboard id="digest" label="Notifications & weekly digest" width={W} height={H}>
+            <NotificationsDigest />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="brand" title="Brand & fidelity" subtitle="Wordmark in context + mid-fi vs hi-fi side-by-side">
+          <DCArtboard id="brands" label="Wilaya wordmark · contexts" width={900} height={620}>
+            <BrandVariations />
+          </DCArtboard>
+          <DCArtboard id="fidelity" label="Mid-fi vs Hi-fi · same card" width={900} height={620}>
+            <FidelityCompare />
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="Fidelity">
+          <TweakToggle label="Hi-fi polish" value={t.hifi} onChange={v => setTweak('hifi', v)} />
+        </TweakSection>
+        <TweakSection title="Map page">
+          <TweakToggle label="Chat sidebar open" value={t.chatOpen} onChange={v => setTweak('chatOpen', v)} />
+        </TweakSection>
+        <TweakSection title="Workspace · canvas rail">
+          <TweakRadio label="Canvas state"
+            value={t.canvasMode}
+            options={[
+              { value: 'rail', label: 'Rail' },
+              { value: 'popout', label: 'Pop out' },
+              { value: 'hidden', label: 'Hidden' },
+            ]}
+            onChange={v => setTweak('canvasMode', v)}
+          />
+          <TweakToggle label="Analyst presence ribbon" value={t.showPresence} onChange={v => setTweak('showPresence', v)} />
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

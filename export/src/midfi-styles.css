@@ -1,0 +1,213 @@
+/* Mid-fi BKPM Investor Chat — design tokens & primitives */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap');
+
+:root {
+  /* warm neutral base — Indonesian-leaning */
+  --bg: #f6f3ec;
+  --surface: #ffffff;
+  --surface-2: #fbf8f1;
+  --surface-3: #f0ebe0;
+  --line: #e6e0d2;
+  --line-strong: #cfc6b0;
+  --ink: #1c1a14;
+  --ink-2: #4a463a;
+  --ink-3: #7a7466;
+  --ink-4: #a39d8d;
+
+  /* accents */
+  --terracotta: #b94a1f;
+  --terracotta-soft: #fbe8dc;
+  --terracotta-tint: #f7d6c1;
+  --jade: #2f6a4f;
+  --jade-soft: #dfeae0;
+  --gold: #c8a13a;
+  --gold-soft: #f3e7c0;
+  --rose: #b73a4a;
+
+  /* status */
+  --ok: #2f6a4f;
+  --warn: #c8731a;
+  --err: #b73a4a;
+
+  --radius: 8px;
+  --radius-sm: 4px;
+  --shadow-1: 0 1px 2px rgba(28,26,20,0.05), 0 1px 0 rgba(28,26,20,0.03);
+  --shadow-2: 0 6px 22px rgba(28,26,20,0.08), 0 2px 6px rgba(28,26,20,0.04);
+  --shadow-3: 0 24px 60px rgba(28,26,20,0.18), 0 8px 20px rgba(28,26,20,0.08);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  font-feature-settings: 'ss01', 'cv11';
+}
+
+.mono { font-family: 'IBM Plex Mono', monospace; }
+.serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+.label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.row { display: flex; }
+.col { display: flex; flex-direction: column; }
+.grow { flex: 1; min-width: 0; min-height: 0; }
+.scroll { overflow: auto; }
+.scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.scroll::-webkit-scrollbar-thumb { background: #d8d2bf; border-radius: 4px; }
+.scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* buttons */
+.btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.12s, border-color 0.12s;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--surface-3); }
+.btn-primary {
+  background: var(--terracotta);
+  color: #fff;
+  border-color: var(--terracotta);
+}
+.btn-primary:hover { background: #a13d16; border-color: #a13d16; }
+.btn-jade {
+  background: var(--jade);
+  color: #fff;
+  border-color: var(--jade);
+}
+.btn-jade:hover { background: #265843; }
+.btn-ghost {
+  border-color: transparent;
+  background: transparent;
+}
+.btn-ghost:hover { background: var(--surface-3); }
+.btn-sm { padding: 4px 8px; font-size: 11px; }
+
+/* chip / pill */
+.chip {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--ink-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--line);
+}
+.chip-terra { background: var(--terracotta-soft); color: var(--terracotta); border-color: var(--terracotta-tint); }
+.chip-jade { background: var(--jade-soft); color: var(--jade); border-color: #cfdcd0; }
+.chip-gold { background: var(--gold-soft); color: #8a6a14; border-color: #e6d495; }
+.chip-dot::before {
+  content: '';
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+}
+
+/* avatar */
+.avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+.avatar-sm { width: 22px; height: 22px; font-size: 9px; }
+.avatar-lg { width: 44px; height: 44px; font-size: 14px; }
+
+/* card */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+}
+
+/* placeholder image */
+.ph {
+  background-color: #ede8d9;
+  background-image:
+    repeating-linear-gradient(45deg, transparent 0 8px, rgba(0,0,0,0.04) 8px 9px);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-4);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+}
+
+/* fake bars (mid-fi) */
+.bar { height: 8px; background: #e6e0d2; border-radius: 2px; }
+.bar-line { height: 2px; background: #e0d9c5; }
+
+/* divider */
+.div-h { height: 1px; background: var(--line); }
+.div-v { width: 1px; background: var(--line); }
+
+/* artboard root */
+.frame {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  position: relative;
+  font-family: 'Inter', sans-serif;
+}
+
+/* highlight */
+.hl-yellow { background: #fff1b8; padding: 1px 3px; border-radius: 2px; }
+.hl-terra { background: var(--terracotta-soft); color: var(--terracotta); padding: 1px 3px; border-radius: 2px; }
+
+/* keyboard key */
+.kbd {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  padding: 1px 5px;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--ink-2);
+}
+
+/* annotation sticky for design notes only */
+.note-sticky {
+  position: absolute;
+  background: #fff1b8;
+  font-size: 11px;
+  font-style: italic;
+  padding: 6px 9px;
+  border-radius: 2px;
+  box-shadow: 2px 3px 0 rgba(0,0,0,0.06);
+  max-width: 220px;
+  z-index: 10;
+  line-height: 1.3;
+  color: #5a4a14;
+}
