@@ -3,7 +3,7 @@
 // Renders Kawasan Industri (industrial estate) + KEK polygons + featured pins
 // on top of a Mapbox basemap. Token comes from NEXT_PUBLIC_MAPBOX_TOKEN.
 
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import industrialData from "@/data/industrial-estates.json";
 import kekData from "@/data/kek.json";
@@ -90,7 +90,10 @@ function addPolygonLayer(map, { id, features, fill, line }) {
   map.addLayer({ id: `${id}-line`, type: "line", source: id, paint: line });
 }
 
-export default function MapboxMap({
+// The featured-opportunity layers we filter when chat highlights a subset.
+const FEATURED_LAYERS = ["mb-featured-halo", "mb-featured-ring", "mb-featured-hit"];
+
+const MapboxMap = forwardRef(function MapboxMap({
   center = [118.0, -2.5],
   zoom = 4.0,
   bearing = 0,
@@ -100,11 +103,25 @@ export default function MapboxMap({
   deemphasizeOthers = true,
   style,
   layers,
-}) {
+  pinFilter,
+}, apiRef) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   const [ready, setReady] = useState(false);
   const [errored, setErrored] = useState(false);
+
+  // Imperative handle so the chat (via MapPage) can drive the camera. Exposed
+  // once the map exists; methods no-op safely before then. Issue #7.
+  useImperativeHandle(apiRef, () => ({
+    flyTo(opts) {
+      const map = mapRef.current;
+      if (map) map.flyTo({ essential: true, ...opts });
+    },
+    fitBounds(bounds, opts) {
+      const map = mapRef.current;
+      if (map && bounds) map.fitBounds(bounds, { padding: 80, maxZoom: 8, duration: 1200, ...opts });
+    },
+  }), []);
 
   useEffect(() => {
     if (!ref.current || mapRef.current) return;
@@ -158,6 +175,18 @@ export default function MapboxMap({
     }
   }, [ready, layers]);
 
+  // Highlight a subset of featured opportunity pins when chat filters them.
+  // `pinFilter.ids` is an array of opportunity ids; null/undefined shows all.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const ids = pinFilter?.ids;
+    const filter = Array.isArray(ids) ? ["in", ["get", "kind"], ["literal", ids]] : null;
+    FEATURED_LAYERS.forEach((id) => {
+      if (map.getLayer(id)) map.setFilter(id, filter);
+    });
+  }, [ready, pinFilter]);
+
   return (
     <div style={{ width: "100%", height: "100%", position: "relative", background: "#cfe6f2" }}>
       <div ref={ref} style={{ width: "100%", height: "100%" }} />
@@ -176,7 +205,9 @@ export default function MapboxMap({
       )}
     </div>
   );
-}
+});
+
+export default MapboxMap;
 
 function addMbOverlays(map, onPinClick) {
   const indFeats = MB_PINS.industrial.map((p, i) => ({

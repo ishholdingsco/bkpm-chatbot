@@ -7,8 +7,14 @@ import realization from "@/data/investment-realization.json";
 import sectors from "@/data/sectors.json";
 import economic from "@/data/economic-indicators.json";
 import hazard from "@/data/hazard.json";
+import { MAP_TOOLS } from "@/components/map/mapActions";
 
 const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
+
+// Control frame used to ship structured map actions inside the otherwise
+// plain-text stream. NUL never appears in prose, so the client can slice these
+// `\0…\0` frames out cleanly (see useChat.js). Issue #7.
+const FRAME = "\u0000";
 
 // Authoritative source registry, derived from the team's data-requirements
 // catalogue (data/data-requirements.csv, items D01–D16). When the assistant
@@ -69,6 +75,54 @@ ${buildDataBrief()}
 
 ${SOURCE_REGISTRY}`;
 
+// Extra instruction added only when the caller (the map view) enables map
+// tools. Tells the model it can actually drive the map via function calls.
+const MAP_TOOLS_INSTRUCTION = `You are looking at the same interactive map as the user and can CONTROL it by calling functions:
+- set_layers — show/hide data layers (industrial, kek, minerals, ports).
+- fly_to — pan/zoom to a region or coordinate.
+- filter_opportunities — filter & highlight the featured opportunity pins (by sector, province, commodity, or minimum foreign-ownership %).
+When the user asks to see, show, zoom to, highlight, filter or focus on something on the map, CALL the matching function instead of only describing it. You may call several in one turn (e.g. fly_to + filter_opportunities). Always also reply with one or two short sentences explaining what you changed. Only the four layers above carry data — wiup/gdp/infra cannot be toggled yet.`;
+
+// Build the JSON payload for a DeepSeek chat completion. Tools are attached
+// only when provided, so the workspace chat (no map) behaves exactly as before.
+function deepseekPayload(model, messages, tools) {
+  const payload = { model, messages, stream: true, temperature: 0.6 };
+  if (tools) {
+    payload.tools = tools;
+    payload.tool_choice = "auto";
+  }
+  return payload;
+}
+
+// Parse DeepSeek's SSE stream, forwarding content deltas to `onContent` and any
+// tool-call deltas to `onToolCall`. Shared by the initial and follow-up calls.
+async function pipeUpstream(upstream, { onContent, onToolCall }) {
+  const reader = upstream.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let idx;
+    while ((idx = buffer.indexOf("\n")) !== -1) {
+      const line = buffer.slice(0, idx).trim();
+      buffer = buffer.slice(idx + 1);
+      if (!line.startsWith("data:")) continue;
+      const data = line.slice(5).trim();
+      if (data === "[DONE]") continue;
+      try {
+        const json = JSON.parse(data);
+        const delta = json.choices?.[0]?.delta;
+        if (delta?.content && onContent) onContent(delta.content);
+        if (delta?.tool_calls && onToolCall) onToolCall(delta.tool_calls);
+      } catch {
+        // ignore partial / non-JSON keepalive lines
+      }
+    }
+  }
+}
+
 export async function POST(req) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
@@ -84,7 +138,7 @@ export async function POST(req) {
     return new Response("Invalid JSON body.", { status: 400 });
   }
 
-  const { messages = [], context, lang } = body;
+  const { messages = [], context, lang, mapTools = false } = body;
 
   // Reply in the user's active UI language (default Bahasa Indonesia). See #8.
   const LANGUAGE_INSTRUCTION = {
@@ -94,7 +148,15 @@ export async function POST(req) {
   };
   const langNote = LANGUAGE_INSTRUCTION[lang] || LANGUAGE_INSTRUCTION.id;
 
-  const system = [BASE_SYSTEM_PROMPT, langNote, context && `Current context: ${context}`]
+  // The map view passes mapTools:true so the assistant can drive the map.
+  const toolsEnabled = mapTools === true;
+
+  const system = [
+    BASE_SYSTEM_PROMPT,
+    langNote,
+    toolsEnabled && MAP_TOOLS_INSTRUCTION,
+    context && `Current context: ${context}`,
+  ]
     .filter(Boolean)
     .join("\n\n");
 
@@ -105,21 +167,16 @@ export async function POST(req) {
       .map((m) => ({ role: m.role, content: String(m.content) })),
   ];
 
+  const callUpstream = (msgs, tools) =>
+    fetch(DEEPSEEK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify(deepseekPayload(model, msgs, tools)),
+    });
+
   let upstream;
   try {
-    upstream = await fetch(DEEPSEEK_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: chatMessages,
-        stream: true,
-        temperature: 0.6,
-      }),
-    });
+    upstream = await callUpstream(chatMessages, toolsEnabled ? MAP_TOOLS : null);
   } catch (err) {
     return new Response("Failed to reach DeepSeek API.", { status: 502 });
   }
@@ -131,34 +188,78 @@ export async function POST(req) {
     });
   }
 
-  // Parse DeepSeek's SSE stream and re-emit just the delta text as a plain
-  // text stream — simplest possible contract for the client.
-  const decoder = new TextDecoder();
+  // Re-emit the assistant's prose as a plain-text stream. When map tools are in
+  // play we also accumulate any tool calls; once the first response finishes we
+  // ship them as a `\0…\0` action frame, then — if the model only acted and
+  // didn't speak — make a short follow-up call so it narrates what it changed.
   const encoder = new TextEncoder();
-  let buffer = "";
 
   const stream = new ReadableStream({
     async start(controller) {
-      const reader = upstream.body.getReader();
       try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
+        const toolCalls = [];
+        let sawContent = false;
 
-          let idx;
-          while ((idx = buffer.indexOf("\n")) !== -1) {
-            const line = buffer.slice(0, idx).trim();
-            buffer = buffer.slice(idx + 1);
-            if (!line.startsWith("data:")) continue;
-            const data = line.slice(5).trim();
-            if (data === "[DONE]") continue;
-            try {
-              const json = JSON.parse(data);
-              const delta = json.choices?.[0]?.delta?.content;
-              if (delta) controller.enqueue(encoder.encode(delta));
-            } catch {
-              // ignore partial / non-JSON keepalive lines
+        await pipeUpstream(upstream, {
+          onContent: (text) => {
+            sawContent = true;
+            controller.enqueue(encoder.encode(text));
+          },
+          onToolCall: (deltas) => {
+            for (const tc of deltas) {
+              const i = tc.index ?? 0;
+              if (!toolCalls[i]) toolCalls[i] = { id: tc.id, name: "", args: "" };
+              if (tc.id) toolCalls[i].id = tc.id;
+              if (tc.function?.name) toolCalls[i].name = tc.function.name;
+              if (tc.function?.arguments) toolCalls[i].args += tc.function.arguments;
+            }
+          },
+        });
+
+        const actions = [];
+        for (const tc of toolCalls) {
+          if (!tc || !tc.name) continue;
+          let args = {};
+          try {
+            args = tc.args ? JSON.parse(tc.args) : {};
+          } catch {
+            args = {};
+          }
+          actions.push({ name: tc.name, args });
+        }
+
+        if (actions.length) {
+          controller.enqueue(encoder.encode(FRAME + JSON.stringify({ actions }) + FRAME));
+
+          // The model usually returns tool calls with no prose. Ask it to
+          // narrate, feeding the tool calls + (stub) results back in context.
+          if (!sawContent) {
+            const followupMessages = [
+              ...chatMessages,
+              {
+                role: "assistant",
+                content: "",
+                tool_calls: toolCalls
+                  .filter((tc) => tc && tc.name)
+                  .map((tc, i) => ({
+                    id: tc.id || `call_${i}`,
+                    type: "function",
+                    function: { name: tc.name, arguments: tc.args || "{}" },
+                  })),
+              },
+              ...toolCalls
+                .filter((tc) => tc && tc.name)
+                .map((tc, i) => ({
+                  role: "tool",
+                  tool_call_id: tc.id || `call_${i}`,
+                  content: "Applied to the map.",
+                })),
+            ];
+            const followup = await callUpstream(followupMessages, null);
+            if (followup.ok && followup.body) {
+              await pipeUpstream(followup, {
+                onContent: (text) => controller.enqueue(encoder.encode(text)),
+              });
             }
           }
         }

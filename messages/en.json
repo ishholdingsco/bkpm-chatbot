@@ -75,14 +75,16 @@
     "matchedThesis": "matched to your thesis",
     "askAboutMap": "Ask about this map",
     "askNusantara": "Ask Nusantara",
-    "reading": "Reading: {n} layers active · viewing Sulawesi",
+    "viewDefault": "Sulawesi",
+    "reading": "Reading: {n} layers active · viewing {view}",
+    "pinPrompt": "Tell me about the {label} opportunity — ticket size, incentives and key risks.",
     "collapseChat": "Collapse chat",
     "intro": "Ask me anything about what's on the map — sectors, special economic zones, ownership rules, or a specific opportunity.",
     "tryAsking": "Try asking",
     "suggestions": [
-      "What's driving the cluster of nickel sites in Sulawesi?",
-      "Which sectors allow 100% foreign ownership right now?",
-      "Compare Sulawesi vs Halmahera nickel infrastructure"
+      "Show only the KEK and minerals layers",
+      "Zoom to the Sulawesi nickel cluster",
+      "Show projects with 100% foreign ownership"
     ],
     "chatPlaceholder": "Ask, or try /filter, /compare…",
     "saveView": "save view",
