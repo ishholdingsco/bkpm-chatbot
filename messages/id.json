@@ -288,5 +288,11 @@
       { "label": "Hubungkan saya dengan analis Wilaya yang tepat", "tag": "MANUSIA" }
     ],
     "sectors": ["Mineral kritis", "Energi", "Infrastruktur digital", "Manufaktur", "Pertanian"]
+  },
+  "desktopOnly": {
+    "title": "Buka di desktop",
+    "body": "Wilaya saat ini dioptimalkan untuk layar desktop. Tampilan untuk ponsel & tablet sedang dikembangkan — silakan akses lewat komputer atau laptop dengan lebar layar minimal 1024px.",
+    "hint": "Lebar layar Anda saat ini terlalu kecil untuk menampilkan peta dan panel analisis.",
+    "footer": "Investment Explorer · BKPM Republik Indonesia"
   }
 }

@@ -13,3 +13,4 @@ export {
 } from "./primitives";
 export { ToastHost, toast, comingSoon, ComingSoonButton } from "./Toast";
 export { LanguageProvider, useI18n, LangToggle, LANGUAGES } from "./i18n";
+export { DesktopOnlyGate } from "./DesktopOnlyGate";
