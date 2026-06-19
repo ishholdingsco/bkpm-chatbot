@@ -82,7 +82,7 @@ function Sidebar({ collapsed, onToggle }) {
         <div style={{ display: "flex", alignItems: "center", padding: "0 6px 6px" }}>
           <span className="label">Projects · 4</span>
           <Tooltip content="New project">
-            <button className="btn btn-ghost btn-sm ui-icon-btn" style={{ marginLeft: "auto" }} aria-label="New project"><Plus size={15} strokeWidth={1.75} /></button>
+            <Link href="/workspace/new" className="btn btn-ghost btn-sm ui-icon-btn" style={{ marginLeft: "auto" }} aria-label="New project"><Plus size={15} strokeWidth={1.75} /></Link>
           </Tooltip>
         </div>
 
@@ -105,7 +105,9 @@ function Sidebar({ collapsed, onToggle }) {
                     <span className="mono" style={{ fontSize: 9, color: "var(--ink-4)" }}>{t.updated}</span>
                   </div>
                 ))}
-                <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 8px", fontSize: 11, color: "var(--ink-3)", cursor: "pointer" }}><Plus size={12} strokeWidth={1.75} /> new thread</div>
+                <Link href="/workspace/new" style={{ textDecoration: "none", color: "var(--ink-3)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 8px", fontSize: 11, cursor: "pointer" }}><Plus size={12} strokeWidth={1.75} /> new thread</div>
+                </Link>
               </div>
             )}
           </div>
@@ -291,7 +293,7 @@ export function ActiveThread() {
           <>
             <button className="btn btn-sm btn-ghost"><Search size={14} strokeWidth={1.75} /> Search <span className="kbd">⌘K</span></button>
             <Tooltip content="Notifications" side="bottom">
-              <button className="btn btn-sm btn-ghost ui-icon-btn" aria-label="Notifications"><Bell size={15} strokeWidth={1.75} /></button>
+              <Link href="/notifications" className="btn btn-sm btn-ghost ui-icon-btn" aria-label="Notifications"><Bell size={15} strokeWidth={1.75} /></Link>
             </Tooltip>
             {canvasMode === "hidden" && (
               <button className="btn btn-sm" onClick={() => setCanvasMode("rail")}>Show canvas <ArrowRight size={14} strokeWidth={1.75} /></button>
