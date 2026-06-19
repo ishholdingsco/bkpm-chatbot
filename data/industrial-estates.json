@@ -1,0 +1,31 @@
+{
+  "_meta": {
+    "title": "Kawasan Industri (Industrial Estates)",
+    "source": "Kemenperin SIINas / company disclosures — selected major estates",
+    "retrieved": "2026-06-19",
+    "disclaimer": "Prototype data. A curated subset of Indonesia's ~150 industrial estates; coordinates are approximate, area/tenants indicative. Verify before real use.",
+    "coordinates": "[longitude, latitude]"
+  },
+  "estates": [
+    { "name": "Krakatau Industrial Estate Cilegon (KIEC)", "province": "Banten", "location": "Cilegon", "coordinates": [106.00, -6.02], "sectors": ["Steel", "Chemicals", "Energy"], "area_ha": 550, "status": "Operational" },
+    { "name": "MM2100 Industrial Town", "province": "Jawa Barat", "location": "Cikarang Barat, Bekasi", "coordinates": [107.10, -6.27], "sectors": ["Automotive", "Electronics", "Manufacturing"], "area_ha": 1230, "status": "Operational" },
+    { "name": "Jababeka Industrial Estate", "province": "Jawa Barat", "location": "Cikarang, Bekasi", "coordinates": [107.15, -6.28], "sectors": ["Manufacturing", "FMCG", "Logistics"], "area_ha": 5600, "status": "Operational" },
+    { "name": "GIIC Kota Deltamas", "province": "Jawa Barat", "location": "Cikarang Pusat, Bekasi", "coordinates": [107.18, -6.30], "sectors": ["Automotive", "Electronics"], "area_ha": 3000, "status": "Operational" },
+    { "name": "Karawang International Industrial City (KIIC)", "province": "Jawa Barat", "location": "Karawang", "coordinates": [107.30, -6.40], "sectors": ["Automotive", "Manufacturing"], "area_ha": 1400, "status": "Operational" },
+    { "name": "Kawasan Industri Wijayakusuma", "province": "Jawa Tengah", "location": "Semarang", "coordinates": [110.32, -6.95], "sectors": ["Manufacturing", "Food", "Logistics"], "area_ha": 250, "status": "Operational" },
+    { "name": "Grand Batang City (KITB)", "province": "Jawa Tengah", "location": "Batang", "coordinates": [109.78, -6.93], "sectors": ["Manufacturing", "Glass", "Electronics", "Textiles"], "area_ha": 4300, "status": "Operational", "note": "National Strategic Project (PSN)" },
+    { "name": "Kawasan Industri Medan (KIM)", "province": "Sumatra Utara", "location": "Medan", "coordinates": [98.70, 3.70], "sectors": ["Manufacturing", "Palm oil", "Logistics"], "area_ha": 780, "status": "Operational" },
+    { "name": "Kuala Tanjung Industrial Estate", "province": "Sumatra Utara", "location": "Batu Bara", "coordinates": [99.43, 3.37], "sectors": ["Aluminium", "Petrochemical", "Logistics"], "area_ha": 3400, "status": "Development" },
+    { "name": "Dumai Industrial Estate", "province": "Riau", "location": "Dumai", "coordinates": [101.45, 1.67], "sectors": ["Palm oil downstream", "Oleochemical"], "area_ha": 1700, "status": "Operational" },
+    { "name": "Batamindo Industrial Park", "province": "Kepulauan Riau", "location": "Batam", "coordinates": [104.03, 1.05], "sectors": ["Electronics", "Manufacturing"], "area_ha": 320, "status": "Operational" },
+    { "name": "Java Integrated Industrial & Ports Estate (JIIPE)", "province": "Jawa Timur", "location": "Gresik", "coordinates": [112.60, -7.10], "sectors": ["Smelter", "Metal", "Chemicals", "Energy"], "area_ha": 2167, "status": "Operational" },
+    { "name": "Indonesia Morowali Industrial Park (IMIP)", "province": "Sulawesi Tengah", "location": "Bahodopi, Morowali", "coordinates": [122.10, -2.83], "sectors": ["Nickel", "Stainless steel", "EV battery"], "area_ha": 4000, "status": "Operational", "tenants": 50 },
+    { "name": "Indonesia Weda Bay Industrial Park (IWIP)", "province": "Maluku Utara", "location": "Weda, Halmahera Tengah", "coordinates": [127.95, 0.52], "sectors": ["Nickel", "HPAL battery", "Stainless steel"], "area_ha": 5000, "status": "Operational" },
+    { "name": "VDNI / OSS Konawe Industrial Park", "province": "Sulawesi Tenggara", "location": "Morosi, Konawe", "coordinates": [122.55, -3.92], "sectors": ["Nickel", "Ferronickel"], "area_ha": 1200, "status": "Operational" },
+    { "name": "Bantaeng Industrial Park (Huadi)", "province": "Sulawesi Selatan", "location": "Bantaeng", "coordinates": [120.00, -5.55], "sectors": ["Nickel", "Smelter"], "area_ha": 3000, "status": "Operational" },
+    { "name": "Batulicin Industrial Estate", "province": "Kalimantan Selatan", "location": "Tanah Bumbu", "coordinates": [115.97, -3.45], "sectors": ["Coal", "Iron/steel", "Logistics"], "area_ha": 530, "status": "Operational" },
+    { "name": "KIPI Tanah Kuning–Mangkupadi", "province": "Kalimantan Utara", "location": "Bulungan", "coordinates": [117.55, 2.95], "sectors": ["Green industry", "Aluminium", "Petrochemical", "Hydropower"], "area_ha": 13000, "status": "Development", "note": "Green industrial park (PSN)" },
+    { "name": "Smelter Grade Alumina Refinery (SGAR) Mempawah", "province": "Kalimantan Barat", "location": "Mempawah", "coordinates": [109.20, 0.36], "sectors": ["Bauxite/alumina"], "area_ha": 290, "status": "Operational" },
+    { "name": "Teluk Bintuni Petrochemical Estate", "province": "Papua Barat", "location": "Teluk Bintuni", "coordinates": [133.50, -2.10], "sectors": ["Methanol", "Petrochemical", "Fertilizer"], "area_ha": 2000, "status": "Development" }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "title": "Priority Investment Sectors",
+    "source": "BKPM Positive Investment List (Perpres 10/2021) + 2024 realization rankings",
+    "retrieved": "2026-06-19",
+    "disclaimer": "Prototype data. Foreign-ownership caps summarize the Positive Investment List and may have conditions; realization figures are from public BKPM releases (period noted). Verify before real use.",
+    "currency": "IDR trillion"
+  },
+  "sectors": [
+    { "id": "base-metals", "name": "Base metals (smelting & refining)", "focus": "Nickel, copper, bauxite/alumina, tin", "foreignCap": "100%", "tag": "Hilirisasi", "realizationQ3_2024": 55.87, "note": "Core of the downstreaming agenda" },
+    { "id": "mining", "name": "Mining", "focus": "Ni, Cu, Au, coal, bauxite, tin", "foreignCap": "Varies (DNI)", "tag": "Extractive", "realizationQ3_2024": 44.64 },
+    { "id": "transport-telco", "name": "Transport, warehousing & telecom", "focus": "Ports, logistics, data centers, connectivity", "foreignCap": "100%", "tag": "Infrastructure", "realizationQ3_2024": 58.04 },
+    { "id": "chemicals-pharma", "name": "Chemicals & pharmaceuticals", "focus": "Petrochemical, methanol, fertilizer, pharma", "foreignCap": "100%", "tag": "Manufacturing", "realizationQ3_2024": 31.61 },
+    { "id": "food", "name": "Food industry", "focus": "Palm oil downstream, F&B, agro-processing", "foreignCap": "95–100%", "tag": "Agribusiness", "realizationQ3_2024": 31.30 },
+    { "id": "ev-battery", "name": "EV battery & ecosystem", "focus": "Precursor, cathode, cell, recycling", "foreignCap": "100%", "tag": "Hilirisasi" },
+    { "id": "renewables", "name": "Renewable energy", "focus": "Geothermal, hydro, solar, green hydrogen", "foreignCap": "95–100%", "tag": "Energy transition" },
+    { "id": "tourism", "name": "Tourism & creative economy", "focus": "KEK tourism, MICE, health tourism", "foreignCap": "100%", "tag": "Services" },
+    { "id": "digital", "name": "Digital infrastructure", "focus": "Data centers, cloud, fiber", "foreignCap": "100%", "tag": "Infrastructure" }
+  ]
+}

@@ -13,15 +13,21 @@ import { useChat } from "@/components/chat/useChat";
 import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
 import { Switch, Tooltip, DropdownMenu } from "@/components/ui/controls";
 import { DATA, Avatar, AvatarStack, BKPM, Logo, TopBar } from "@/components/ui";
+import industrialData from "@/data/industrial-estates.json";
+import kekData from "@/data/kek.json";
+import mineralsData from "@/data/minerals.json";
+import portsData from "@/data/ports.json";
 
+// Counts come straight from the static JSON in data/ so the panel and the map
+// can never drift apart. WIUP/GDP/infra are future layers without point data yet.
 const LAYERS = [
-  { id: "industrial", name: "Kawasan Industri", desc: "Industrial estates · 142 sites", color: "#f7b500", count: 142 },
-  { id: "kek", name: "Kawasan Ekonomi Khusus", desc: "Special Economic Zones · 22", color: "#7e4dd9", count: 22 },
+  { id: "industrial", name: "Kawasan Industri", desc: `Industrial estates · ${industrialData.estates.length} mapped`, color: "#f7b500", count: industrialData.estates.length },
+  { id: "kek", name: "Kawasan Ekonomi Khusus", desc: `Special Economic Zones · ${kekData.estates.length}`, color: "#7e4dd9", count: kekData.estates.length },
   { id: "wiup", name: "WIUP — Mining Concessions", desc: "Active concessions · 4,210", color: "#29b0a4", count: 4210 },
-  { id: "minerals", name: "Mineral & Resource Deposits", desc: "Ni · Cu · Au · Bauxite · Coal · Tin", color: "#e8533f" },
+  { id: "minerals", name: "Mineral & Resource Deposits", desc: "Ni · Cu · Au · Bauxite · Coal · Tin", color: "#e8533f", count: mineralsData.deposits.length },
   { id: "gdp", name: "GDP per capita", desc: "Choropleth · 2025", color: "#4264fb" },
   { id: "infra", name: "Power grid & corridors", desc: "PLN backbone + planned", color: "#f74565" },
-  { id: "ports", name: "Sea ports", desc: "36 strategic ports", color: "#1a1a2e" },
+  { id: "ports", name: "Sea ports", desc: `${portsData.ports.length} strategic ports`, color: "#1a1a2e", count: portsData.ports.length },
 ];
 
 function Wordmark({ name, tag = "BKPM", hifi = false, size = 17 }) {
@@ -303,7 +309,7 @@ export function Landing({ name = "Wilaya", hifi = false, mapStyle }) {
         </h1>
 
         <p style={{ fontSize: 14, lineHeight: 1.55, color: "var(--ink-2)", margin: 0, textWrap: "pretty" }}>
-          17,508 islands. 142 industrial estates. 22 special economic zones. Every concession, corridor and incentive — overlaid on one live atlas.
+          17,508 islands. 142 industrial estates. {kekData.estates.length} special economic zones. Every concession, corridor and incentive — overlaid on one live atlas.
         </p>
 
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
@@ -323,7 +329,7 @@ export function Landing({ name = "Wilaya", hifi = false, mapStyle }) {
 
       <div style={{ position: "absolute", top: 92, right: 18, zIndex: 5, background: "rgba(255,255,255,0.94)", backdropFilter: "blur(6px)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6, boxShadow: "0 4px 14px rgba(0,0,0,0.08)" }}>
         <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", letterSpacing: "0.14em" }}>OVERLAYS</span>
-        {[["#f7b500", "Industrial estates · 142"], ["#7e4dd9", "Special economic zones · 22"], ["#c44a36", "Featured opportunities"]].map(([c, l]) => (
+        {[["#f7b500", "Industrial estates · 142"], ["#7e4dd9", `Special economic zones · ${kekData.estates.length}`], ["#c44a36", "Featured opportunities"]].map(([c, l]) => (
           <div key={l} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "var(--ink-2)" }}>
             <span style={{ width: 10, height: 10, borderRadius: 3, background: c, opacity: 0.7, border: `1px solid ${c}` }} />
             {l}

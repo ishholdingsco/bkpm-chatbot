@@ -1,0 +1,36 @@
+{
+  "_meta": {
+    "title": "Kawasan Ekonomi Khusus (Special Economic Zones)",
+    "count": 24,
+    "source": "Dewan Nasional KEK / Kompas (Oct 2024) — 24 designated KEK",
+    "retrieved": "2026-06-19",
+    "disclaimer": "Prototype data. Coordinates are approximate (zone centroid), compiled for demo rendering — verify against official sources before any real use.",
+    "coordinates": "[longitude, latitude]"
+  },
+  "estates": [
+    { "name": "KEK Arun Lhokseumawe", "province": "Aceh", "location": "Lhokseumawe & Aceh Utara", "coordinates": [97.05, 5.18], "sectors": ["Energy", "Petrochemical", "Palm oil"], "status": "Operational", "established": 2017, "area_ha": 2622 },
+    { "name": "KEK Sei Mangkei", "province": "Sumatra Utara", "location": "Simalungun", "coordinates": [99.45, 3.04], "sectors": ["Palm oil downstream", "Rubber", "Logistics"], "status": "Operational", "established": 2014, "area_ha": 1934, "anchor": "Unilever Oleochemical" },
+    { "name": "KEK Galang Batang", "province": "Kepulauan Riau", "location": "Bintan", "coordinates": [104.55, 0.95], "sectors": ["Bauxite/alumina", "Logistics"], "status": "Operational", "established": 2017, "area_ha": 2333 },
+    { "name": "KEK Batam Aero Technic", "province": "Kepulauan Riau", "location": "Batam", "coordinates": [104.12, 1.12], "sectors": ["Aircraft MRO"], "status": "Operational", "established": 2021, "area_ha": 30 },
+    { "name": "KEK Nongsa", "province": "Kepulauan Riau", "location": "Batam", "coordinates": [104.13, 1.18], "sectors": ["Digital", "Tourism"], "status": "Operational", "established": 2021, "area_ha": 166 },
+    { "name": "KEK Tanjung Sauh", "province": "Kepulauan Riau", "location": "Batam", "coordinates": [104.18, 1.10], "sectors": ["Manufacturing", "Logistics"], "status": "Development", "established": 2024, "area_ha": 840 },
+    { "name": "KEK Kesehatan Internasional Batam", "province": "Kepulauan Riau", "location": "Batam", "coordinates": [104.00, 1.12], "sectors": ["Health tourism"], "status": "Development", "established": 2024, "area_ha": 5 },
+    { "name": "KEK Tanjung Kelayang", "province": "Bangka Belitung", "location": "Belitung", "coordinates": [107.65, -2.55], "sectors": ["Tourism"], "status": "Operational", "established": 2016, "area_ha": 324 },
+    { "name": "KEK Banten (Pendidikan, Teknologi & Kesehatan)", "province": "Banten", "location": "Tangerang", "coordinates": [106.65, -6.30], "sectors": ["Education", "Health", "Technology"], "status": "Development", "established": 2024, "area_ha": 59 },
+    { "name": "KEK Tanjung Lesung", "province": "Banten", "location": "Pandeglang", "coordinates": [105.65, -6.47], "sectors": ["Tourism"], "status": "Operational", "established": 2012, "area_ha": 1500 },
+    { "name": "KEK Lido", "province": "Jawa Barat", "location": "Bogor", "coordinates": [106.80, -6.74], "sectors": ["Tourism", "Creative industries"], "status": "Development", "established": 2023, "area_ha": 1040 },
+    { "name": "KEK Kendal", "province": "Jawa Tengah", "location": "Kendal", "coordinates": [110.20, -6.92], "sectors": ["Textiles", "Furniture", "Food", "Automotive", "Electronics"], "status": "Operational", "established": 2019, "area_ha": 1000 },
+    { "name": "KEK Gresik (JIIPE)", "province": "Jawa Timur", "location": "Gresik", "coordinates": [112.60, -7.10], "sectors": ["Metal/smelter", "Electronics", "Chemicals", "Energy"], "status": "Operational", "established": 2021, "area_ha": 2167, "anchor": "Freeport copper smelter" },
+    { "name": "KEK Singhasari", "province": "Jawa Timur", "location": "Malang", "coordinates": [112.67, -7.89], "sectors": ["Tourism", "Technology"], "status": "Operational", "established": 2019, "area_ha": 120 },
+    { "name": "KEK Sanur", "province": "Bali", "location": "Denpasar", "coordinates": [115.26, -8.69], "sectors": ["Health tourism"], "status": "Operational", "established": 2022, "area_ha": 41 },
+    { "name": "KEK Kura-Kura Bali", "province": "Bali", "location": "Denpasar (Serangan)", "coordinates": [115.23, -8.72], "sectors": ["Tourism", "Creative industries"], "status": "Development", "established": 2023, "area_ha": 498 },
+    { "name": "KEK Mandalika", "province": "Nusa Tenggara Barat", "location": "Lombok Tengah", "coordinates": [116.28, -8.89], "sectors": ["Tourism"], "status": "Operational", "established": 2014, "area_ha": 1035 },
+    { "name": "KEK Maloy Batuta Trans Kalimantan (MBTK)", "province": "Kalimantan Timur", "location": "Kutai Timur", "coordinates": [117.98, 1.02], "sectors": ["Palm oil downstream", "Energy", "Logistics"], "status": "Operational", "established": 2014, "area_ha": 557 },
+    { "name": "KEK Setangga", "province": "Kalimantan Selatan", "location": "Tanah Bumbu", "coordinates": [115.60, -3.75], "sectors": ["Manufacturing", "Smelting"], "status": "Development", "established": 2024, "area_ha": 668 },
+    { "name": "KEK Palu", "province": "Sulawesi Tengah", "location": "Palu", "coordinates": [119.85, -0.82], "sectors": ["Base metal", "Logistics"], "status": "Operational", "established": 2017, "area_ha": 1500 },
+    { "name": "KEK Bitung", "province": "Sulawesi Utara", "location": "Bitung", "coordinates": [125.18, 1.44], "sectors": ["Coconut downstream", "Fishery", "Logistics"], "status": "Operational", "established": 2014, "area_ha": 534 },
+    { "name": "KEK Likupang", "province": "Sulawesi Utara", "location": "Minahasa Utara", "coordinates": [125.07, 1.68], "sectors": ["Tourism"], "status": "Operational", "established": 2019, "area_ha": 197 },
+    { "name": "KEK Morotai", "province": "Maluku Utara", "location": "Pulau Morotai", "coordinates": [128.40, 2.20], "sectors": ["Tourism", "Fishery", "Logistics"], "status": "Operational", "established": 2014, "area_ha": 1102 },
+    { "name": "KEK Sorong", "province": "Papua Barat Daya", "location": "Sorong", "coordinates": [131.30, -0.92], "sectors": ["Nickel downstream", "Palm oil", "Forestry"], "status": "Operational", "established": 2016, "area_ha": 523 }
+  ]
+}

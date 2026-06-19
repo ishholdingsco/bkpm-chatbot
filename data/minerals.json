@@ -1,0 +1,23 @@
+{
+  "_meta": {
+    "title": "Mineral & Resource Deposits / Mining Clusters",
+    "source": "ESDM Minerba / company disclosures — major deposit clusters",
+    "retrieved": "2026-06-19",
+    "disclaimer": "Prototype data. Cluster centroids are approximate and indicative, not concession boundaries. Verify against ESDM MODI / WIUP data before real use.",
+    "coordinates": "[longitude, latitude]"
+  },
+  "deposits": [
+    { "name": "Sulawesi nickel belt (Morowali–Konawe)", "commodity": "Nickel", "code": "Ni", "province": "Sulawesi Tengah / Tenggara", "coordinates": [122.20, -3.50], "color": "#e8533f", "note": "Largest Ni laterite belt; feeds IMIP/VDNI smelters" },
+    { "name": "Halmahera nickel district (Weda Bay–Obi)", "commodity": "Nickel", "code": "Ni", "province": "Maluku Utara", "coordinates": [128.00, 0.40], "color": "#e8533f", "note": "HPAL battery-grade nickel" },
+    { "name": "Grasberg (Freeport)", "commodity": "Copper–Gold", "code": "Cu·Au", "province": "Papua Tengah", "coordinates": [137.11, -4.06], "color": "#c08a2e", "note": "One of the world's largest Cu-Au mines" },
+    { "name": "Batu Hijau / Elang (Amman)", "commodity": "Copper–Gold", "code": "Cu·Au", "province": "Nusa Tenggara Barat", "coordinates": [116.87, -8.96], "color": "#c08a2e" },
+    { "name": "Tujuh Bukit (Tumpang Pitu)", "commodity": "Gold–Copper", "code": "Au·Cu", "province": "Jawa Timur", "coordinates": [114.05, -8.55], "color": "#c08a2e" },
+    { "name": "Martabe", "commodity": "Gold", "code": "Au", "province": "Sumatra Utara", "coordinates": [99.08, 1.55], "color": "#d4af37" },
+    { "name": "Tayan–Sanggau bauxite", "commodity": "Bauxite", "code": "Al", "province": "Kalimantan Barat", "coordinates": [110.13, -0.03], "color": "#b46a4a" },
+    { "name": "Bintan bauxite", "commodity": "Bauxite", "code": "Al", "province": "Kepulauan Riau", "coordinates": [104.55, 0.95], "color": "#b46a4a" },
+    { "name": "South Sumatra coal (Muara Enim–Tanjung Enim)", "commodity": "Coal", "code": "C", "province": "Sumatra Selatan", "coordinates": [103.77, -3.72], "color": "#5a5048" },
+    { "name": "Sangatta–Kutai coal", "commodity": "Coal", "code": "C", "province": "Kalimantan Timur", "coordinates": [117.55, 0.50], "color": "#5a5048" },
+    { "name": "Tabalong–Tanjung coal", "commodity": "Coal", "code": "C", "province": "Kalimantan Selatan", "coordinates": [115.40, -2.20], "color": "#5a5048" },
+    { "name": "Bangka Belitung tin", "commodity": "Tin", "code": "Sn", "province": "Bangka Belitung", "coordinates": [106.10, -2.10], "color": "#7a8b99" }
+  ]
+}
