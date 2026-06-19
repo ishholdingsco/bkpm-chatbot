@@ -18,6 +18,19 @@
 | `opportunities.json` | Featured investment opportunities (illustrative) | Compiled from BKPM priority/hilirisasi projects |
 | `sectors.json` | Priority sectors + foreign-ownership caps | Perpres 10/2021 (Positive Investment List) |
 | `investment-realization.json` | National / province / sector realization | BKPM FY2024 release (Jan 2025), Q3 2024 data |
+| `economic-indicators.json` | Per-province GDRP (PDRB), growth, unemployment | BPS WebAPI (webapi.bps.go.id), 2024 — CSV item D06 |
+| `hazard.json` | Per-province multi-hazard risk index | InaRISK / BNPB (inarisk.bnpb.go.id) — CSV item D11 |
+| `data-requirements.csv` | Data-sourcing catalogue (D01–D16): source, access, feasibility, risk | Compiled by the team (planning artifact, not data) |
+
+## Data-requirements catalogue (`data-requirements.csv`)
+
+`data-requirements.csv` is **not a dataset** — it is the team's blueprint of the 16
+datasets (D01–D16) the production platform would need, each with primary/secondary
+sources, access method, update frequency, POC feasibility, risks and mitigations.
+It is the provenance map behind the JSON above and the roadmap for layers still to be
+added (e.g. RTRW zoning D07, WIUP concession polygons D09, geology D13). The chat
+assistant's source registry (`app/api/chat/route.js`) is derived from this file so
+answers cite the real primary source for each topic.
 
 ## Key figures (FY2024, BKPM)
 

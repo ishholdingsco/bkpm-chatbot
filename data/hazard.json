@@ -1,0 +1,26 @@
+{
+  "_meta": {
+    "title": "Disaster Risk Index by Province (multi-hazard)",
+    "source": "InaRISK — BNPB (gis.bnpb.go.id / inarisk.bnpb.go.id), ArcGIS REST",
+    "retrieved": "2026-06-19",
+    "disclaimer": "Prototype data. Per-province multi-hazard scores are indicative 0–100 indices simplified from InaRISK risk classes for a toggleable demo layer, NOT official IRBI scores. Verify against inarisk.bnpb.go.id before real use.",
+    "csvRef": "D11 — Data Kebencanaan (Hazard Maps - InaRISK)",
+    "scale": "0 (low) – 100 (high); class derived from index"
+  },
+  "provinces": [
+    { "province": "DKI Jakarta", "multi_hazard_index": 62, "class": "High", "top_hazards": ["Flood", "Land subsidence", "Earthquake"], "note": "Coastal flooding & subsidence dominate site-selection risk" },
+    { "province": "Jawa Barat", "multi_hazard_index": 71, "class": "High", "top_hazards": ["Earthquake", "Landslide", "Flood"], "note": "High seismicity (Cianjur 2022); landslide-prone uplands" },
+    { "province": "Jawa Timur", "multi_hazard_index": 64, "class": "High", "top_hazards": ["Volcanic", "Earthquake", "Flood"], "note": "Active volcanoes (Semeru, Bromo); coastal flood" },
+    { "province": "Jawa Tengah", "multi_hazard_index": 66, "class": "High", "top_hazards": ["Landslide", "Flood", "Volcanic"], "note": "Landslide & flood across central uplands" },
+    { "province": "Banten", "multi_hazard_index": 58, "class": "Medium", "top_hazards": ["Tsunami", "Earthquake", "Flood"], "note": "Sunda Strait tsunami exposure (2018)" },
+    { "province": "Sumatera Utara", "multi_hazard_index": 60, "class": "Medium", "top_hazards": ["Earthquake", "Volcanic", "Flood"], "note": "Sumatran fault & Toba caldera region" },
+    { "province": "Riau", "multi_hazard_index": 45, "class": "Medium", "top_hazards": ["Flood", "Forest fire", "Haze"], "note": "Peatland fire & flood; lower seismic risk" },
+    { "province": "Kalimantan Timur", "multi_hazard_index": 33, "class": "Low", "top_hazards": ["Flood", "Forest fire"], "note": "Low seismicity — a stability advantage for IKN & smelters" },
+    { "province": "Kepulauan Riau", "multi_hazard_index": 30, "class": "Low", "top_hazards": ["Flood", "Coastal abrasion"], "note": "Batam: low seismic risk, attractive for data centers" },
+    { "province": "Sulawesi Tengah", "multi_hazard_index": 74, "class": "High", "top_hazards": ["Earthquake", "Tsunami", "Liquefaction"], "note": "Palu-Koro fault; 2018 quake/liquefaction — key risk for nickel sites" },
+    { "province": "Sulawesi Tenggara", "multi_hazard_index": 52, "class": "Medium", "top_hazards": ["Flood", "Earthquake", "Landslide"], "note": "Moderate seismic & flood exposure in nickel districts" },
+    { "province": "Maluku Utara", "multi_hazard_index": 68, "class": "High", "top_hazards": ["Earthquake", "Volcanic", "Tsunami"], "note": "Active volcanism near Weda Bay smelter cluster" },
+    { "province": "Sulawesi Selatan", "multi_hazard_index": 50, "class": "Medium", "top_hazards": ["Flood", "Landslide", "Earthquake"], "note": "Flood & landslide in highland districts" },
+    { "province": "Papua", "multi_hazard_index": 55, "class": "Medium", "top_hazards": ["Earthquake", "Landslide", "Flood"], "note": "High-relief terrain; seismic activity near highlands" }
+  ]
+}
