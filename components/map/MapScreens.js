@@ -318,20 +318,22 @@ export function MapPage({ hifi = false }) {
     [chat, t]
   );
 
-  const navItems = [t("nav.map"), t("nav.sectors"), t("nav.opportunities"), t("nav.analysts")];
+  // Map is the active tab here; "Value Chain" links to the Hilirisasi page.
+  // Keep the order in sync with HilirisasiPage's nav (Map · Value Chain · …).
+  const navItems = [t("nav.map"), t("nav.valueChain"), t("nav.sectors"), t("nav.opportunities"), t("nav.analysts")];
   return (
     <div className={"frame col " + (hifi ? "hifi" : "")}>
       <TopBar
         showOrg={false}
         left={
           <div style={{ display: "flex", gap: 4 }}>
-            {navItems.map((label, i) => (
-              <span
-                key={label}
-                onClick={() => i !== 0 && comingSoon(label)}
-                style={{ padding: "6px 10px", fontSize: 12.5, fontWeight: i === 0 ? 600 : 500, color: i === 0 ? "var(--terracotta)" : "var(--ink-2)", borderBottom: i === 0 ? "2px solid var(--terracotta)" : "2px solid transparent", cursor: "pointer" }}
-              >{label}</span>
-            ))}
+            {navItems.map((label, i) => {
+              const active = i === 0;
+              const style = { padding: "6px 10px", fontSize: 12.5, fontWeight: active ? 600 : 500, color: active ? "var(--terracotta)" : "var(--ink-2)", borderBottom: active ? "2px solid var(--terracotta)" : "2px solid transparent", cursor: "pointer" };
+              if (i === 0) return <span key={label} style={style}>{label}</span>;
+              if (i === 1) return <Link key={label} href="/hilirisasi" style={{ ...style, textDecoration: "none" }}>{label}</Link>;
+              return <span key={label} onClick={() => comingSoon(label)} style={style}>{label}</span>;
+            })}
           </div>
         }
         right={
