@@ -4,9 +4,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import {
+  ChevronDown, ChevronRight, Plus, Minus, Locate, Compass,
+  Search, MessageCircle, ArrowUpRight, ArrowRight, Loader2,
+} from "lucide-react";
 import MapboxMap from "@/components/map/MapboxMap";
 import { useChat } from "@/components/chat/useChat";
 import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
+import { Switch, Tooltip, DropdownMenu } from "@/components/ui/controls";
 import { DATA, Avatar, AvatarStack, BKPM, Logo, TopBar } from "@/components/ui";
 
 const LAYERS = [
@@ -31,7 +36,7 @@ function LayerPanel({ active, onToggle, hifi }) {
         <span className="label">Layers</span>
         <span className="chip" style={{ marginLeft: 6, fontSize: 9 }}>{Object.values(active).filter(Boolean).length} on</span>
         <div className="grow" />
-        <button className="btn btn-sm btn-ghost" style={{ padding: 2, fontSize: 11 }}>⌄</button>
+        <button className="btn btn-sm btn-ghost ui-icon-btn" aria-label="Collapse layers"><ChevronDown size={15} strokeWidth={1.75} /></button>
       </div>
       {LAYERS.map((l) => (
         <div key={l.id} className={"layer-pill " + (active[l.id] ? "active" : "")} onClick={() => onToggle(l.id)}>
@@ -40,8 +45,8 @@ function LayerPanel({ active, onToggle, hifi }) {
             <div style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.2 }}>{l.name}</div>
             <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 2 }}>{l.desc}</div>
           </div>
-          <div style={{ width: 24, height: 14, borderRadius: 7, background: active[l.id] ? "#4264fb" : "#cfc6b0", position: "relative", flexShrink: 0 }}>
-            <div style={{ position: "absolute", top: 1, left: active[l.id] ? 11 : 1, width: 12, height: 12, borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
+          <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", flexShrink: 0 }}>
+            <Switch checked={!!active[l.id]} onCheckedChange={() => onToggle(l.id)} color={l.color} aria-label={l.name} />
           </div>
         </div>
       ))}
@@ -54,12 +59,12 @@ function MapControls() {
   return (
     <div style={{ position: "absolute", top: 16, right: 16, zIndex: 3, display: "flex", flexDirection: "column", gap: 8 }}>
       <div className="map-control">
-        <button>＋</button>
-        <button>−</button>
+        <Tooltip content="Zoom in"><button aria-label="Zoom in"><Plus size={16} strokeWidth={1.75} /></button></Tooltip>
+        <Tooltip content="Zoom out"><button aria-label="Zoom out"><Minus size={16} strokeWidth={1.75} /></button></Tooltip>
       </div>
       <div className="map-control">
-        <button title="Locate">⌖</button>
-        <button title="Compass">⌥</button>
+        <Tooltip content="Locate me"><button aria-label="Locate"><Locate size={16} strokeWidth={1.75} /></button></Tooltip>
+        <Tooltip content="Reset bearing"><button aria-label="Compass"><Compass size={16} strokeWidth={1.75} /></button></Tooltip>
       </div>
     </div>
   );
@@ -84,7 +89,7 @@ function MapChat({ open, onToggle, hifi, activeLayers }) {
         onClick={onToggle}
         style={{ position: "absolute", bottom: 20, right: 20, zIndex: 4, background: "#1a1a2e", color: "#fff", borderColor: "#1a1a2e", padding: "10px 14px", borderRadius: 24, boxShadow: "0 6px 16px rgba(20,20,40,0.2)" }}
       >
-        💬 Ask about this map
+        <MessageCircle size={15} strokeWidth={1.75} /> Ask about this map
       </button>
     );
   }
@@ -99,7 +104,9 @@ function MapChat({ open, onToggle, hifi, activeLayers }) {
             Reading: {Object.values(activeLayers).filter(Boolean).length} layers active · viewing Sulawesi
           </div>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={onToggle} style={{ padding: 4 }}>›</button>
+        <Tooltip content="Collapse" side="bottom">
+          <button className="btn btn-ghost btn-sm ui-icon-btn" onClick={onToggle} aria-label="Collapse chat"><ChevronRight size={16} strokeWidth={1.75} /></button>
+        </Tooltip>
       </div>
 
       <div className="scroll col grow" style={{ padding: "14px", gap: 14 }}>
@@ -115,9 +122,9 @@ function MapChat({ open, onToggle, hifi, activeLayers }) {
                   <div
                     key={s}
                     onClick={() => !loading && send(s)}
-                    style={{ fontSize: 12, padding: "6px 8px", background: "#fff", borderRadius: 6, border: "1px solid var(--line)", cursor: loading ? "default" : "pointer" }}
+                    style={{ display: "flex", alignItems: "flex-start", gap: 6, fontSize: 12, padding: "6px 8px", background: "#fff", borderRadius: 6, border: "1px solid var(--line)", cursor: loading ? "default" : "pointer" }}
                   >
-                    ↗ {s}
+                    <ArrowUpRight size={14} strokeWidth={1.75} style={{ flexShrink: 0, marginTop: 2, color: "var(--ink-3)" }} /> {s}
                   </div>
                 ))}
               </div>
@@ -132,7 +139,11 @@ function MapChat({ open, onToggle, hifi, activeLayers }) {
             </div>
           ) : (
             <div key={i} style={{ fontSize: 13, lineHeight: 1.55, whiteSpace: "pre-wrap" }}>
-              {m.content || (loading ? "● thinking…" : "")}
+              {m.content || (loading ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "var(--ink-3)" }}>
+                  <Loader2 size={14} strokeWidth={2} className="spin" /> thinking…
+                </span>
+              ) : "")}
             </div>
           )
         )}
@@ -152,9 +163,9 @@ function MapChat({ open, onToggle, hifi, activeLayers }) {
           <SendButton className="btn btn-sm btn-primary" loading={loading} input={input} onSend={() => send()} />
         </div>
         <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-          <span className="chip">+ save view</span>
+          <span className="chip"><Plus size={11} strokeWidth={2} /> save view</span>
           <Link href="/workspace" style={{ textDecoration: "none" }}>
-            <span className="chip chip-terra" style={{ cursor: "pointer" }}>↗ start workspace</span>
+            <span className="chip chip-terra" style={{ cursor: "pointer" }}><ArrowUpRight size={11} strokeWidth={2} /> start workspace</span>
           </Link>
         </div>
       </div>
@@ -197,14 +208,23 @@ export function MapPage({ hifi = false }) {
         right={
           <>
             <div className="card" style={{ display: "flex", alignItems: "center", padding: "4px 10px", gap: 8, background: "var(--surface-2)", minWidth: 260 }}>
-              <span style={{ fontSize: 13, color: "var(--ink-4)" }}>🔍</span>
+              <Search size={14} strokeWidth={1.75} style={{ color: "var(--ink-4)" }} />
               <span style={{ fontSize: 12.5, color: "var(--ink-4)" }}>Search regions, sectors, projects…</span>
               <div className="grow" />
               <span className="kbd">⌘K</span>
             </div>
-            <button className="btn btn-sm btn-ghost">EN</button>
+            <DropdownMenu
+              align="end"
+              trigger={
+                <button className="btn btn-sm btn-ghost">EN <ChevronDown size={13} strokeWidth={1.75} /></button>
+              }
+              items={[
+                { label: "English", hint: "EN" },
+                { label: "Bahasa Indonesia", hint: "ID" },
+              ]}
+            />
             <Link href="/workspace" style={{ textDecoration: "none" }}>
-              <button className="btn btn-sm btn-primary">Start a project →</button>
+              <button className="btn btn-sm btn-primary">Start a project <ArrowRight size={14} strokeWidth={1.75} /></button>
             </Link>
           </>
         }
@@ -236,7 +256,7 @@ export function MapPage({ hifi = false }) {
               </div>
               <div style={{ width: 1, height: 30, background: "var(--line)" }} />
               <div className="col">
-                <span className="chip chip-terra" style={{ fontSize: 9 }}>● 3 featured</span>
+                <span className="chip chip-terra chip-dot" style={{ fontSize: 9 }}>3 featured</span>
                 <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 2 }}>matched to your thesis</span>
               </div>
             </div>
@@ -268,7 +288,7 @@ export function Landing({ name = "Wilaya", hifi = false, mapStyle }) {
         <span style={{ width: 1, height: 22, background: "var(--line)" }} />
         <button className="btn btn-sm btn-ghost">Sign in</button>
         <Link href="/map" style={{ textDecoration: "none" }}>
-          <button className="btn btn-sm btn-primary">Start exploring →</button>
+          <button className="btn btn-sm btn-primary">Start exploring <ArrowRight size={14} strokeWidth={1.75} /></button>
         </Link>
       </div>
 
@@ -288,7 +308,7 @@ export function Landing({ name = "Wilaya", hifi = false, mapStyle }) {
 
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
           <Link href="/map" style={{ textDecoration: "none" }}>
-            <button className="btn btn-primary" style={{ padding: "10px 18px", fontSize: 13.5, display: "inline-flex", alignItems: "center", gap: 8 }}>Explore the map →</button>
+            <button className="btn btn-primary" style={{ padding: "10px 18px", fontSize: 13.5, display: "inline-flex", alignItems: "center", gap: 8 }}>Explore the map <ArrowRight size={15} strokeWidth={1.75} /></button>
           </Link>
           <button className="btn" style={{ padding: "10px 16px", fontSize: 13.5 }}>Browse 38 sectors</button>
         </div>

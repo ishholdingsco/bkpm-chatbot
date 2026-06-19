@@ -4,6 +4,8 @@
 // enabled/label logic so neither surface re-implements it. Layout & styling
 // stay with the caller, so each surface keeps its exact look.
 
+import { Send, Loader2 } from "lucide-react";
+
 // Textarea that submits on a configurable key combo.
 //   submitOn="enter"      → Enter (Shift+Enter inserts a newline)
 //   submitOn="mod-enter"  → ⌘/Ctrl+Enter
@@ -29,11 +31,18 @@ export function ChatTextarea({ value, onChange, onSend, submitOn = "enter", ...r
 }
 
 // Send button — disabled while loading or when the input is empty, shows a
-// spinner glyph while a reply is streaming. Caller supplies the class for color.
+// spinner while a reply is streaming. Caller supplies the class for color.
 export function SendButton({ className, loading, input, onSend }) {
   return (
-    <button className={className} disabled={loading || !input.trim()} onClick={onSend}>
-      {loading ? "…" : "Send"}
+    <button
+      className={(className || "") + " ui-icon-btn"}
+      disabled={loading || !input.trim()}
+      onClick={onSend}
+      aria-label="Send message"
+    >
+      {loading
+        ? <Loader2 size={15} strokeWidth={2} className="spin" />
+        : <Send size={15} strokeWidth={1.75} />}
     </button>
   );
 }

@@ -221,6 +221,133 @@ body {
   color: var(--ink-2);
 }
 
+/* ─────────────────────────────────────────────────────────────
+   shadcn-style controls (Radix) — see components/ui/controls.js
+   ───────────────────────────────────────────────────────────── */
+
+/* icon-only buttons: keep the lucide glyph centered & square */
+.ui-icon-btn { padding: 5px; line-height: 0; }
+
+/* spinning loader glyph (streaming reply / send-in-flight) */
+.spin { animation: ui-spin 0.8s linear infinite; }
+@keyframes ui-spin { to { transform: rotate(360deg); } }
+
+/* Switch */
+.ui-switch {
+  width: 26px; height: 15px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--line-strong);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ui-switch[data-state="checked"] { background: var(--switch-on, var(--bkpm-blue)); }
+.ui-switch:focus-visible { outline: 2px solid var(--bkpm-blue-tint); outline-offset: 2px; }
+.ui-switch-thumb {
+  display: block;
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(28,26,20,0.25);
+  transform: translateX(2px);
+  transition: transform 0.15s;
+  will-change: transform;
+}
+.ui-switch[data-state="checked"] .ui-switch-thumb { transform: translateX(13px); }
+
+/* Dropdown menu */
+.ui-menu {
+  min-width: 180px;
+  padding: 5px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-2);
+  z-index: 50;
+  animation: ui-pop 0.12s ease-out;
+}
+.ui-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  color: var(--ink);
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+}
+.ui-menu-item[data-highlighted] { background: var(--surface-3); }
+.ui-menu-icon { display: inline-flex; color: var(--ink-3); }
+.ui-menu-hint { margin-left: auto; font-size: 10px; color: var(--ink-4); }
+.ui-menu-sep { height: 1px; background: var(--line); margin: 4px 2px; }
+
+/* Dialog */
+.ui-overlay {
+  position: fixed; inset: 0;
+  background: rgba(28,26,20,0.42);
+  backdrop-filter: blur(2px);
+  z-index: 60;
+  animation: ui-fade 0.15s ease-out;
+}
+.ui-dialog {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 64px);
+  overflow: auto;
+  padding: 18px 20px 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-3);
+  z-index: 61;
+  animation: ui-dialog-in 0.16s ease-out;
+}
+.ui-dialog-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.ui-dialog-title {
+  margin: 0;
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  flex: 1;
+}
+.ui-dialog-desc { margin: 0 0 12px; font-size: 12.5px; color: var(--ink-3); line-height: 1.5; }
+
+/* Tooltip */
+.ui-tooltip {
+  padding: 5px 9px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  box-shadow: var(--shadow-2);
+  z-index: 70;
+  animation: ui-fade 0.12s ease-out;
+}
+.ui-tooltip-arrow { fill: var(--ink); }
+
+@keyframes ui-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ui-pop {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes ui-dialog-in {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.97); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
 /* annotation sticky for design notes only */
 .note-sticky {
   position: absolute;
