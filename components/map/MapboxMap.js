@@ -8,9 +8,24 @@ import mapboxgl from "mapbox-gl";
 import industrialData from "@/data/industrial-estates.json";
 import kekData from "@/data/kek.json";
 import opportunitiesData from "@/data/opportunities.json";
+import mineralsData from "@/data/minerals.json";
+import portsData from "@/data/ports.json";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const DEFAULT_STYLE = "mapbox://styles/mapbox/light-v11";
+
+// Toggle key (LayerPanel `id`) → the Mapbox layer ids it shows/hides. Keys not
+// listed here (wiup, gdp, infra) have no point data yet, so their toggles are
+// harmless no-ops until those datasets land. Used by the `layers` prop below.
+export const MB_LAYER_GROUPS = {
+  industrial: ["mb-industrial-fill", "mb-industrial-line"],
+  kek: ["mb-kek-fill", "mb-kek-line"],
+  minerals: ["mb-minerals-halo", "mb-minerals-dot"],
+  ports: ["mb-ports-dot"],
+};
+
+// Which LayerPanel toggles actually drive a Mapbox layer (the rest await data).
+export const MB_LAYER_KEYS = Object.keys(MB_LAYER_GROUPS);
 
 // Mapbox Standard with the "faded" theme — a calmer, monochromatic look.
 export const MB_STANDARD_FADED = {
@@ -84,6 +99,7 @@ export default function MapboxMap({
   onPinClick,
   deemphasizeOthers = true,
   style,
+  layers,
 }) {
   const ref = useRef(null);
   const mapRef = useRef(null);
@@ -127,6 +143,20 @@ export default function MapboxMap({
     return () => { ro.disconnect(); map.remove(); mapRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Reflect the parent's active-layer state onto the real Mapbox layers. Runs
+  // once the map is ready and again whenever `layers` changes, so toggling a
+  // pill in LayerPanel shows/hides its layers instantly without a reload.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !layers) return;
+    for (const [key, ids] of Object.entries(MB_LAYER_GROUPS)) {
+      const visibility = layers[key] ? "visible" : "none";
+      ids.forEach((id) => {
+        if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visibility);
+      });
+    }
+  }, [ready, layers]);
 
   return (
     <div style={{ width: "100%", height: "100%", position: "relative", background: "#cfe6f2" }}>
@@ -184,6 +214,27 @@ function addMbOverlays(map, onPinClick) {
   map.addLayer({ id: "mb-featured-hit", type: "circle", source: "mb-featured", paint: { "circle-radius": 20, "circle-color": "#000", "circle-opacity": 0.001 } });
   map.addLayer({ id: "mb-featured-ring", type: "circle", source: "mb-featured", paint: { "circle-radius": 5, "circle-color": "#c44a36", "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 } });
 
+  // Mineral / resource deposit clusters and strategic sea ports. Both start
+  // hidden (visibility:none) — they're off by default in LayerPanel and never
+  // shown on the public Landing, which renders the map without the `layers`
+  // prop. The MB_LAYER_GROUPS effect flips them on when toggled.
+  const minFeats = mineralsData.deposits.map((d) => ({
+    type: "Feature",
+    properties: { name: d.name, commodity: d.commodity, color: d.color || "#e8533f" },
+    geometry: { type: "Point", coordinates: d.coordinates },
+  }));
+  map.addSource("mb-minerals", { type: "geojson", data: { type: "FeatureCollection", features: minFeats } });
+  map.addLayer({ id: "mb-minerals-halo", type: "circle", source: "mb-minerals", layout: { visibility: "none" }, paint: { "circle-radius": 13, "circle-color": ["get", "color"], "circle-opacity": 0.18, "circle-blur": 0.3 } });
+  map.addLayer({ id: "mb-minerals-dot", type: "circle", source: "mb-minerals", layout: { visibility: "none" }, paint: { "circle-radius": 5, "circle-color": ["get", "color"], "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 } });
+
+  const portFeats = portsData.ports.map((p) => ({
+    type: "Feature",
+    properties: { name: p.name, kind: p.type, province: p.province },
+    geometry: { type: "Point", coordinates: p.coordinates },
+  }));
+  map.addSource("mb-ports", { type: "geojson", data: { type: "FeatureCollection", features: portFeats } });
+  map.addLayer({ id: "mb-ports-dot", type: "circle", source: "mb-ports", layout: { visibility: "none" }, paint: { "circle-radius": 5, "circle-color": "#1a1a2e", "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 } });
+
   const popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, offset: 14, className: "mb-tip" });
   const enter = (e) => {
     map.getCanvas().style.cursor = "pointer";
@@ -224,6 +275,24 @@ function addMbOverlays(map, onPinClick) {
 
   addFillHoverPopup("mb-industrial-fill", "KAWASAN INDUSTRI", "#b07900");
   addFillHoverPopup("mb-kek-fill", "SPECIAL ECONOMIC ZONE", "#7e4dd9");
+
+  // Point layers (minerals, ports) share a name + tag hover popup anchored to
+  // the feature's own coordinates.
+  const addPointHoverPopup = (layerId, tagFor, tagColor) => {
+    map.on("mouseenter", layerId, (e) => {
+      map.getCanvas().style.cursor = "pointer";
+      const f = e.features?.[0];
+      if (!f) return;
+      popup.setLngLat(f.geometry.coordinates.slice()).setHTML(
+        `<div style="font:600 12px/1.3 Inter,system-ui,sans-serif;color:#1a1a2e;">${f.properties.name}</div>
+         <div style="font:500 10px/1.4 'IBM Plex Mono',monospace;color:${tagColor};letter-spacing:0.06em;margin-top:2px;">${tagFor(f.properties)}</div>`
+      ).addTo(map);
+    });
+    map.on("mouseleave", layerId, leave);
+  };
+
+  addPointHoverPopup("mb-minerals-dot", (p) => (p.commodity || "MINERAL").toUpperCase(), "#c08a2e");
+  addPointHoverPopup("mb-ports-dot", (p) => (p.kind || "SEA PORT").toUpperCase(), "#1a1a2e");
 }
 
 // De-emphasize non-Indonesia using Mapbox's real country-boundaries source.

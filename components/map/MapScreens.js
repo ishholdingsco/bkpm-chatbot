@@ -8,7 +8,7 @@ import {
   ChevronDown, ChevronRight, Plus, Minus, Locate, Compass,
   Search, MessageCircle, ArrowUpRight, ArrowRight, Loader2,
 } from "lucide-react";
-import MapboxMap from "@/components/map/MapboxMap";
+import MapboxMap, { MB_LAYER_KEYS } from "@/components/map/MapboxMap";
 import { useChat } from "@/components/chat/useChat";
 import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
 import { Switch, Tooltip, DropdownMenu } from "@/components/ui/controls";
@@ -44,18 +44,33 @@ function LayerPanel({ active, onToggle, hifi }) {
         <div className="grow" />
         <button className="btn btn-sm btn-ghost ui-icon-btn" aria-label="Collapse layers"><ChevronDown size={15} strokeWidth={1.75} /></button>
       </div>
-      {LAYERS.map((l) => (
-        <div key={l.id} className={"layer-pill " + (active[l.id] ? "active" : "")} onClick={() => onToggle(l.id)}>
-          <div className="layer-swatch" style={{ background: l.color, opacity: active[l.id] ? 1 : 0.3 }} />
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.2 }}>{l.name}</div>
-            <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 2 }}>{l.desc}</div>
+      {LAYERS.map((l) => {
+        // Layers without point data yet (WIUP, GDP, infra) can't be drawn, so
+        // their toggle would do nothing — flag them "soon" and disable it.
+        const hasData = MB_LAYER_KEYS.includes(l.id);
+        const on = hasData && !!active[l.id];
+        return (
+          <div
+            key={l.id}
+            className={"layer-pill " + (on ? "active" : "")}
+            onClick={() => hasData && onToggle(l.id)}
+            style={{ cursor: hasData ? "pointer" : "default", opacity: hasData ? 1 : 0.6 }}
+          >
+            <div className="layer-swatch" style={{ background: l.color, opacity: on ? 1 : 0.3 }} />
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.2 }}>{l.name}</div>
+              <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 2 }}>{l.desc}</div>
+            </div>
+            {hasData ? (
+              <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", flexShrink: 0 }}>
+                <Switch checked={on} onCheckedChange={() => onToggle(l.id)} color={l.color} aria-label={l.name} />
+              </div>
+            ) : (
+              <span className="chip" style={{ flexShrink: 0, fontSize: 8 }}>soon</span>
+            )}
           </div>
-          <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", flexShrink: 0 }}>
-            <Switch checked={!!active[l.id]} onCheckedChange={() => onToggle(l.id)} color={l.color} aria-label={l.name} />
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -198,7 +213,7 @@ function MapTooltip() {
 export function MapPage({ hifi = false }) {
   const [chatOpen, setChatOpen] = useState(true);
   const [active, setActive] = useState({
-    industrial: true, kek: true, wiup: true, minerals: false, gdp: false, infra: false, ports: false,
+    industrial: true, kek: true, wiup: false, minerals: true, gdp: false, infra: false, ports: true,
   });
   return (
     <div className={"frame col " + (hifi ? "hifi" : "")}>
@@ -238,7 +253,7 @@ export function MapPage({ hifi = false }) {
 
       <div className="row grow" style={{ minHeight: 0 }}>
         <div className="map-canvas grow" style={{ position: "relative" }}>
-          <MapboxMap center={[120.0, -2.0]} zoom={3.9} bearing={-12} interactive={true} />
+          <MapboxMap center={[120.0, -2.0]} zoom={3.9} bearing={-12} interactive={true} layers={active} />
 
           <LayerPanel active={active} onToggle={(id) => setActive({ ...active, [id]: !active[id] })} hifi={hifi} />
           <MapControls />
