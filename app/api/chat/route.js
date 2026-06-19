@@ -3,7 +3,56 @@
 
 export const runtime = "nodejs";
 
+import realization from "@/data/investment-realization.json";
+import sectors from "@/data/sectors.json";
+import economic from "@/data/economic-indicators.json";
+import hazard from "@/data/hazard.json";
+
 const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
+
+// Authoritative source registry, derived from the team's data-requirements
+// catalogue (data/data-requirements.csv, items D01–D16). When the assistant
+// cites something it should point at the *real* primary source by name.
+const SOURCE_REGISTRY = `Authoritative sources — cite these by name when relevant:
+- Regulations & permits: JDIH BPK (peraturan.bpk.go.id) and peraturan.go.id [D01].
+- BKPM legal basis for regional investment (PIR): Kepmen 50/2023 [D02].
+- Downstreaming roadmap / industrial tree: BKPM "Gerbang Investasi Hilirisasi" & Kemenko Perekonomian [D03].
+- Investment realization (PMA/PMDN): BKPM Satu Data (data.bkpm.go.id), cross-check BPS [D04].
+- Regional project catalogue (PIR): regionalinvestment.bkpm.go.id [D05].
+- Regional economic indicators (PDRB, labor, trade): BPS WebAPI (webapi.bps.go.id) [D06].
+- Special Economic Zones (KEK): Dewan Nasional KEK (kek.go.id) [D10].
+- Mining concessions (WIUP/IUP): ESDM MOMI / MinerbaOne (momi.minerba.esdm.go.id) — access-gated [D09].
+- Disaster/hazard layers: InaRISK, BNPB (inarisk.bnpb.go.id) [D11].
+- Geospatial basemap & admin boundaries: BIG Ina-Geoportal (tanahair.indonesia.go.id) [D08].`;
+
+// Compact factual brief built from the static JSON in data/ so answers are
+// grounded in the same numbers the map renders.
+function buildDataBrief() {
+  const n = realization.national_2024;
+  const provReal = realization.by_province_2024_top
+    .map((p) => `${p.province} Rp${p.value}T`)
+    .join(", ");
+  const topGrowth = [...economic.provinces]
+    .sort((a, b) => b.growth_2024_pct - a.growth_2024_pct)
+    .slice(0, 3)
+    .map((p) => `${p.province} ${p.growth_2024_pct}%`)
+    .join(", ");
+  const highHazard = hazard.provinces
+    .filter((p) => p.class === "High")
+    .map((p) => `${p.province} (${p.top_hazards[0]})`)
+    .join(", ");
+  const hiliriSectors = sectors.sectors
+    .filter((s) => s.tag === "Hilirisasi")
+    .map((s) => s.name)
+    .join(", ");
+  return `Grounding data (prototype, FY2024 unless noted — figures are indicative):
+- National investment realization: Rp${n.total}T (+${n.yoyGrowthPct}% YoY), FDI Rp${n.pma_fdi}T / domestic Rp${n.pmdn_domestic}T, ${n.jobs.toLocaleString("en-US")} jobs [BKPM].
+- Top provinces by realization: ${provReal} [BKPM].
+- Fastest-growing provincial economies: ${topGrowth} — nickel downstreaming driven [BPS].
+- High disaster-risk provinces (site-selection caveat): ${highHazard} [InaRISK/BNPB].
+- Priority hilirisasi sectors (100% foreign cap, tax-holiday eligible): ${hiliriSectors} [Perpres 10/2021].
+Use these figures when relevant; do not invent contradicting numbers.`;
+}
 
 const BASE_SYSTEM_PROMPT = `You are "Nusantara", the AI investment analyst inside Wilaya — an investment-intelligence platform built for Indonesia's Investment Ministry / BKPM.
 
@@ -12,9 +61,13 @@ You help foreign and domestic investors understand opportunities in Indonesia: i
 Style:
 - Be concise, precise and confident, like a sell-side analyst briefing a director.
 - Use concrete figures, sectors and regions where helpful.
-- When you reference a regulation or data source, name it inline (e.g. "Perpres 10/2021", "BKPM realisasi 2024"). Do not fabricate specific clause numbers you are unsure of — keep them plausible and clearly framed.
+- When you reference a regulation or data source, name it inline (e.g. "Perpres 10/2021", "BKPM realisasi 2024"). Prefer the authoritative sources listed below. Do not fabricate specific clause numbers you are unsure of — keep them plausible and clearly framed.
 - Prefer short paragraphs and tight bullet lists.
-- This is a prototype/demo; if asked something outside Indonesian investment, answer briefly and steer back.`;
+- This is a prototype/demo; if asked something outside Indonesian investment, answer briefly and steer back.
+
+${buildDataBrief()}
+
+${SOURCE_REGISTRY}`;
 
 export async function POST(req) {
   const apiKey = process.env.DEEPSEEK_API_KEY;

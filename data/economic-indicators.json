@@ -1,0 +1,26 @@
+{
+  "_meta": {
+    "title": "Regional Economic Indicators (PDRB, growth, labor)",
+    "source": "BPS — Badan Pusat Statistik (webapi.bps.go.id / bps.go.id), 2024 figures",
+    "retrieved": "2026-06-19",
+    "disclaimer": "Prototype data. Per-province GDRP (PDRB ADHB) and growth figures are indicative estimates compiled for the demo, rounded for legibility. Verify against webapi.bps.go.id (registered API key) before real use.",
+    "csvRef": "D06 — Indikator Ekonomi BPS (PDRB, Tenaga Kerja, Ekspor-Impor)",
+    "currency": "IDR trillion (PDRB Atas Dasar Harga Berlaku)"
+  },
+  "provinces": [
+    { "province": "DKI Jakarta", "gdrp_adhb_2024_idr_tn": 3540, "growth_2024_pct": 4.9, "unemployment_pct": 6.0, "note": "Largest provincial economy; services & finance hub" },
+    { "province": "Jawa Timur", "gdrp_adhb_2024_idr_tn": 3050, "growth_2024_pct": 4.9, "unemployment_pct": 3.7, "note": "Manufacturing & agribusiness powerhouse" },
+    { "province": "Jawa Barat", "gdrp_adhb_2024_idr_tn": 2710, "growth_2024_pct": 5.0, "unemployment_pct": 6.8, "note": "Top FDI/PMDN realization province (Rp251.1T, 2024)" },
+    { "province": "Jawa Tengah", "gdrp_adhb_2024_idr_tn": 1700, "growth_2024_pct": 4.9, "unemployment_pct": 4.4, "note": "Labor-intensive manufacturing, relocation magnet" },
+    { "province": "Riau", "gdrp_adhb_2024_idr_tn": 1110, "growth_2024_pct": 4.0, "unemployment_pct": 4.0, "note": "Palm oil & oil/gas; downstreaming potential" },
+    { "province": "Sumatera Utara", "gdrp_adhb_2024_idr_tn": 1090, "growth_2024_pct": 5.0, "unemployment_pct": 5.4, "note": "Agribusiness, KEK Sei Mangkei (oleochemicals)" },
+    { "province": "Banten", "gdrp_adhb_2024_idr_tn": 880, "growth_2024_pct": 4.8, "unemployment_pct": 7.0, "note": "Industrial corridor; 4th in realization (Rp105.6T)" },
+    { "province": "Kalimantan Timur", "gdrp_adhb_2024_idr_tn": 900, "growth_2024_pct": 6.2, "unemployment_pct": 5.1, "note": "Coal, oil/gas; IKN (new capital) catalyst" },
+    { "province": "Sulawesi Selatan", "gdrp_adhb_2024_idr_tn": 700, "growth_2024_pct": 5.0, "unemployment_pct": 4.3, "note": "Eastern Indonesia logistics & agri hub" },
+    { "province": "Kepulauan Riau", "gdrp_adhb_2024_idr_tn": 370, "growth_2024_pct": 5.2, "unemployment_pct": 6.9, "note": "Batam free-trade zone; electronics, data centers" },
+    { "province": "Sulawesi Tengah", "gdrp_adhb_2024_idr_tn": 340, "growth_2024_pct": 9.5, "unemployment_pct": 3.0, "note": "Nickel hilirisasi boom (IMIP/Morowali); 4th in realization (Rp139.9T)" },
+    { "province": "Sulawesi Tenggara", "gdrp_adhb_2024_idr_tn": 210, "growth_2024_pct": 5.5, "unemployment_pct": 3.4, "note": "Nickel (Konawe/VDNI); downstreaming growth" },
+    { "province": "Maluku Utara", "gdrp_adhb_2024_idr_tn": 135, "growth_2024_pct": 20.5, "unemployment_pct": 4.6, "note": "Highest provincial growth in Indonesia, driven by nickel smelting (IWIP/Weda Bay)" },
+    { "province": "Papua", "gdrp_adhb_2024_idr_tn": 250, "growth_2024_pct": 1.5, "unemployment_pct": 3.0, "note": "Copper/gold (Grasberg); growth tied to mining output" }
+  ]
+}
