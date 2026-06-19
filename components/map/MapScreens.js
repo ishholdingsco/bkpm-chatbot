@@ -6,7 +6,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ChevronDown, ChevronRight, Plus, Minus, Locate, Compass,
-  Search, MessageCircle, ArrowUpRight, ArrowRight, Loader2,
+  Search, MessageCircle, ArrowUpRight, ArrowRight, Loader2, X,
 } from "lucide-react";
 import MapboxMap from "@/components/map/MapboxMap";
 import { applyLayerChange, boundsOf, resolveFlyTo, selectOpportunities } from "@/components/map/mapActions";
@@ -233,6 +233,10 @@ export function MapPage({ hifi = false }) {
     industrial: true, kek: true, minerals: true, ports: true,
   });
   const [pinFilter, setPinFilter] = useState(null);
+  // A single opportunity the human clicked on the map. Drives the top card the
+  // same way a chat filter does, so the card appears on a click — not only when
+  // the assistant filters. Most-recent action wins (see `cardInfo`).
+  const [selected, setSelected] = useState(null);
   const [viewLabel, setViewLabel] = useState(t("map.viewDefault"));
   const mapRef = useRef(null);
 
@@ -276,6 +280,7 @@ export function MapPage({ hifi = false }) {
 
     let selCoords = null;
     if (filt) {
+      setSelected(null); // an assistant filter supersedes a single clicked pin
       const sel = selectOpportunities(filt.args || {});
       if (!sel.ids) setPinFilter(null);
       else {
@@ -297,17 +302,34 @@ export function MapPage({ hifi = false }) {
 
   const chat = useChat({ context, lang, mapTools: true, onAction });
 
-  // Clicking a featured pin pulls its context into the chat: open the panel and
-  // prefill a question about that opportunity for the user to send.
+  // Clicking a featured pin both surfaces the top card (via `selected`) and
+  // pulls its context into the chat: open the panel and prefill a question about
+  // that opportunity. Clicking the same pin again clears the card.
   const onPinClick = useCallback(
     (id) => {
       const opp = opportunitiesData.opportunities.find((o) => o.id === id);
       if (!opp) return;
+      setSelected((prev) => (prev === id ? null : id));
       setChatOpen(true);
       chat.setInput(t("map.pinPrompt", { label: opp.label }));
     },
     [chat, t]
   );
+
+  // What the top "opportunities" card shows. A clicked pin takes precedence over
+  // a chat filter (most-recent explicit action wins); null hides the card. The
+  // click path is deterministic, so the card always appears on a click even if
+  // the assistant chose not to call a map tool.
+  const cardInfo = useMemo(() => {
+    if (selected) {
+      const o = opportunitiesData.opportunities.find((x) => x.id === selected);
+      if (o) return { count: 1, value: o.ticketUsdM || 0, label: o.label, onClose: () => setSelected(null) };
+    }
+    if (pinFilter?.ids?.length) {
+      return { count: pinFilter.count, value: pinFilter.valueUsdM, label: pinFilter.label, onClose: () => setPinFilter(null) };
+    }
+    return null;
+  }, [selected, pinFilter]);
 
   // Map is the active tab here; "Value Chain" links to the Hilirisasi page.
   // Keep the order in sync with HilirisasiPage's nav (Map · Value Chain · …).
@@ -370,21 +392,24 @@ export function MapPage({ hifi = false }) {
             </div>
           </div>
 
-          {/* Opportunities panel — hidden until the chat filters/highlights a set
-              of opportunities; then the count and tracked value are derived from
-              the matched data (pinFilter), never hardcoded. */}
-          {pinFilter?.ids?.length > 0 && (
+          {/* Opportunities card — hidden until a pin is clicked (human) or the
+              chat filters/highlights a set (AI). Count and tracked value are
+              derived from the matched data, never hardcoded. */}
+          {cardInfo && (
             <div style={{ position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 3 }}>
               <div className="card" style={{ padding: "8px 14px", display: "flex", gap: 14, alignItems: "center" }}>
                 <div>
                   <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)" }}>{t("map.oppsInView")}</div>
-                  <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "Source Serif 4" }}>{pinFilter.count} <span style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400, fontFamily: "Inter" }}>{t("map.oppsTracked", { value: formatUsdM(pinFilter.valueUsdM) })}</span></div>
+                  <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "Source Serif 4" }}>{cardInfo.count} <span style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400, fontFamily: "Inter" }}>{t("map.oppsTracked", { value: formatUsdM(cardInfo.value) })}</span></div>
                 </div>
                 <div style={{ width: 1, height: 30, background: "var(--line)" }} />
                 <div className="col">
-                  <span className="chip chip-terra chip-dot" style={{ fontSize: 9 }}>{t("map.featured", { n: pinFilter.count })}</span>
-                  <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 2 }}>{pinFilter.label}</span>
+                  <span className="chip chip-terra chip-dot" style={{ fontSize: 9 }}>{t("map.featured", { n: cardInfo.count })}</span>
+                  <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 2 }}>{cardInfo.label}</span>
                 </div>
+                <button className="btn btn-ghost btn-sm ui-icon-btn" onClick={cardInfo.onClose} aria-label={t("common.collapse")} style={{ marginLeft: 2 }}>
+                  <X size={14} strokeWidth={1.75} />
+                </button>
               </div>
             </div>
           )}
