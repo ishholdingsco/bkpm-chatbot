@@ -5,6 +5,7 @@
 
 import { Loader2, Pin } from "lucide-react";
 import { DATA, Avatar, BKPM, Cite } from "@/components/ui";
+import { Markdown } from "@/components/chat/Markdown";
 
 // Small inline status dot (presence / accent) — replaces the "●" glyph.
 function Dot({ color = "currentColor", size = 6 }) {
@@ -49,8 +50,8 @@ export function ChatTurn({ turn, loading }) {
         {time && <span className="mono" style={{ fontSize: 9, color: "var(--ink-4)" }}>{time}</span>}
         {isUser && <Avatar name={DATA.user.short} color={DATA.user.color} size="sm" />}
       </div>
-      <div style={{ fontSize: 13.5, lineHeight: 1.55, maxWidth: 640, background: isUser ? "var(--surface-3)" : "transparent", padding: isUser ? "10px 14px" : "4px 0", borderRadius: 8, color: "var(--ink)", whiteSpace: "pre-wrap" }}>
-        {text || (loading ? <Thinking /> : "")}
+      <div style={{ fontSize: 13.5, lineHeight: 1.55, maxWidth: 640, background: isUser ? "var(--surface-3)" : "transparent", padding: isUser ? "10px 14px" : "4px 0", borderRadius: 8, color: "var(--ink)", whiteSpace: isUser ? "pre-wrap" : "normal" }}>
+        {isUser ? text : text ? <Markdown>{text}</Markdown> : loading ? <Thinking /> : ""}
       </div>
       {turn.cite && (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2 }}>

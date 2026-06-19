@@ -11,6 +11,7 @@ import {
 import MapboxMap, { MB_LAYER_KEYS } from "@/components/map/MapboxMap";
 import { useChat } from "@/components/chat/useChat";
 import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
+import { Markdown } from "@/components/chat/Markdown";
 import { Switch, Tooltip, DropdownMenu } from "@/components/ui/controls";
 import { DATA, Avatar, AvatarStack, BKPM, Logo, TopBar, comingSoon } from "@/components/ui";
 import industrialData from "@/data/industrial-estates.json";
@@ -159,12 +160,16 @@ function MapChat({ open, onToggle, hifi, activeLayers }) {
               {m.content}
             </div>
           ) : (
-            <div key={i} style={{ fontSize: 13, lineHeight: 1.55, whiteSpace: "pre-wrap" }}>
-              {m.content || (loading ? (
+            <div key={i} style={{ fontSize: 13, lineHeight: 1.55 }}>
+              {m.content ? (
+                <Markdown>{m.content}</Markdown>
+              ) : loading ? (
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "var(--ink-3)" }}>
                   <Loader2 size={14} strokeWidth={2} className="spin" /> thinking…
                 </span>
-              ) : "")}
+              ) : (
+                ""
+              )}
             </div>
           )
         )}
