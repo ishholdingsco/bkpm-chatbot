@@ -4,9 +4,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import MapboxMap from "@/components/MapboxMap";
-import { useChat } from "@/components/useChat";
-import { DATA, Avatar, AvatarStack, BKPM, Cite, Logo, TopBar } from "@/components/shared";
+import MapboxMap from "@/components/map/MapboxMap";
+import { useChat } from "@/components/chat/useChat";
+import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
+import { DATA, Avatar, AvatarStack, BKPM, Logo, TopBar } from "@/components/ui";
 
 const LAYERS = [
   { id: "industrial", name: "Kawasan Industri", desc: "Industrial estates · 142 sites", color: "#f7b500", count: 142 },
@@ -88,13 +89,6 @@ function MapChat({ open, onToggle, hifi, activeLayers }) {
     );
   }
 
-  const onKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      send();
-    }
-  };
-
   return (
     <div className={"col " + (hifi ? "hifi" : "")} style={{ width: 340, borderLeft: "1px solid var(--line)", background: "var(--surface)" }}>
       <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 8 }}>
@@ -146,17 +140,16 @@ function MapChat({ open, onToggle, hifi, activeLayers }) {
 
       <div style={{ borderTop: "1px solid var(--line)", padding: 12 }}>
         <div className="card" style={{ padding: "8px 10px", display: "flex", alignItems: "flex-end", gap: 8 }}>
-          <textarea
+          <ChatTextarea
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={onKeyDown}
+            onChange={setInput}
+            onSend={() => send()}
+            submitOn="enter"
             rows={1}
             placeholder="Ask, or try /filter, /compare…"
             style={{ flex: 1, border: "none", outline: "none", resize: "none", fontSize: 12.5, fontFamily: "Inter, sans-serif", background: "transparent", color: "var(--ink)", maxHeight: 90 }}
           />
-          <button className="btn btn-sm btn-primary" disabled={loading || !input.trim()} onClick={() => send()}>
-            {loading ? "…" : "Send"}
-          </button>
+          <SendButton className="btn btn-sm btn-primary" loading={loading} input={input} onSend={() => send()} />
         </div>
         <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
           <span className="chip">+ save view</span>

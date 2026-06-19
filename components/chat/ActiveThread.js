@@ -4,8 +4,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useChat } from "@/components/useChat";
-import { DATA, Avatar, AvatarStack, ArtifactCard, BKPM, Cite, Logo, TopBar } from "@/components/shared";
+import { useChat } from "@/components/chat/useChat";
+import { ChatTurn } from "@/components/chat/ChatTurn";
+import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
+import { DATA, Avatar, AvatarStack, ArtifactCard, BKPM, Logo, TopBar } from "@/components/ui";
 
 // Seed the thread from the canned demo turns. Each carries both the API
 // fields (role/content) and the richer render fields used by ChatTurn.
@@ -137,64 +139,16 @@ function FloatingChip({ onClick, show }) {
   );
 }
 
-// ─── Chat turn (works for both seeded turns and live messages) ───
-function ChatTurn({ turn, loading }) {
-  const isUser = turn.who ? turn.who === "user" : turn.role === "user";
-  const isSuggest = turn.kind === "suggest";
-  const name = turn.name || (isUser ? DATA.user.name : "BKPM Assistant");
-  const time = turn.time || "";
-  const text = turn.text ?? turn.content;
-
-  if (isSuggest) {
-    return (
-      <div style={{ background: "var(--surface-2)", border: "1px solid var(--line)", borderLeft: "3px solid var(--terracotta)", borderRadius: 6, padding: "12px 14px", maxWidth: 640 }}>
-        <div className="label" style={{ color: "var(--terracotta)", marginBottom: 4 }}>● <BKPM /> AI · suggested handoff</div>
-        <div style={{ fontSize: 13, lineHeight: 1.55 }}>{text}</div>
-        <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
-          <button className="btn btn-sm btn-primary">Yes, ask Rina</button>
-          <button className="btn btn-sm">Schedule a call</button>
-          <button className="btn btn-sm btn-ghost">Not yet</button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="col" style={{ alignItems: isUser ? "flex-end" : "flex-start", gap: 4, maxWidth: "100%" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
-        {!isUser && <Avatar name="AI" color="#1c1a14" size="sm" />}
-        <span style={{ fontWeight: 600 }}>{name}</span>
-        {time && <span className="mono" style={{ fontSize: 9, color: "var(--ink-4)" }}>{time}</span>}
-        {isUser && <Avatar name={DATA.user.short} color={DATA.user.color} size="sm" />}
-      </div>
-      <div style={{ fontSize: 13.5, lineHeight: 1.55, maxWidth: 640, background: isUser ? "var(--surface-3)" : "transparent", padding: isUser ? "10px 14px" : "4px 0", borderRadius: 8, color: "var(--ink)", whiteSpace: "pre-wrap" }}>
-        {text || (loading ? "● thinking…" : "")}
-      </div>
-      {turn.cite && (
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
-          {turn.cite.map((c) => <Cite key={c}>{c}</Cite>)}
-          {turn.pin && <span className="mono" style={{ fontSize: 10, color: "var(--jade)" }}>↗ pinned to canvas: {turn.pin}</span>}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── Composer (live) ───
 function Composer({ input, setInput, onSend, loading, onReferHuman }) {
-  const onKeyDown = (e) => {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      onSend();
-    }
-  };
   return (
     <div style={{ borderTop: "1px solid var(--line)", padding: "12px 20px 14px", background: "var(--surface-2)" }}>
       <div className="card" style={{ padding: "10px 12px" }}>
-        <textarea
+        <ChatTextarea
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={onKeyDown}
+          onChange={setInput}
+          onSend={onSend}
+          submitOn="mod-enter"
           rows={2}
           placeholder="Ask about regulations, structure, comps — or @mention an analyst…"
           style={{ width: "100%", border: "none", outline: "none", resize: "none", fontSize: 13, lineHeight: 1.5, fontFamily: "Inter, sans-serif", background: "transparent", color: "var(--ink)", minHeight: 38 }}
@@ -208,9 +162,7 @@ function Composer({ input, setInput, onSend, loading, onReferHuman }) {
           <span className="mono" style={{ fontSize: 9, color: "var(--ink-4)" }}>
             <span className="kbd">⌘</span> <span className="kbd">↵</span> send
           </span>
-          <button className="btn btn-sm btn-jade" disabled={loading || !input.trim()} onClick={onSend}>
-            {loading ? "…" : "Send"}
-          </button>
+          <SendButton className="btn btn-sm btn-jade" loading={loading} input={input} onSend={onSend} />
         </div>
       </div>
     </div>
