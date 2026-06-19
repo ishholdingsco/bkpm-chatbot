@@ -84,8 +84,19 @@ export async function POST(req) {
     return new Response("Invalid JSON body.", { status: 400 });
   }
 
-  const { messages = [], context } = body;
-  const system = context ? `${BASE_SYSTEM_PROMPT}\n\nCurrent context: ${context}` : BASE_SYSTEM_PROMPT;
+  const { messages = [], context, lang } = body;
+
+  // Reply in the user's active UI language (default Bahasa Indonesia). See #8.
+  const LANGUAGE_INSTRUCTION = {
+    id: "Reply in Bahasa Indonesia. Keep regulation names, figures and proper nouns as-is.",
+    en: "Reply in English.",
+    zh: "Reply in Simplified Chinese (简体中文). Keep regulation names, figures and proper nouns as-is.",
+  };
+  const langNote = LANGUAGE_INSTRUCTION[lang] || LANGUAGE_INSTRUCTION.id;
+
+  const system = [BASE_SYSTEM_PROMPT, langNote, context && `Current context: ${context}`]
+    .filter(Boolean)
+    .join("\n\n");
 
   const chatMessages = [
     { role: "system", content: system },

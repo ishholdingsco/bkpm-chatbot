@@ -12,8 +12,8 @@ import MapboxMap, { MB_LAYER_KEYS } from "@/components/map/MapboxMap";
 import { useChat } from "@/components/chat/useChat";
 import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
 import { Markdown } from "@/components/chat/Markdown";
-import { Switch, Tooltip, DropdownMenu } from "@/components/ui/controls";
-import { DATA, Avatar, AvatarStack, BKPM, Logo, TopBar, comingSoon } from "@/components/ui";
+import { Switch, Tooltip } from "@/components/ui/controls";
+import { DATA, Avatar, AvatarStack, BKPM, Logo, TopBar, comingSoon, useI18n, LangToggle } from "@/components/ui";
 import industrialData from "@/data/industrial-estates.json";
 import kekData from "@/data/kek.json";
 import mineralsData from "@/data/minerals.json";
@@ -21,14 +21,16 @@ import portsData from "@/data/ports.json";
 
 // Counts come straight from the static JSON in data/ so the panel and the map
 // can never drift apart. WIUP/GDP/infra are future layers without point data yet.
+// Display name/description live in messages/*.json under map.layerNames /
+// map.layerDesc, keyed by `id` (see useI18n).
 const LAYERS = [
-  { id: "industrial", name: "Kawasan Industri", desc: `Industrial estates · ${industrialData.estates.length} mapped`, color: "#f7b500", count: industrialData.estates.length },
-  { id: "kek", name: "Kawasan Ekonomi Khusus", desc: `Special Economic Zones · ${kekData.estates.length}`, color: "#7e4dd9", count: kekData.estates.length },
-  { id: "wiup", name: "WIUP — Mining Concessions", desc: "Active concessions · 4,210", color: "#29b0a4", count: 4210 },
-  { id: "minerals", name: "Mineral & Resource Deposits", desc: "Ni · Cu · Au · Bauxite · Coal · Tin", color: "#e8533f", count: mineralsData.deposits.length },
-  { id: "gdp", name: "GDP per capita", desc: "Choropleth · 2025", color: "#4264fb" },
-  { id: "infra", name: "Power grid & corridors", desc: "PLN backbone + planned", color: "#f74565" },
-  { id: "ports", name: "Sea ports", desc: `${portsData.ports.length} strategic ports`, color: "#1a1a2e", count: portsData.ports.length },
+  { id: "industrial", color: "#f7b500", count: industrialData.estates.length },
+  { id: "kek", color: "#7e4dd9", count: kekData.estates.length },
+  { id: "wiup", color: "#29b0a4", count: 4210 },
+  { id: "minerals", color: "#e8533f", count: mineralsData.deposits.length },
+  { id: "gdp", color: "#4264fb" },
+  { id: "infra", color: "#f74565" },
+  { id: "ports", color: "#1a1a2e", count: portsData.ports.length },
 ];
 
 function Wordmark({ name, tag = "BKPM", hifi = false, size = 17 }) {
@@ -37,19 +39,22 @@ function Wordmark({ name, tag = "BKPM", hifi = false, size = 17 }) {
 
 // ─── Layer panel ───
 function LayerPanel({ active, onToggle, hifi }) {
+  const { t } = useI18n();
   return (
     <div className={"card " + (hifi ? "hifi" : "")} style={{ position: "absolute", top: 16, left: 16, width: 260, padding: 12, zIndex: 3 }}>
       <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-        <span className="label">Layers</span>
-        <span className="chip" style={{ marginLeft: 6, fontSize: 9 }}>{Object.values(active).filter(Boolean).length} on</span>
+        <span className="label">{t("map.layers")}</span>
+        <span className="chip" style={{ marginLeft: 6, fontSize: 9 }}>{t("map.layersOn", { n: Object.values(active).filter(Boolean).length })}</span>
         <div className="grow" />
-        <button className="btn btn-sm btn-ghost ui-icon-btn" aria-label="Collapse layers"><ChevronDown size={15} strokeWidth={1.75} /></button>
+        <button className="btn btn-sm btn-ghost ui-icon-btn" aria-label={t("map.collapseLayers")}><ChevronDown size={15} strokeWidth={1.75} /></button>
       </div>
       {LAYERS.map((l) => {
         // Layers without point data yet (WIUP, GDP, infra) can't be drawn, so
         // their toggle would do nothing — flag them "soon" and disable it.
         const hasData = MB_LAYER_KEYS.includes(l.id);
         const on = hasData && !!active[l.id];
+        const name = t("map.layerNames." + l.id);
+        const desc = t("map.layerDesc." + l.id, { n: l.count });
         return (
           <div
             key={l.id}
@@ -59,15 +64,15 @@ function LayerPanel({ active, onToggle, hifi }) {
           >
             <div className="layer-swatch" style={{ background: l.color, opacity: on ? 1 : 0.3 }} />
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.2 }}>{l.name}</div>
-              <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 2 }}>{l.desc}</div>
+              <div style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.2 }}>{name}</div>
+              <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 2 }}>{desc}</div>
             </div>
             {hasData ? (
               <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", flexShrink: 0 }}>
-                <Switch checked={on} onCheckedChange={() => onToggle(l.id)} color={l.color} aria-label={l.name} />
+                <Switch checked={on} onCheckedChange={() => onToggle(l.id)} color={l.color} aria-label={name} />
               </div>
             ) : (
-              <span className="chip" style={{ flexShrink: 0, fontSize: 8 }}>soon</span>
+              <span className="chip" style={{ flexShrink: 0, fontSize: 8 }}>{t("common.soon")}</span>
             )}
           </div>
         );
@@ -78,31 +83,28 @@ function LayerPanel({ active, onToggle, hifi }) {
 
 // ─── Map controls (zoom, locate) ───
 function MapControls() {
+  const { t } = useI18n();
   return (
     <div style={{ position: "absolute", top: 16, right: 16, zIndex: 3, display: "flex", flexDirection: "column", gap: 8 }}>
       <div className="map-control">
-        <Tooltip content="Zoom in"><button aria-label="Zoom in" onClick={() => comingSoon("Zoom controls")}><Plus size={16} strokeWidth={1.75} /></button></Tooltip>
-        <Tooltip content="Zoom out"><button aria-label="Zoom out" onClick={() => comingSoon("Zoom controls")}><Minus size={16} strokeWidth={1.75} /></button></Tooltip>
+        <Tooltip content={t("map.zoomIn")}><button aria-label={t("map.zoomIn")} onClick={() => comingSoon("Zoom controls")}><Plus size={16} strokeWidth={1.75} /></button></Tooltip>
+        <Tooltip content={t("map.zoomOut")}><button aria-label={t("map.zoomOut")} onClick={() => comingSoon("Zoom controls")}><Minus size={16} strokeWidth={1.75} /></button></Tooltip>
       </div>
       <div className="map-control">
-        <Tooltip content="Locate me"><button aria-label="Locate" onClick={() => comingSoon("Locate me")}><Locate size={16} strokeWidth={1.75} /></button></Tooltip>
-        <Tooltip content="Reset bearing"><button aria-label="Compass" onClick={() => comingSoon("Reset bearing")}><Compass size={16} strokeWidth={1.75} /></button></Tooltip>
+        <Tooltip content={t("map.locate")}><button aria-label={t("map.locate")} onClick={() => comingSoon("Locate me")}><Locate size={16} strokeWidth={1.75} /></button></Tooltip>
+        <Tooltip content={t("map.resetBearing")}><button aria-label={t("map.compass")} onClick={() => comingSoon("Reset bearing")}><Compass size={16} strokeWidth={1.75} /></button></Tooltip>
       </div>
     </div>
   );
 }
 
 // ─── Chat sidebar (collapsible, contextual to map) — LIVE via DeepSeek ───
-const MAP_SUGGESTIONS = [
-  "What's driving the cluster of nickel sites in Sulawesi?",
-  "Which sectors allow 100% foreign ownership right now?",
-  "Compare Sulawesi vs Halmahera nickel infrastructure",
-];
-
 function MapChat({ open, onToggle, hifi, activeLayers }) {
-  const layerNames = LAYERS.filter((l) => activeLayers[l.id]).map((l) => l.name).join(", ");
+  const { t, lang } = useI18n();
+  const layerNames = LAYERS.filter((l) => activeLayers[l.id]).map((l) => t("map.layerNames." + l.id)).join(", ");
   const context = `User is on the Wilaya map view. Active map layers: ${layerNames || "none"}. They are looking at Indonesia (default focus: Sulawesi nickel belt). Answer in the context of what's visible on the map.`;
-  const { messages, input, setInput, send, loading } = useChat({ context });
+  const { messages, input, setInput, send, loading } = useChat({ context, lang });
+  const suggestions = t("map.suggestions");
 
   if (!open) {
     return (
@@ -111,7 +113,7 @@ function MapChat({ open, onToggle, hifi, activeLayers }) {
         onClick={onToggle}
         style={{ position: "absolute", bottom: 20, right: 20, zIndex: 4, background: "#1a1a2e", color: "#fff", borderColor: "#1a1a2e", padding: "10px 14px", borderRadius: 24, boxShadow: "0 6px 16px rgba(20,20,40,0.2)" }}
       >
-        <MessageCircle size={15} strokeWidth={1.75} /> Ask about this map
+        <MessageCircle size={15} strokeWidth={1.75} /> {t("map.askAboutMap")}
       </button>
     );
   }
@@ -121,13 +123,13 @@ function MapChat({ open, onToggle, hifi, activeLayers }) {
       <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 8 }}>
         <Avatar name="AI" color="#1a1a2e" size="sm" status="online" />
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 12, fontWeight: 600 }}>Ask Nusantara</div>
+          <div style={{ fontSize: 12, fontWeight: 600 }}>{t("map.askNusantara")}</div>
           <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)" }}>
-            Reading: {Object.values(activeLayers).filter(Boolean).length} layers active · viewing Sulawesi
+            {t("map.reading", { n: Object.values(activeLayers).filter(Boolean).length })}
           </div>
         </div>
-        <Tooltip content="Collapse" side="bottom">
-          <button className="btn btn-ghost btn-sm ui-icon-btn" onClick={onToggle} aria-label="Collapse chat"><ChevronRight size={16} strokeWidth={1.75} /></button>
+        <Tooltip content={t("common.collapse")} side="bottom">
+          <button className="btn btn-ghost btn-sm ui-icon-btn" onClick={onToggle} aria-label={t("map.collapseChat")}><ChevronRight size={16} strokeWidth={1.75} /></button>
         </Tooltip>
       </div>
 
@@ -135,12 +137,12 @@ function MapChat({ open, onToggle, hifi, activeLayers }) {
         {messages.length === 0 && (
           <>
             <div style={{ fontSize: 13, lineHeight: 1.55, color: "var(--ink-2)" }}>
-              Ask me anything about what&apos;s on the map — sectors, special economic zones, ownership rules, or a specific opportunity.
+              {t("map.intro")}
             </div>
             <div style={{ background: "var(--surface-2)", border: "1px solid var(--line)", borderRadius: 8, padding: 12 }}>
-              <div className="label" style={{ marginBottom: 6 }}>Try asking</div>
+              <div className="label" style={{ marginBottom: 6 }}>{t("map.tryAsking")}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {MAP_SUGGESTIONS.map((s) => (
+                {suggestions.map((s) => (
                   <div
                     key={s}
                     onClick={() => !loading && send(s)}
@@ -165,7 +167,7 @@ function MapChat({ open, onToggle, hifi, activeLayers }) {
                 <Markdown>{m.content}</Markdown>
               ) : loading ? (
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "var(--ink-3)" }}>
-                  <Loader2 size={14} strokeWidth={2} className="spin" /> thinking…
+                  <Loader2 size={14} strokeWidth={2} className="spin" /> {t("common.thinking")}
                 </span>
               ) : (
                 ""
@@ -184,15 +186,15 @@ function MapChat({ open, onToggle, hifi, activeLayers }) {
             submitOn="enter"
             rows={1}
             maxHeight={120}
-            placeholder="Ask, or try /filter, /compare…"
+            placeholder={t("map.chatPlaceholder")}
             style={{ flex: 1, border: "none", outline: "none", resize: "none", fontSize: 12.5, fontFamily: "Inter, sans-serif", background: "transparent", color: "var(--ink)" }}
           />
           <SendButton className="btn btn-sm btn-primary" loading={loading} input={input} onSend={() => send()} />
         </div>
         <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-          <span className="chip" style={{ cursor: "pointer" }} onClick={() => comingSoon("Save view")}><Plus size={11} strokeWidth={2} /> save view</span>
+          <span className="chip" style={{ cursor: "pointer" }} onClick={() => comingSoon("Save view")}><Plus size={11} strokeWidth={2} /> {t("map.saveView")}</span>
           <Link href="/workspace" style={{ textDecoration: "none" }}>
-            <span className="chip chip-terra" style={{ cursor: "pointer" }}><ArrowUpRight size={11} strokeWidth={2} /> start workspace</span>
+            <span className="chip chip-terra" style={{ cursor: "pointer" }}><ArrowUpRight size={11} strokeWidth={2} /> {t("map.startWorkspace")}</span>
           </Link>
         </div>
       </div>
@@ -217,22 +219,24 @@ function MapTooltip() {
 
 // ─── MAP PAGE — hero ───
 export function MapPage({ hifi = false }) {
+  const { t } = useI18n();
   const [chatOpen, setChatOpen] = useState(true);
   const [active, setActive] = useState({
     industrial: true, kek: true, wiup: false, minerals: true, gdp: false, infra: false, ports: true,
   });
+  const navItems = [t("nav.map"), t("nav.sectors"), t("nav.opportunities"), t("nav.analysts")];
   return (
     <div className={"frame col " + (hifi ? "hifi" : "")}>
       <TopBar
         showOrg={false}
         left={
           <div style={{ display: "flex", gap: 4 }}>
-            {["Map", "Sectors", "Opportunities", "Analysts"].map((t, i) => (
+            {navItems.map((label, i) => (
               <span
-                key={t}
-                onClick={() => i !== 0 && comingSoon(t)}
+                key={label}
+                onClick={() => i !== 0 && comingSoon(label)}
                 style={{ padding: "6px 10px", fontSize: 12.5, fontWeight: i === 0 ? 600 : 500, color: i === 0 ? "var(--terracotta)" : "var(--ink-2)", borderBottom: i === 0 ? "2px solid var(--terracotta)" : "2px solid transparent", cursor: "pointer" }}
-              >{t}</span>
+              >{label}</span>
             ))}
           </div>
         }
@@ -244,22 +248,13 @@ export function MapPage({ hifi = false }) {
               style={{ display: "flex", alignItems: "center", padding: "4px 10px", gap: 8, background: "var(--surface-2)", minWidth: 260, cursor: "pointer" }}
             >
               <Search size={14} strokeWidth={1.75} style={{ color: "var(--ink-4)" }} />
-              <span style={{ fontSize: 12.5, color: "var(--ink-4)" }}>Search regions, sectors, projects…</span>
+              <span style={{ fontSize: 12.5, color: "var(--ink-4)" }}>{t("common.searchPlaceholder")}</span>
               <div className="grow" />
               <span className="kbd">⌘K</span>
             </div>
-            <DropdownMenu
-              align="end"
-              trigger={
-                <button className="btn btn-sm btn-ghost">EN <ChevronDown size={13} strokeWidth={1.75} /></button>
-              }
-              items={[
-                { label: "English", hint: "EN", onSelect: () => comingSoon("Language · English") },
-                { label: "Bahasa Indonesia", hint: "ID", onSelect: () => comingSoon("Bahasa Indonesia (i18n)") },
-              ]}
-            />
+            <LangToggle />
             <Link href="/workspace" style={{ textDecoration: "none" }}>
-              <button className="btn btn-sm btn-primary">Start a project <ArrowRight size={14} strokeWidth={1.75} /></button>
+              <button className="btn btn-sm btn-primary">{t("map.startProject")} <ArrowRight size={14} strokeWidth={1.75} /></button>
             </Link>
           </>
         }
@@ -286,13 +281,13 @@ export function MapPage({ hifi = false }) {
           <div style={{ position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 3 }}>
             <div className="card" style={{ padding: "8px 14px", display: "flex", gap: 14, alignItems: "center" }}>
               <div>
-                <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)" }}>OPPORTUNITIES IN VIEW</div>
-                <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "Source Serif 4" }}>237 <span style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400, fontFamily: "Inter" }}>· $48.2B tracked</span></div>
+                <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)" }}>{t("map.oppsInView")}</div>
+                <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "Source Serif 4" }}>237 <span style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400, fontFamily: "Inter" }}>{t("map.oppsTracked", { value: "$48.2B" })}</span></div>
               </div>
               <div style={{ width: 1, height: 30, background: "var(--line)" }} />
               <div className="col">
-                <span className="chip chip-terra chip-dot" style={{ fontSize: 9 }}>3 featured</span>
-                <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 2 }}>matched to your thesis</span>
+                <span className="chip chip-terra chip-dot" style={{ fontSize: 9 }}>{t("map.featured", { n: 3 })}</span>
+                <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 2 }}>{t("map.matchedThesis")}</span>
               </div>
             </div>
           </div>
@@ -306,6 +301,8 @@ export function MapPage({ hifi = false }) {
 
 // ─── PUBLIC LANDING — full-bleed Mapbox map, floating chrome on top ───
 export function Landing({ name = "Wilaya", hifi = false, mapStyle }) {
+  const { t } = useI18n();
+  const navItems = [t("nav.exploreMap"), t("nav.sectors"), t("nav.whyIndonesia"), t("nav.analysts"), t("nav.pricing")];
   return (
     <div className={"frame col " + (hifi ? "hifi" : "")} style={{ background: "var(--bg)", position: "relative" }}>
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
@@ -316,53 +313,53 @@ export function Landing({ name = "Wilaya", hifi = false, mapStyle }) {
         <Wordmark name={name} hifi={hifi} />
         <div className="grow" />
         <div style={{ display: "flex", gap: 22, fontSize: 13 }}>
-          {["Explore the map", "Sectors", "Why Indonesia", "Analysts", "Pricing"].map((t, i) =>
+          {navItems.map((label, i) =>
             i === 0 ? (
-              <Link key={t} href="/map" style={{ color: "#1a1a2e", fontWeight: 600, cursor: "pointer", textDecoration: "none" }}>{t}</Link>
+              <Link key={label} href="/map" style={{ color: "#1a1a2e", fontWeight: 600, cursor: "pointer", textDecoration: "none" }}>{label}</Link>
             ) : (
-              <span key={t} onClick={() => comingSoon(t)} style={{ color: "var(--ink-2)", fontWeight: 400, cursor: "pointer" }}>{t}</span>
+              <span key={label} onClick={() => comingSoon(label)} style={{ color: "var(--ink-2)", fontWeight: 400, cursor: "pointer" }}>{label}</span>
             )
           )}
         </div>
         <span style={{ width: 1, height: 22, background: "var(--line)" }} />
-        <button className="btn btn-sm btn-ghost" onClick={() => comingSoon("Accounts")}>Sign in</button>
+        <button className="btn btn-sm btn-ghost" onClick={() => comingSoon("Accounts")}>{t("common.signIn")}</button>
         <Link href="/map" style={{ textDecoration: "none" }}>
-          <button className="btn btn-sm btn-primary">Start exploring <ArrowRight size={14} strokeWidth={1.75} /></button>
+          <button className="btn btn-sm btn-primary">{t("common.startExploring")} <ArrowRight size={14} strokeWidth={1.75} /></button>
         </Link>
       </div>
 
       <div style={{ position: "absolute", left: 28, bottom: 28, zIndex: 5, width: 460, padding: "26px 28px", background: "#fff", borderRadius: 18, border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 18px 48px rgba(0,0,0,0.18), 0 2px 0 rgba(255,255,255,0.7) inset", display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#51b749" }} />
-          <span className="mono" style={{ fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.14em" }}>INDONESIA INVESTMENT INTELLIGENCE · LIVE</span>
+          <span className="mono" style={{ fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.14em" }}>{t("landing.eyebrow")}</span>
         </div>
 
         <h1 className="serif" style={{ fontSize: hifi ? 38 : 34, fontWeight: 600, lineHeight: 1.08, letterSpacing: "-0.024em", margin: 0, color: "#1a1a2e", textWrap: "balance" }}>
-          The world&apos;s <span style={{ color: "var(--terracotta)" }}>$1.5T</span> growth story, mapped down to the parcel.
+          {t("landing.headlinePre")} <span style={{ color: "var(--terracotta)" }}>{t("landing.headlineFigure")}</span> {t("landing.headlinePost")}
         </h1>
 
         <p style={{ fontSize: 14, lineHeight: 1.55, color: "var(--ink-2)", margin: 0, textWrap: "pretty" }}>
-          17,508 islands. 142 industrial estates. {kekData.estates.length} special economic zones. Every concession, corridor and incentive — overlaid on one live atlas.
+          {t("landing.subcopy", { kek: kekData.estates.length })}
         </p>
 
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
           <Link href="/map" style={{ textDecoration: "none" }}>
-            <button className="btn btn-primary" style={{ padding: "10px 18px", fontSize: 13.5, display: "inline-flex", alignItems: "center", gap: 8 }}>Explore the map <ArrowRight size={15} strokeWidth={1.75} /></button>
+            <button className="btn btn-primary" style={{ padding: "10px 18px", fontSize: 13.5, display: "inline-flex", alignItems: "center", gap: 8 }}>{t("common.exploreMap")} <ArrowRight size={15} strokeWidth={1.75} /></button>
           </Link>
-          <button className="btn" style={{ padding: "10px 16px", fontSize: 13.5 }} onClick={() => comingSoon("Sector explorer")}>Browse 38 sectors</button>
+          <button className="btn" style={{ padding: "10px 16px", fontSize: 13.5 }} onClick={() => comingSoon("Sector explorer")}>{t("landing.browseSectors")}</button>
         </div>
 
         <div style={{ display: "flex", gap: 12, alignItems: "center", paddingTop: 12, borderTop: "1px solid var(--line)" }}>
           <AvatarStack items={DATA.analysts} max={3} />
           <span style={{ fontSize: 12, color: "var(--ink-2)" }}>
-            <BKPM />&nbsp;<b>23 analysts</b> online · avg reply 4 min
+            <BKPM />&nbsp;<b>{t("landing.analystsCount")}</b> {t("landing.analystsSuffix")}
           </span>
         </div>
       </div>
 
       <div style={{ position: "absolute", top: 92, right: 18, zIndex: 5, background: "rgba(255,255,255,0.94)", backdropFilter: "blur(6px)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6, boxShadow: "0 4px 14px rgba(0,0,0,0.08)" }}>
-        <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", letterSpacing: "0.14em" }}>OVERLAYS</span>
-        {[["#f7b500", "Industrial estates · 142"], ["#7e4dd9", `Special economic zones · ${kekData.estates.length}`], ["#c44a36", "Featured opportunities"]].map(([c, l]) => (
+        <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", letterSpacing: "0.14em" }}>{t("landing.overlays")}</span>
+        {[["#f7b500", t("landing.overlayIndustrial")], ["#7e4dd9", t("landing.overlayKek", { kek: kekData.estates.length })], ["#c44a36", t("landing.overlayFeatured")]].map(([c, l]) => (
           <div key={l} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "var(--ink-2)" }}>
             <span style={{ width: 10, height: 10, borderRadius: 3, background: c, opacity: 0.7, border: `1px solid ${c}` }} />
             {l}
@@ -371,8 +368,8 @@ export function Landing({ name = "Wilaya", hifi = false, mapStyle }) {
       </div>
 
       <div style={{ position: "absolute", right: 28, bottom: 28, zIndex: 5, display: "flex", flexDirection: "column", gap: 8, background: "rgba(255,255,255,0.94)", backdropFilter: "blur(6px)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 14, padding: "14px 18px", boxShadow: "0 8px 24px rgba(0,0,0,0.10)" }}>
-        <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", letterSpacing: "0.14em" }}>ATLAS · LIVE</span>
-        {[["$48.2B", "tracked opportunities"], ["237", "live projects"], ["38", "sectors covered"]].map(([n, l]) => (
+        <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", letterSpacing: "0.14em" }}>{t("landing.atlasLive")}</span>
+        {[["$48.2B", t("landing.statTracked")], ["237", t("landing.statProjects")], ["38", t("landing.statSectors")]].map(([n, l]) => (
           <div key={l} style={{ display: "flex", alignItems: "baseline", gap: 8, justifyContent: "space-between" }}>
             <span className="serif" style={{ fontSize: 18, fontWeight: 600, color: "#1a1a2e" }}>{n}</span>
             <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", letterSpacing: "0.10em" }}>{l.toUpperCase()}</span>

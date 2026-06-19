@@ -5,7 +5,7 @@
 
 import { useCallback, useRef, useState } from "react";
 
-export function useChat({ initialMessages = [], context } = {}) {
+export function useChat({ initialMessages = [], context, lang } = {}) {
   const [messages, setMessages] = useState(initialMessages);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,6 +35,7 @@ export function useChat({ initialMessages = [], context } = {}) {
           body: JSON.stringify({
             messages: convo.map((m) => ({ role: m.role, content: m.content })),
             context,
+            lang,
           }),
         });
         if (!res.ok || !res.body) throw new Error("Request failed: " + res.status);
@@ -73,7 +74,7 @@ export function useChat({ initialMessages = [], context } = {}) {
         setLoading(false);
       }
     },
-    [input, context]
+    [input, context, lang]
   );
 
   return { messages, setMessages, input, setInput, send, loading };

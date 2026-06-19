@@ -2,9 +2,10 @@
 // (NotificationsDigest). Pure render — the feed and weekly digest are static
 // demo content. The "Open thread" / "Review" CTAs link into the workspace.
 
+"use client";
 import Link from "next/link";
 import { Check } from "lucide-react";
-import { Avatar, TopBar } from "@/components/ui";
+import { Avatar, TopBar, useI18n } from "@/components/ui";
 
 const ITEMS = [
   { kind: "analyst", who: "Rina P.", avatar: "RP", color: "#b94a1f", text: "replied in DNI / smelter co-invest", detail: "“Konawe used a 12% SME quota — happy to walk through it.”", time: "4m", project: "SULAWESI.NI", urgent: true },
@@ -15,26 +16,27 @@ const ITEMS = [
 ];
 
 const FILTERS = [
-  ["All · 12", true], ["Analysts · 4", false], ["AI · 5", false],
-  ["Opportunities · 2", false], ["System · 1", false],
+  ["all", true], ["analysts", false], ["ai", false],
+  ["opportunities", false], ["system", false],
 ];
 
 export function NotificationsDigest() {
+  const { t } = useI18n();
   return (
     <div className="frame col" style={{ background: "var(--surface)" }}>
-      <TopBar right={<span className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>Aisha Tan</span>} showOrg={false} />
+      <TopBar right={<span className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>{t("notifications.user")}</span>} showOrg={false} />
 
       <div className="row grow" style={{ minHeight: 0 }}>
         <div style={{ width: 60, background: "var(--surface-2)", borderRight: "1px solid var(--line)" }} />
 
         <div className="col grow scroll" style={{ padding: "32px 48px", background: "var(--surface)" }}>
-          <div className="mono" style={{ fontSize: 10, color: "var(--ink-3)" }}>INBOX · 26 APR 2026</div>
-          <h1 className="serif" style={{ fontSize: 28, fontWeight: 500, margin: "4px 0 4px", letterSpacing: "-0.01em" }}>Good morning, Aisha</h1>
-          <p style={{ fontSize: 14, color: "var(--ink-2)", margin: "0 0 24px" }}>3 updates need your eyes · 1 analyst reply pending · 1 new match for your thesis</p>
+          <div className="mono" style={{ fontSize: 10, color: "var(--ink-3)" }}>{t("notifications.inbox")}</div>
+          <h1 className="serif" style={{ fontSize: 28, fontWeight: 500, margin: "4px 0 4px", letterSpacing: "-0.01em" }}>{t("notifications.greeting")}</h1>
+          <p style={{ fontSize: 14, color: "var(--ink-2)", margin: "0 0 24px" }}>{t("notifications.subhead")}</p>
 
           <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-            {FILTERS.map(([label, active]) => (
-              <span key={label} className={"chip " + (active ? "chip-terra chip-dot" : "")} style={{ fontWeight: active ? 600 : 400, cursor: "pointer" }}>{label}</span>
+            {FILTERS.map(([key, active]) => (
+              <span key={key} className={"chip " + (active ? "chip-terra chip-dot" : "")} style={{ fontWeight: active ? 600 : 400, cursor: "pointer" }}>{t("notifications.filters." + key)}</span>
             ))}
           </div>
 
@@ -59,12 +61,12 @@ export function NotificationsDigest() {
                 </div>
                 {n.urgent && (
                   <Link href="/workspace" style={{ textDecoration: "none" }}>
-                    <button className="btn btn-sm btn-primary">Open thread</button>
+                    <button className="btn btn-sm btn-primary">{t("notifications.openThread")}</button>
                   </Link>
                 )}
                 {!n.urgent && n.kind === "opp" && (
                   <Link href="/workspace" style={{ textDecoration: "none" }}>
-                    <button className="btn btn-sm">Review</button>
+                    <button className="btn btn-sm">{t("notifications.review")}</button>
                   </Link>
                 )}
               </div>
@@ -72,7 +74,7 @@ export function NotificationsDigest() {
           </div>
 
           <div style={{ marginTop: 24, padding: 16, background: "var(--surface-2)", borderRadius: 8, border: "1px solid var(--line)" }}>
-            <div className="label" style={{ marginBottom: 6 }}>Weekly digest · auto</div>
+            <div className="label" style={{ marginBottom: 6 }}>{t("notifications.weeklyDigest")}</div>
             <div style={{ fontSize: 13, lineHeight: 1.55, color: "var(--ink-2)" }}>
               4 active threads · 12 artifacts pinned · 2 analyst calls scheduled · 1 IC pre-read drafted. Estimated $2.7B in tracked opportunities across 4 projects.
             </div>

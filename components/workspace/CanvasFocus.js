@@ -6,7 +6,7 @@
 
 import { Download, ArrowUpRight } from "lucide-react";
 import { Dialog } from "@/components/ui/controls";
-import { ArtifactCard } from "@/components/ui";
+import { ArtifactCard, useI18n } from "@/components/ui";
 
 const OUTLINE = [
   ["§ C(1) Mining concessions", false],
@@ -23,6 +23,7 @@ const ANNOTATIONS = [
 ];
 
 function DocumentReader() {
+  const { t } = useI18n();
   return (
     <div className="row" style={{ gap: 0, minHeight: 0 }}>
       {/* doc area */}
@@ -50,14 +51,14 @@ function DocumentReader() {
 
       {/* right rail: outline + annotations */}
       <div className="col" style={{ width: 260, flexShrink: 0, borderLeft: "1px solid var(--line)", background: "var(--surface-2)", padding: 14, gap: 12, maxHeight: "70vh", overflow: "auto" }}>
-        <div className="label">Outline</div>
+        <div className="label">{t("canvasFocus.outline")}</div>
         <div style={{ fontSize: 12, lineHeight: 1.7 }}>
           {OUTLINE.map(([txt, active]) => (
             <div key={txt} style={{ fontWeight: active ? 600 : 400, color: active ? "var(--terracotta)" : "var(--ink-3)" }}>{txt}</div>
           ))}
         </div>
         <div className="div-h" />
-        <div className="label">Annotations · 3</div>
+        <div className="label">{t("canvasFocus.annotations")}</div>
         {ANNOTATIONS.map(([n, who, txt, c]) => (
           <div key={n} style={{ display: "flex", gap: 8 }}>
             <div style={{ width: 18, height: 18, borderRadius: "50%", background: c, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, flexShrink: 0 }}>{n}</div>
@@ -68,7 +69,7 @@ function DocumentReader() {
           </div>
         ))}
         <div className="div-h" />
-        <div className="label">Linked threads</div>
+        <div className="label">{t("canvasFocus.linkedThreads")}</div>
         <div style={{ fontSize: 11.5, color: "var(--terracotta)" }}>● DNI / smelter co-investment</div>
         <div style={{ fontSize: 11.5, color: "var(--ink-2)" }}>○ Tax holiday eligibility</div>
       </div>
@@ -78,6 +79,7 @@ function DocumentReader() {
 
 // Compact preview for non-document artifacts (the original ActiveThread modal).
 function ArtifactPreview({ artifact }) {
+  const { t } = useI18n();
   return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
@@ -91,14 +93,15 @@ function ArtifactPreview({ artifact }) {
         </div>
       )}
       <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
-        <button className="btn btn-sm btn-primary">Open in canvas</button>
-        <button className="btn btn-sm"><ArrowUpRight size={14} strokeWidth={1.75} /> Share</button>
+        <button className="btn btn-sm btn-primary">{t("canvasFocus.openInCanvas")}</button>
+        <button className="btn btn-sm"><ArrowUpRight size={14} strokeWidth={1.75} /> {t("canvasFocus.share")}</button>
       </div>
     </>
   );
 }
 
 export function CanvasFocus({ artifact, onOpenChange }) {
+  const { t } = useI18n();
   const isDoc = artifact?.kind === "DOC";
   return (
     <Dialog
@@ -112,9 +115,9 @@ export function CanvasFocus({ artifact, onOpenChange }) {
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
               <span className="chip chip-terra">DOC</span>
-              <span className="mono" style={{ fontSize: 10, color: "var(--ink-3)" }}>Pinned by AI · 14:00 · {artifact.meta}</span>
+              <span className="mono" style={{ fontSize: 10, color: "var(--ink-3)" }}>{t("canvasFocus.pinnedMeta", { meta: artifact.meta })}</span>
               <div className="grow" />
-              <button className="btn btn-sm"><Download size={14} strokeWidth={1.75} /> Download PDF</button>
+              <button className="btn btn-sm"><Download size={14} strokeWidth={1.75} /> {t("canvasFocus.downloadPdf")}</button>
             </div>
             <DocumentReader />
           </>
