@@ -3,7 +3,7 @@
 // primary CTA drop the user into the live workspace thread.
 
 import Link from "next/link";
-import { DATA, AvatarStack, BKPM, TopBar } from "@/components/ui";
+import { DATA, AvatarStack, BKPM, TopBar, ComingSoonButton } from "@/components/ui";
 
 const STARTERS = [
   { icon: "§", label: "What's the foreign-ownership cap on this sector?", tag: "Regulatory" },
@@ -65,7 +65,7 @@ export function EmptyState() {
             <Link href="/workspace" style={{ textDecoration: "none" }}>
               <button className="btn btn-primary">Create project &amp; start thread</button>
             </Link>
-            <button className="btn">Import deal memo (.pdf, .docx)</button>
+            <ComingSoonButton label="Import deal memo" className="btn">Import deal memo (.pdf, .docx)</ComingSoonButton>
             <div className="grow" />
             <span style={{ fontSize: 11 }}>3 <BKPM /> analysts available now</span>
             <AvatarStack items={DATA.analysts} max={3} />

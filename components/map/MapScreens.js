@@ -12,7 +12,7 @@ import MapboxMap, { MB_LAYER_KEYS } from "@/components/map/MapboxMap";
 import { useChat } from "@/components/chat/useChat";
 import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
 import { Switch, Tooltip, DropdownMenu } from "@/components/ui/controls";
-import { DATA, Avatar, AvatarStack, BKPM, Logo, TopBar } from "@/components/ui";
+import { DATA, Avatar, AvatarStack, BKPM, Logo, TopBar, comingSoon } from "@/components/ui";
 import industrialData from "@/data/industrial-estates.json";
 import kekData from "@/data/kek.json";
 import mineralsData from "@/data/minerals.json";
@@ -80,12 +80,12 @@ function MapControls() {
   return (
     <div style={{ position: "absolute", top: 16, right: 16, zIndex: 3, display: "flex", flexDirection: "column", gap: 8 }}>
       <div className="map-control">
-        <Tooltip content="Zoom in"><button aria-label="Zoom in"><Plus size={16} strokeWidth={1.75} /></button></Tooltip>
-        <Tooltip content="Zoom out"><button aria-label="Zoom out"><Minus size={16} strokeWidth={1.75} /></button></Tooltip>
+        <Tooltip content="Zoom in"><button aria-label="Zoom in" onClick={() => comingSoon("Zoom controls")}><Plus size={16} strokeWidth={1.75} /></button></Tooltip>
+        <Tooltip content="Zoom out"><button aria-label="Zoom out" onClick={() => comingSoon("Zoom controls")}><Minus size={16} strokeWidth={1.75} /></button></Tooltip>
       </div>
       <div className="map-control">
-        <Tooltip content="Locate me"><button aria-label="Locate"><Locate size={16} strokeWidth={1.75} /></button></Tooltip>
-        <Tooltip content="Reset bearing"><button aria-label="Compass"><Compass size={16} strokeWidth={1.75} /></button></Tooltip>
+        <Tooltip content="Locate me"><button aria-label="Locate" onClick={() => comingSoon("Locate me")}><Locate size={16} strokeWidth={1.75} /></button></Tooltip>
+        <Tooltip content="Reset bearing"><button aria-label="Compass" onClick={() => comingSoon("Reset bearing")}><Compass size={16} strokeWidth={1.75} /></button></Tooltip>
       </div>
     </div>
   );
@@ -184,7 +184,7 @@ function MapChat({ open, onToggle, hifi, activeLayers }) {
           <SendButton className="btn btn-sm btn-primary" loading={loading} input={input} onSend={() => send()} />
         </div>
         <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-          <span className="chip"><Plus size={11} strokeWidth={2} /> save view</span>
+          <span className="chip" style={{ cursor: "pointer" }} onClick={() => comingSoon("Save view")}><Plus size={11} strokeWidth={2} /> save view</span>
           <Link href="/workspace" style={{ textDecoration: "none" }}>
             <span className="chip chip-terra" style={{ cursor: "pointer" }}><ArrowUpRight size={11} strokeWidth={2} /> start workspace</span>
           </Link>
@@ -222,13 +222,21 @@ export function MapPage({ hifi = false }) {
         left={
           <div style={{ display: "flex", gap: 4 }}>
             {["Map", "Sectors", "Opportunities", "Analysts"].map((t, i) => (
-              <span key={t} style={{ padding: "6px 10px", fontSize: 12.5, fontWeight: i === 0 ? 600 : 500, color: i === 0 ? "var(--terracotta)" : "var(--ink-2)", borderBottom: i === 0 ? "2px solid var(--terracotta)" : "2px solid transparent", cursor: "pointer" }}>{t}</span>
+              <span
+                key={t}
+                onClick={() => i !== 0 && comingSoon(t)}
+                style={{ padding: "6px 10px", fontSize: 12.5, fontWeight: i === 0 ? 600 : 500, color: i === 0 ? "var(--terracotta)" : "var(--ink-2)", borderBottom: i === 0 ? "2px solid var(--terracotta)" : "2px solid transparent", cursor: "pointer" }}
+              >{t}</span>
             ))}
           </div>
         }
         right={
           <>
-            <div className="card" style={{ display: "flex", alignItems: "center", padding: "4px 10px", gap: 8, background: "var(--surface-2)", minWidth: 260 }}>
+            <div
+              className="card"
+              onClick={() => comingSoon("Search")}
+              style={{ display: "flex", alignItems: "center", padding: "4px 10px", gap: 8, background: "var(--surface-2)", minWidth: 260, cursor: "pointer" }}
+            >
               <Search size={14} strokeWidth={1.75} style={{ color: "var(--ink-4)" }} />
               <span style={{ fontSize: 12.5, color: "var(--ink-4)" }}>Search regions, sectors, projects…</span>
               <div className="grow" />
@@ -240,8 +248,8 @@ export function MapPage({ hifi = false }) {
                 <button className="btn btn-sm btn-ghost">EN <ChevronDown size={13} strokeWidth={1.75} /></button>
               }
               items={[
-                { label: "English", hint: "EN" },
-                { label: "Bahasa Indonesia", hint: "ID" },
+                { label: "English", hint: "EN", onSelect: () => comingSoon("Language · English") },
+                { label: "Bahasa Indonesia", hint: "ID", onSelect: () => comingSoon("Bahasa Indonesia (i18n)") },
               ]}
             />
             <Link href="/workspace" style={{ textDecoration: "none" }}>
@@ -302,12 +310,16 @@ export function Landing({ name = "Wilaya", hifi = false, mapStyle }) {
         <Wordmark name={name} hifi={hifi} />
         <div className="grow" />
         <div style={{ display: "flex", gap: 22, fontSize: 13 }}>
-          {["Explore the map", "Sectors", "Why Indonesia", "Analysts", "Pricing"].map((t, i) => (
-            <span key={t} style={{ color: i === 0 ? "#1a1a2e" : "var(--ink-2)", fontWeight: i === 0 ? 600 : 400, cursor: "pointer" }}>{t}</span>
-          ))}
+          {["Explore the map", "Sectors", "Why Indonesia", "Analysts", "Pricing"].map((t, i) =>
+            i === 0 ? (
+              <Link key={t} href="/map" style={{ color: "#1a1a2e", fontWeight: 600, cursor: "pointer", textDecoration: "none" }}>{t}</Link>
+            ) : (
+              <span key={t} onClick={() => comingSoon(t)} style={{ color: "var(--ink-2)", fontWeight: 400, cursor: "pointer" }}>{t}</span>
+            )
+          )}
         </div>
         <span style={{ width: 1, height: 22, background: "var(--line)" }} />
-        <button className="btn btn-sm btn-ghost">Sign in</button>
+        <button className="btn btn-sm btn-ghost" onClick={() => comingSoon("Accounts")}>Sign in</button>
         <Link href="/map" style={{ textDecoration: "none" }}>
           <button className="btn btn-sm btn-primary">Start exploring <ArrowRight size={14} strokeWidth={1.75} /></button>
         </Link>
@@ -331,7 +343,7 @@ export function Landing({ name = "Wilaya", hifi = false, mapStyle }) {
           <Link href="/map" style={{ textDecoration: "none" }}>
             <button className="btn btn-primary" style={{ padding: "10px 18px", fontSize: 13.5, display: "inline-flex", alignItems: "center", gap: 8 }}>Explore the map <ArrowRight size={15} strokeWidth={1.75} /></button>
           </Link>
-          <button className="btn" style={{ padding: "10px 16px", fontSize: 13.5 }}>Browse 38 sectors</button>
+          <button className="btn" style={{ padding: "10px 16px", fontSize: 13.5 }} onClick={() => comingSoon("Sector explorer")}>Browse 38 sectors</button>
         </div>
 
         <div style={{ display: "flex", gap: 12, alignItems: "center", paddingTop: 12, borderTop: "1px solid var(--line)" }}>

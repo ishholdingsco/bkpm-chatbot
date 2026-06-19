@@ -5,7 +5,7 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Plus, Star } from "lucide-react";
-import { DATA, BKPM, TopBar } from "@/components/ui";
+import { DATA, BKPM, TopBar, ComingSoonButton } from "@/components/ui";
 
 const PROJECTS = [
   {
@@ -56,9 +56,9 @@ export function CompareView() {
         }
         right={
           <>
-            <button className="btn btn-sm"><Plus size={14} strokeWidth={1.75} /> Add project</button>
-            <button className="btn btn-sm">Export to memo</button>
-            <button className="btn btn-sm btn-primary">Share comparison</button>
+            <ComingSoonButton label="Add project" className="btn btn-sm"><Plus size={14} strokeWidth={1.75} /> Add project</ComingSoonButton>
+            <ComingSoonButton label="Export to memo" className="btn btn-sm">Export to memo</ComingSoonButton>
+            <ComingSoonButton label="Share comparison" className="btn btn-sm btn-primary">Share comparison</ComingSoonButton>
           </>
         }
       />
@@ -117,8 +117,8 @@ export function CompareView() {
             <Link href="/workspace" style={{ textDecoration: "none" }}>
               <button className="btn btn-sm btn-primary">Draft IC pre-read <ArrowRight size={14} strokeWidth={1.75} /></button>
             </Link>
-            <button className="btn btn-sm">Ask Rina to weigh in</button>
-            <button className="btn btn-sm btn-ghost">Save synthesis</button>
+            <ComingSoonButton label="Ask Rina to weigh in" className="btn btn-sm">Ask Rina to weigh in</ComingSoonButton>
+            <ComingSoonButton label="Save synthesis" className="btn btn-sm btn-ghost">Save synthesis</ComingSoonButton>
           </div>
         </div>
       </div>

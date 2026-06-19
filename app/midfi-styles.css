@@ -342,9 +342,12 @@ body {
 .ui-tooltip-arrow { fill: var(--ink); }
 
 @keyframes ui-fade { from { opacity: 0; } to { opacity: 1; } }
+/* Opacity-only: never animate `transform` here — Radix/Floating-UI positions
+   the menu via an inline `transform`, and a CSS animation would override it,
+   making the menu jump to the top-left corner. */
 @keyframes ui-pop {
-  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 @keyframes ui-dialog-in {
   from { opacity: 0; transform: translate(-50%, -48%) scale(0.97); }

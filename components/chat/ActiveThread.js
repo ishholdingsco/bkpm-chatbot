@@ -12,7 +12,7 @@ import { useChat } from "@/components/chat/useChat";
 import { ChatTurn } from "@/components/chat/ChatTurn";
 import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
 import { DropdownMenu, Tooltip } from "@/components/ui/controls";
-import { DATA, Avatar, AvatarStack, ArtifactCard, BKPM, Logo, TopBar } from "@/components/ui";
+import { DATA, Avatar, AvatarStack, ArtifactCard, BKPM, Logo, TopBar, comingSoon } from "@/components/ui";
 import { HandoffModal } from "@/components/workspace/HandoffModal";
 import { CanvasFocus } from "@/components/workspace/CanvasFocus";
 
@@ -70,10 +70,10 @@ function Sidebar({ collapsed, onToggle }) {
             </button>
           }
           items={[
-            { label: "Switch organization" },
-            { label: "Organization settings" },
+            { label: "Switch organization", onSelect: () => comingSoon("Switch organization") },
+            { label: "Organization settings", onSelect: () => comingSoon("Organization settings") },
             { separator: true },
-            { label: "Invite teammates", icon: <Plus size={14} strokeWidth={1.75} /> },
+            { label: "Invite teammates", icon: <Plus size={14} strokeWidth={1.75} />, onSelect: () => comingSoon("Invite teammates") },
           ]}
         />
       </div>
@@ -132,10 +132,10 @@ function Sidebar({ collapsed, onToggle }) {
             </button>
           }
           items={[
-            { label: "Account settings" },
-            { label: "Preferences" },
+            { label: "Account settings", onSelect: () => comingSoon("Account settings") },
+            { label: "Preferences", onSelect: () => comingSoon("Preferences") },
             { separator: true },
-            { label: "Sign out" },
+            { label: "Sign out", onSelect: () => comingSoon("Accounts") },
           ]}
         />
       </div>
@@ -192,9 +192,9 @@ function Composer({ input, setInput, onSend, loading, onReferHuman }) {
           style={{ width: "100%", border: "none", outline: "none", resize: "none", fontSize: 13, lineHeight: 1.5, fontFamily: "Inter, sans-serif", background: "transparent", color: "var(--ink)", minHeight: 38 }}
         />
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-          <button className="btn btn-sm btn-ghost"><Paperclip size={14} strokeWidth={1.75} /> Attach</button>
-          <button className="btn btn-sm btn-ghost"><AtSign size={14} strokeWidth={1.75} /> Mention</button>
-          <button className="btn btn-sm btn-ghost"><Slash size={14} strokeWidth={1.75} /> Slash</button>
+          <button className="btn btn-sm btn-ghost" onClick={() => comingSoon("Attach files")}><Paperclip size={14} strokeWidth={1.75} /> Attach</button>
+          <button className="btn btn-sm btn-ghost" onClick={() => comingSoon("Mention an analyst")}><AtSign size={14} strokeWidth={1.75} /> Mention</button>
+          <button className="btn btn-sm btn-ghost" onClick={() => comingSoon("Slash commands")}><Slash size={14} strokeWidth={1.75} /> Slash</button>
           <button className="btn btn-sm" onClick={onReferHuman} style={{ color: "var(--terracotta)", borderColor: "var(--terracotta-tint)" }}><ArrowUpRight size={14} strokeWidth={1.75} /> Refer to human</button>
           <div className="grow" />
           <span className="mono" style={{ fontSize: 9, color: "var(--ink-4)" }}>
@@ -242,7 +242,7 @@ function CanvasRail({ mode, onToggle, onPopout, onArtifactClick }) {
           DATA.artifacts.map((a) => <ArtifactCard key={a.title} {...a} onClick={() => onArtifactClick(a)} />)
         )}
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, padding: 10, border: "1px dashed var(--line-strong)", borderRadius: 6, fontSize: 11, color: "var(--ink-3)", marginTop: 4 }}><Plus size={13} strokeWidth={1.75} /> Pin from chat or upload</div>
+        <div onClick={() => comingSoon("Pin / upload to canvas")} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, padding: 10, border: "1px dashed var(--line-strong)", borderRadius: 6, fontSize: 11, color: "var(--ink-3)", marginTop: 4, cursor: "pointer" }}><Plus size={13} strokeWidth={1.75} /> Pin from chat or upload</div>
 
         <div className="card" style={{ padding: 12, marginTop: 8 }}>
           <div className="label" style={{ marginBottom: 8 }}>On call · <BKPM /></div>
@@ -254,7 +254,7 @@ function CanvasRail({ mode, onToggle, onPopout, onArtifactClick }) {
                 <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)" }}>{a.focus}</div>
               </div>
               <Tooltip content={"Message " + a.name.split(" ")[0]}>
-                <button className="btn btn-sm btn-ghost ui-icon-btn" aria-label={"Message " + a.name}><ArrowUpRight size={15} strokeWidth={1.75} /></button>
+                <button className="btn btn-sm btn-ghost ui-icon-btn" aria-label={"Message " + a.name} onClick={() => comingSoon("Message " + a.name.split(" ")[0])}><ArrowUpRight size={15} strokeWidth={1.75} /></button>
               </Tooltip>
             </div>
           ))}
@@ -294,7 +294,7 @@ export function ActiveThread() {
         }
         right={
           <>
-            <button className="btn btn-sm btn-ghost"><Search size={14} strokeWidth={1.75} /> Search <span className="kbd">⌘K</span></button>
+            <button className="btn btn-sm btn-ghost" onClick={() => comingSoon("Search")}><Search size={14} strokeWidth={1.75} /> Search <span className="kbd">⌘K</span></button>
             <Tooltip content="Notifications" side="bottom">
               <Link href="/notifications" className="btn btn-sm btn-ghost ui-icon-btn" aria-label="Notifications"><Bell size={15} strokeWidth={1.75} /></Link>
             </Tooltip>
@@ -322,11 +322,11 @@ export function ActiveThread() {
                   <button className="btn btn-sm btn-ghost ui-icon-btn" aria-label="Thread options"><MoreHorizontal size={16} strokeWidth={1.75} /></button>
                 }
                 items={[
-                  { label: "Rename thread" },
-                  { label: "Share thread", icon: <ArrowUpRight size={14} strokeWidth={1.75} /> },
-                  { label: "Add to canvas", icon: <Plus size={14} strokeWidth={1.75} /> },
+                  { label: "Rename thread", onSelect: () => comingSoon("Rename thread") },
+                  { label: "Share thread", icon: <ArrowUpRight size={14} strokeWidth={1.75} />, onSelect: () => comingSoon("Share thread") },
+                  { label: "Add to canvas", icon: <Plus size={14} strokeWidth={1.75} />, onSelect: () => comingSoon("Add to canvas") },
                   { separator: true },
-                  { label: "Archive thread" },
+                  { label: "Archive thread", onSelect: () => comingSoon("Archive thread") },
                 ]}
               />
             </div>
