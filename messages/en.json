@@ -288,5 +288,11 @@
       { "label": "Connect me with the right Wilaya analyst", "tag": "HUMAN" }
     ],
     "sectors": ["Critical minerals", "Energy", "Digital infra", "Manufacturing", "Agriculture"]
+  },
+  "desktopOnly": {
+    "title": "Open on desktop",
+    "body": "Wilaya is currently optimized for desktop screens. The phone & tablet experience is still in development — please open it on a computer or laptop with a screen at least 1024px wide.",
+    "hint": "Your screen is currently too narrow to show the map and analysis panels.",
+    "footer": "Investment Explorer · BKPM Republic of Indonesia"
   }
 }

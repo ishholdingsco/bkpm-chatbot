@@ -441,3 +441,77 @@ body {
 }
 .md th { background: var(--surface-2); font-weight: 600; }
 .md img { max-width: 100%; border-radius: var(--radius-sm); }
+
+/* ── Desktop-only gate (issue #28, interim) ─────────────────────────────────
+   Full prototype is desktop-only for now; below the desktop breakpoint we show
+   an "open on desktop" overlay instead of a broken multi-panel layout. Pure
+   CSS so desktop (≥1024px) is untouched and there's no hydration flash. */
+.desktop-gate { display: none; }
+@media (max-width: 1023.98px) {
+  .desktop-gate {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background:
+      radial-gradient(120% 80% at 50% 0%, var(--surface-2) 0%, var(--bg) 55%);
+    overflow: auto;
+  }
+  .desktop-gate-card {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 18px;
+    padding: 32px 24px 26px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: calc(var(--radius) * 1.5);
+    box-shadow: var(--shadow-2);
+  }
+  .desktop-gate-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    color: var(--bkpm-blue);
+    background: var(--bkpm-blue-soft);
+    border: 1px solid var(--bkpm-blue-tint);
+  }
+  .desktop-gate-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .desktop-gate-body {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink-2);
+  }
+  .desktop-gate-hint {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--ink-3);
+  }
+  .desktop-gate-footer {
+    margin-top: 4px;
+    padding-top: 16px;
+    width: 100%;
+    border-top: 1px solid var(--line);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+  }
+}
