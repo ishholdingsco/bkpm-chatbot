@@ -8,7 +8,7 @@ import {
   ChevronDown, ChevronRight, Plus, Minus, Locate, Compass,
   Search, MessageCircle, ArrowUpRight, ArrowRight, Loader2,
 } from "lucide-react";
-import MapboxMap, { MB_LAYER_KEYS } from "@/components/map/MapboxMap";
+import MapboxMap from "@/components/map/MapboxMap";
 import { applyLayerChange, boundsOf, resolveFlyTo, selectOpportunities } from "@/components/map/mapActions";
 import { useChat } from "@/components/chat/useChat";
 import { useStickToBottom, JumpToLatest } from "@/components/chat/useStickToBottom";
@@ -23,16 +23,14 @@ import portsData from "@/data/ports.json";
 import opportunitiesData from "@/data/opportunities.json";
 
 // Counts come straight from the static JSON in data/ so the panel and the map
-// can never drift apart. WIUP/GDP/infra are future layers without point data yet.
-// Display name/description live in messages/*.json under map.layerNames /
-// map.layerDesc, keyed by `id` (see useI18n).
+// can never drift apart. Only layers that carry real point/polygon data are
+// listed — the old "coming soon" rows (WIUP/GDP/infra) were dropped so every
+// toggle here actually does something. Display name/description live in
+// messages/*.json under map.layerNames / map.layerDesc, keyed by `id`.
 const LAYERS = [
   { id: "industrial", color: "#f7b500", count: industrialData.estates.length },
   { id: "kek", color: "#7e4dd9", count: kekData.estates.length },
-  { id: "wiup", color: "#29b0a4", count: 4210 },
   { id: "minerals", color: "#e8533f", count: mineralsData.deposits.length },
-  { id: "gdp", color: "#4264fb" },
-  { id: "infra", color: "#f74565" },
   { id: "ports", color: "#1a1a2e", count: portsData.ports.length },
 ];
 
@@ -43,40 +41,41 @@ function Wordmark({ name, tag = "BKPM", hifi = false, size = 17 }) {
 // ─── Layer panel ───
 function LayerPanel({ active, onToggle, hifi }) {
   const { t } = useI18n();
+  const [collapsed, setCollapsed] = useState(false);
   return (
     <div className={"card " + (hifi ? "hifi" : "")} style={{ position: "absolute", top: 16, left: 16, width: 260, padding: 12, zIndex: 3 }}>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: collapsed ? 0 : 8 }}>
         <span className="label">{t("map.layers")}</span>
         <span className="chip" style={{ marginLeft: 6, fontSize: 9 }}>{t("map.layersOn", { n: Object.values(active).filter(Boolean).length })}</span>
         <div className="grow" />
-        <button className="btn btn-sm btn-ghost ui-icon-btn" aria-label={t("map.collapseLayers")}><ChevronDown size={15} strokeWidth={1.75} /></button>
+        <button
+          className="btn btn-sm btn-ghost ui-icon-btn"
+          onClick={() => setCollapsed((c) => !c)}
+          aria-label={t("map.collapseLayers")}
+          aria-expanded={!collapsed}
+        >
+          <ChevronDown size={15} strokeWidth={1.75} style={{ transition: "transform 0.15s", transform: collapsed ? "rotate(-90deg)" : "none" }} />
+        </button>
       </div>
-      {LAYERS.map((l) => {
-        // Layers without point data yet (WIUP, GDP, infra) can't be drawn, so
-        // their toggle would do nothing — flag them "soon" and disable it.
-        const hasData = MB_LAYER_KEYS.includes(l.id);
-        const on = hasData && !!active[l.id];
+      {!collapsed && LAYERS.map((l) => {
+        const on = !!active[l.id];
         const name = t("map.layerNames." + l.id);
         const desc = t("map.layerDesc." + l.id, { n: l.count });
         return (
           <div
             key={l.id}
             className={"layer-pill " + (on ? "active" : "")}
-            onClick={() => hasData && onToggle(l.id)}
-            style={{ cursor: hasData ? "pointer" : "default", opacity: hasData ? 1 : 0.6 }}
+            onClick={() => onToggle(l.id)}
+            style={{ cursor: "pointer" }}
           >
             <div className="layer-swatch" style={{ background: l.color, opacity: on ? 1 : 0.3 }} />
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.2 }}>{name}</div>
               <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 2 }}>{desc}</div>
             </div>
-            {hasData ? (
-              <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", flexShrink: 0 }}>
-                <Switch checked={on} onCheckedChange={() => onToggle(l.id)} color={l.color} aria-label={name} />
-              </div>
-            ) : (
-              <span className="chip" style={{ flexShrink: 0, fontSize: 8 }}>{t("common.soon")}</span>
-            )}
+            <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", flexShrink: 0 }}>
+              <Switch checked={on} onCheckedChange={() => onToggle(l.id)} color={l.color} aria-label={name} />
+            </div>
           </div>
         );
       })}
@@ -84,18 +83,19 @@ function LayerPanel({ active, onToggle, hifi }) {
   );
 }
 
-// ─── Map controls (zoom, locate) ───
-function MapControls() {
+// ─── Map controls (zoom, locate, compass) — drive the real Mapbox instance ───
+function MapControls({ mapRef }) {
   const { t } = useI18n();
+  const map = () => mapRef.current;
   return (
     <div style={{ position: "absolute", top: 16, right: 16, zIndex: 3, display: "flex", flexDirection: "column", gap: 8 }}>
       <div className="map-control">
-        <Tooltip content={t("map.zoomIn")}><button aria-label={t("map.zoomIn")} onClick={() => comingSoon("Zoom controls")}><Plus size={16} strokeWidth={1.75} /></button></Tooltip>
-        <Tooltip content={t("map.zoomOut")}><button aria-label={t("map.zoomOut")} onClick={() => comingSoon("Zoom controls")}><Minus size={16} strokeWidth={1.75} /></button></Tooltip>
+        <Tooltip content={t("map.zoomIn")}><button aria-label={t("map.zoomIn")} onClick={() => map()?.zoomIn()}><Plus size={16} strokeWidth={1.75} /></button></Tooltip>
+        <Tooltip content={t("map.zoomOut")}><button aria-label={t("map.zoomOut")} onClick={() => map()?.zoomOut()}><Minus size={16} strokeWidth={1.75} /></button></Tooltip>
       </div>
       <div className="map-control">
-        <Tooltip content={t("map.locate")}><button aria-label={t("map.locate")} onClick={() => comingSoon("Locate me")}><Locate size={16} strokeWidth={1.75} /></button></Tooltip>
-        <Tooltip content={t("map.resetBearing")}><button aria-label={t("map.compass")} onClick={() => comingSoon("Reset bearing")}><Compass size={16} strokeWidth={1.75} /></button></Tooltip>
+        <Tooltip content={t("map.locate")}><button aria-label={t("map.locate")} onClick={() => map()?.locate()}><Locate size={16} strokeWidth={1.75} /></button></Tooltip>
+        <Tooltip content={t("map.resetBearing")}><button aria-label={t("map.compass")} onClick={() => map()?.resetNorth()}><Compass size={16} strokeWidth={1.75} /></button></Tooltip>
       </div>
     </div>
   );
@@ -214,21 +214,6 @@ function MapChat({ open, onToggle, hifi, activeLayers, viewLabel, chat }) {
   );
 }
 
-// ─── Hover tooltip (static demo accent) ───
-function MapTooltip() {
-  return (
-    <div className="map-tooltip" style={{ top: 230, right: 280 }}>
-      <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)" }}>SULAWESI · MOROWALI</div>
-      <div style={{ fontSize: 13, fontWeight: 600, marginTop: 2 }}>IMIP Industrial Park</div>
-      <div style={{ fontSize: 11, color: "var(--ink-2)", marginTop: 4, lineHeight: 1.4 }}>Nickel midstream cluster · 47 tenants</div>
-      <div style={{ display: "flex", gap: 4, marginTop: 6 }}>
-        <span className="chip chip-jade chip-dot" style={{ fontSize: 8 }}>KEK active</span>
-        <span className="chip" style={{ fontSize: 8 }}>$12.4B FDI</span>
-      </div>
-    </div>
-  );
-}
-
 // Is a point inside a bounding box, allowing a degree margin (~111 km/deg)?
 function inBounds([lng, lat], [[minLng, minLat], [maxLng, maxLat]], margin = 1.0) {
   return lng >= minLng - margin && lng <= maxLng + margin && lat >= minLat - margin && lat <= maxLat + margin;
@@ -239,9 +224,13 @@ export function MapPage({ hifi = false }) {
   const { t, lang } = useI18n();
   const [chatOpen, setChatOpen] = useState(true);
   const [active, setActive] = useState({
-    industrial: true, kek: true, wiup: false, minerals: true, gdp: false, infra: false, ports: true,
+    industrial: true, kek: true, minerals: true, ports: true,
   });
   const [pinFilter, setPinFilter] = useState(null);
+  // A single opportunity the human clicked on the map. Drives the top card the
+  // same way a chat filter does, so the card appears on a click — not only when
+  // the assistant filters. Most-recent action wins (see `cardInfo`).
+  const [selected, setSelected] = useState(null);
   const [viewLabel, setViewLabel] = useState(t("map.viewDefault"));
   const mapRef = useRef(null);
 
@@ -285,8 +274,11 @@ export function MapPage({ hifi = false }) {
 
     let selCoords = null;
     if (filt) {
+      setSelected(null); // an assistant filter supersedes a single clicked pin
       const sel = selectOpportunities(filt.args || {});
-      if (!sel.ids) setPinFilter(null);
+      // No matches (or an explicit clear) → drop the filter so every pin stays
+      // visible, rather than emphasizing an empty set.
+      if (!sel.ids || sel.ids.length === 0) setPinFilter(null);
       else {
         setPinFilter(sel);
         selCoords = sel.coords;
@@ -306,17 +298,38 @@ export function MapPage({ hifi = false }) {
 
   const chat = useChat({ context, lang, mapTools: true, onAction });
 
-  // Clicking a featured pin pulls its context into the chat: open the panel and
-  // prefill a question about that opportunity for the user to send.
+  // Clicking a featured pin both surfaces the top card (via `selected`) and
+  // pulls its context into the chat: open the panel and prefill a question about
+  // that opportunity. The card then stays put and just switches as you click
+  // around — there's no dismiss; another click/filter replaces it.
   const onPinClick = useCallback(
     (id) => {
       const opp = opportunitiesData.opportunities.find((o) => o.id === id);
       if (!opp) return;
+      setSelected(id);
       setChatOpen(true);
       chat.setInput(t("map.pinPrompt", { label: opp.label }));
     },
     [chat, t]
   );
+
+  // The detail card shows ONE opportunity's real data (IMIP-style): a clicked
+  // pin takes precedence, otherwise the first pin of a chat filter. `more` is how
+  // many other opportunities the filter also matched. null hides the card. The
+  // click path is deterministic, so the card always appears on a click even if
+  // the assistant chose not to call a map tool.
+  const card = useMemo(() => {
+    const find = (id) => opportunitiesData.opportunities.find((o) => o.id === id) || null;
+    if (selected) {
+      const o = find(selected);
+      if (o) return { opp: o, more: 0 };
+    }
+    if (pinFilter?.ids?.length) {
+      const o = find(pinFilter.ids[0]);
+      if (o) return { opp: o, more: (pinFilter.count || pinFilter.ids.length) - 1 };
+    }
+    return null;
+  }, [selected, pinFilter]);
 
   // Map is the active tab here; "Value Chain" links to the Hilirisasi page.
   // Keep the order in sync with HilirisasiPage's nav (Map · Value Chain · …).
@@ -370,32 +383,35 @@ export function MapPage({ hifi = false }) {
           />
 
           <LayerPanel active={active} onToggle={(id) => setActive({ ...active, [id]: !active[id] })} hifi={hifi} />
-          <MapControls />
-          <MapTooltip />
+          <MapControls mapRef={mapRef} />
 
           <div style={{ position: "absolute", bottom: 16, left: 16, display: "flex", gap: 8, alignItems: "center", zIndex: 3 }}>
             <div className="card" style={{ padding: "6px 10px", display: "flex", gap: 8, alignItems: "center" }}>
               <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)" }}>0  500km</span>
               <div style={{ width: 60, height: 3, background: "linear-gradient(to right, #1a1a2e 50%, #fff 50%)", border: "1px solid #1a1a2e" }} />
             </div>
-            <div className="card" style={{ padding: "6px 10px" }}>
-              <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)" }}>BPS · BKPM · ESDM · 2025</span>
-            </div>
           </div>
 
-          <div style={{ position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 3 }}>
-            <div className="card" style={{ padding: "8px 14px", display: "flex", gap: 14, alignItems: "center" }}>
-              <div>
-                <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)" }}>{t("map.oppsInView")}</div>
-                <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "Source Serif 4" }}>237 <span style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400, fontFamily: "Inter" }}>{t("map.oppsTracked", { value: "$48.2B" })}</span></div>
+          {/* Opportunity detail card (IMIP-style) — hidden until a pin is clicked
+              (human) or the chat filters/highlights a set (AI). Every value is the
+              real data of that opportunity, never hardcoded. */}
+          {card && (
+            <div className="map-tooltip" style={{ top: 16, left: "50%", transform: "translateX(-50%)", width: 264 }}>
+              <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{card.opp.province}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, marginTop: 2, lineHeight: 1.25 }}>{card.opp.label}</div>
+              <div style={{ fontSize: 11, color: "var(--ink-2)", marginTop: 4, lineHeight: 1.4 }}>
+                {card.opp.sector}{card.opp.irr ? ` · IRR ${card.opp.irr}` : ""}
               </div>
-              <div style={{ width: 1, height: 30, background: "var(--line)" }} />
-              <div className="col">
-                <span className="chip chip-terra chip-dot" style={{ fontSize: 9 }}>{t("map.featured", { n: 3 })}</span>
-                <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 2 }}>{t("map.matchedThesis")}</span>
+              <div style={{ display: "flex", gap: 4, marginTop: 7, flexWrap: "wrap" }}>
+                {card.opp.status && <span className="chip chip-jade chip-dot" style={{ fontSize: 8 }}>{card.opp.status}</span>}
+                {card.opp.ticket && <span className="chip" style={{ fontSize: 8 }}>{card.opp.ticket}</span>}
+                {card.opp.foreignCap && <span className="chip" style={{ fontSize: 8 }}>{t("map.foreignChip", { cap: card.opp.foreignCap })}</span>}
               </div>
+              {card.more > 0 && (
+                <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 7 }}>{t("map.moreOpps", { n: card.more })}</div>
+              )}
             </div>
-          </div>
+          )}
         </div>
 
         <MapChat
@@ -469,7 +485,7 @@ export function Landing({ name = "Wilaya", hifi = false, mapStyle }) {
 
       <div style={{ position: "absolute", top: 92, right: 18, zIndex: 5, background: "rgba(255,255,255,0.94)", backdropFilter: "blur(6px)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6, boxShadow: "0 4px 14px rgba(0,0,0,0.08)" }}>
         <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", letterSpacing: "0.14em" }}>{t("landing.overlays")}</span>
-        {[["#f7b500", t("landing.overlayIndustrial")], ["#7e4dd9", t("landing.overlayKek", { kek: kekData.estates.length })], ["#c44a36", t("landing.overlayFeatured")]].map(([c, l]) => (
+        {[["#f7b500", t("landing.overlayIndustrial")], ["#7e4dd9", t("landing.overlayKek", { kek: kekData.estates.length })], ["#0055a6", t("landing.overlayFeatured")]].map(([c, l]) => (
           <div key={l} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "var(--ink-2)" }}>
             <span style={{ width: 10, height: 10, borderRadius: 3, background: c, opacity: 0.7, border: `1px solid ${c}` }} />
             {l}

@@ -55,25 +55,21 @@
     "layerNames": {
       "industrial": "Kawasan Industri",
       "kek": "Kawasan Ekonomi Khusus",
-      "wiup": "WIUP — Mining Concessions",
       "minerals": "Mineral & Resource Deposits",
-      "gdp": "GDP per capita",
-      "infra": "Power grid & corridors",
       "ports": "Sea ports"
     },
     "layerDesc": {
-      "industrial": "Industrial estates · {n} mapped",
-      "kek": "Special Economic Zones · {n}",
-      "wiup": "Active concessions · 4,210",
-      "minerals": "Ni · Cu · Au · Bauxite · Coal · Tin",
-      "gdp": "Choropleth · 2025",
-      "infra": "PLN backbone + planned",
-      "ports": "{n} strategic ports"
+      "industrial": "{n} mapped",
+      "kek": "{n} mapped",
+      "minerals": "{n} mapped",
+      "ports": "{n} mapped"
     },
     "oppsInView": "OPPORTUNITIES IN VIEW",
     "oppsTracked": "· {value} tracked",
     "featured": "{n} featured",
     "matchedThesis": "matched to your thesis",
+    "foreignChip": "{cap} foreign",
+    "moreOpps": "+{n} more nearby",
     "askAboutMap": "Ask about this map",
     "askNusantara": "Ask Nusantara",
     "viewDefault": "Sulawesi",

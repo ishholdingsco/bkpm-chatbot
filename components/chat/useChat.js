@@ -5,6 +5,27 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+// Some models echo the tool call as a literal `{"actions":[…]}` blob in their
+// prose on top of the real function call. Strip any such object (brace-balanced,
+// so nested args survive) before display. An unterminated trailing blob — a
+// partial during streaming — is dropped too, so JSON never flashes on screen.
+function stripActionJson(s) {
+  let out = "";
+  let i = 0;
+  while (i < s.length) {
+    const start = s.indexOf('{"actions"', i);
+    if (start === -1) { out += s.slice(i); break; }
+    out += s.slice(i, start);
+    let depth = 0, j = start;
+    for (; j < s.length; j++) {
+      if (s[j] === "{") depth++;
+      else if (s[j] === "}" && --depth === 0) { j++; break; }
+    }
+    i = j; // skip the (possibly still-open) blob
+  }
+  return out;
+}
+
 // Map actions ride inside the plain-text stream framed by NUL bytes (see
 // app/api/chat/route.js). Prose never contains NUL, so we can slice frames out.
 const FRAME = "\u0000";
@@ -93,9 +114,10 @@ export function useChat({ initialMessages = [], context, lang, mapTools = false,
 
           if (prose) {
             acc += prose;
+            const shown = stripActionJson(acc);
             setMessages((prev) => {
               const copy = [...prev];
-              copy[copy.length - 1] = { role: "assistant", content: acc };
+              copy[copy.length - 1] = { role: "assistant", content: shown };
               return copy;
             });
           }
