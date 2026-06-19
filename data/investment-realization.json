@@ -1,0 +1,30 @@
+{
+  "_meta": {
+    "title": "BKPM Investment Realization",
+    "source": "Kementerian Investasi & Hilirisasi / BKPM — FY2024 release (Jan 2025) and Q3 2024 data",
+    "retrieved": "2026-06-19",
+    "disclaimer": "Prototype data. Figures from public BKPM press releases; province choropleth values are FY2024 totals. Verify against data.bkpm.go.id before real use.",
+    "currency": "IDR trillion"
+  },
+  "national_2024": {
+    "total": 1714.2,
+    "pma_fdi": 900.2,
+    "pmdn_domestic": 814.0,
+    "yoyGrowthPct": 20.8,
+    "jobs": 2456130
+  },
+  "by_province_2024_top": [
+    { "province": "Jawa Barat", "value": 251.1 },
+    { "province": "DKI Jakarta", "value": 241.9 },
+    { "province": "Jawa Timur", "value": 147.3 },
+    { "province": "Sulawesi Tengah", "value": 139.9 },
+    { "province": "Banten", "value": 105.6 }
+  ],
+  "by_sector_q3_2024": [
+    { "sector": "Transport, warehousing & telecom", "value": 58.04 },
+    { "sector": "Base metals", "value": 55.87 },
+    { "sector": "Mining", "value": 44.64 },
+    { "sector": "Chemicals & pharmaceuticals", "value": 31.61 },
+    { "sector": "Food industry", "value": 31.30 }
+  ]
+}

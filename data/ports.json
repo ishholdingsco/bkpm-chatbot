@@ -1,0 +1,22 @@
+{
+  "_meta": {
+    "title": "Strategic Sea Ports",
+    "source": "Kemenhub / Pelindo — selected strategic & PSN ports",
+    "retrieved": "2026-06-19",
+    "disclaimer": "Prototype data. Selected major ports; coordinates approximate. Verify before real use.",
+    "coordinates": "[longitude, latitude]"
+  },
+  "ports": [
+    { "name": "Tanjung Priok", "province": "DKI Jakarta", "coordinates": [106.88, -6.10], "type": "Container hub", "operator": "Pelindo" },
+    { "name": "Patimban", "province": "Jawa Barat", "coordinates": [107.95, -6.25], "type": "Automotive/container", "operator": "Pelindo", "note": "National Strategic Project (PSN)" },
+    { "name": "Tanjung Perak", "province": "Jawa Timur", "coordinates": [112.73, -7.20], "type": "Container hub", "operator": "Pelindo" },
+    { "name": "Belawan", "province": "Sumatra Utara", "coordinates": [98.69, 3.79], "type": "Container/general", "operator": "Pelindo" },
+    { "name": "Kuala Tanjung", "province": "Sumatra Utara", "coordinates": [99.43, 3.37], "type": "Industrial/transshipment", "operator": "Pelindo", "note": "PSN" },
+    { "name": "Batu Ampar", "province": "Kepulauan Riau", "coordinates": [104.00, 1.16], "type": "Container", "operator": "BP Batam" },
+    { "name": "Kijing (Pontianak)", "province": "Kalimantan Barat", "coordinates": [108.95, -0.05], "type": "Container/general", "operator": "Pelindo" },
+    { "name": "Semayang (Balikpapan)", "province": "Kalimantan Timur", "coordinates": [116.80, -1.27], "type": "General/energy", "operator": "Pelindo" },
+    { "name": "Makassar New Port", "province": "Sulawesi Selatan", "coordinates": [119.40, -5.10], "type": "Container hub (East Indonesia)", "operator": "Pelindo", "note": "PSN" },
+    { "name": "Bitung", "province": "Sulawesi Utara", "coordinates": [125.19, 1.44], "type": "International hub/fishery", "operator": "Pelindo" },
+    { "name": "Sorong", "province": "Papua Barat Daya", "coordinates": [131.25, -0.88], "type": "Gateway East Indonesia", "operator": "Pelindo" }
+  ]
+}

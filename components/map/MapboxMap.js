@@ -5,6 +5,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
+import industrialData from "@/data/industrial-estates.json";
+import kekData from "@/data/kek.json";
+import opportunitiesData from "@/data/opportunities.json";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const DEFAULT_STYLE = "mapbox://styles/mapbox/light-v11";
@@ -28,57 +31,25 @@ export const MB_STANDARD_FADED = {
   layers: [],
 };
 
+// Map a real footprint (hectares) to a display blob radius in km. The blobs are
+// stylized markers, not surveyed boundaries, so we scale sqrt(area) into a
+// readable 8–38 km range and fall back to a default when area is unknown.
+function displayRadiusKm(areaHa, fallback = 16) {
+  if (!areaHa) return fallback;
+  return Math.max(8, Math.min(38, Math.sqrt(areaHa) * 0.3));
+}
+
+// Adapt the static JSON (data/*.json) into the shape the overlay renderer wants.
 const MB_PINS = {
-  industrial: [
-    { ll: [107.150, -6.260], n: "KIM Cikarang", size: 32, aspect: 1.4 },
-    { ll: [110.220, -6.929], n: "Kendal IE", size: 22, aspect: 1.2 },
-    { ll: [106.040, -6.020], n: "Cilegon", size: 24, aspect: 1.1 },
-    { ll: [112.750, -7.250], n: "Surabaya IE", size: 26, aspect: 1.3 },
-    { ll: [108.530, -6.730], n: "KI Subang", size: 20, aspect: 1.2 },
-    { ll: [110.050, -6.450], n: "KI Brebes", size: 18, aspect: 1.1 },
-    { ll: [99.450, 3.380], n: "Sei Mangkei", size: 20, aspect: 1.0 },
-    { ll: [104.770, -3.720], n: "Tj. Api-api", size: 22, aspect: 1.2 },
-    { ll: [104.030, 1.050], n: "Batam IE", size: 18, aspect: 1.1 },
-    { ll: [100.380, -0.940], n: "KI Padang", size: 18, aspect: 1.0 },
-    { ll: [105.260, -5.380], n: "KI Tj. Bintang", size: 20, aspect: 1.1 },
-    { ll: [95.330, 5.550], n: "KI Ladong · Aceh", size: 18, aspect: 1.0 },
-    { ll: [117.550, 0.500], n: "KIPI Maloy", size: 26, aspect: 1.0 },
-    { ll: [114.300, -3.330], n: "KI Batulicin", size: 22, aspect: 1.0 },
-    { ll: [109.330, -0.020], n: "KI Mempawah", size: 18, aspect: 1.1 },
-    { ll: [121.060, -2.531], n: "IMIP Morowali", size: 38, aspect: 0.9 },
-    { ll: [122.620, -3.992], n: "PT VDNI Konawe", size: 30, aspect: 1.0 },
-    { ll: [125.190, 1.440], n: "Bitung IE", size: 22, aspect: 1.1 },
-    { ll: [119.430, -5.140], n: "KI Makassar", size: 22, aspect: 1.2 },
-    { ll: [131.250, -0.880], n: "KI Sorong", size: 26, aspect: 1.1 },
-    { ll: [136.080, -2.530], n: "KI Teluk Bintuni", size: 28, aspect: 1.0 },
-    { ll: [140.700, -2.530], n: "KI Jayapura", size: 18, aspect: 1.0 },
-    { ll: [115.200, -8.610], n: "KI Bali Selatan", size: 14, aspect: 1.1 },
-    { ll: [116.450, -8.580], n: "KI Lombok", size: 16, aspect: 1.0 },
-    { ll: [123.580, -10.180], n: "KI Kupang", size: 18, aspect: 1.1 },
-  ],
-  kek: [
-    { ll: [98.700, 3.580], n: "KEK Sei Mangkei", r: 30 },
-    { ll: [121.060, -2.531], n: "KEK Morowali", r: 38 },
-    { ll: [116.830, -1.250], n: "KEK Maloy Batuta", r: 32 },
-    { ll: [131.250, -0.880], n: "KEK Sorong", r: 30 },
-    { ll: [114.420, -8.190], n: "KEK Singhasari", r: 22 },
-    { ll: [104.080, 1.150], n: "KEK Nongsa", r: 18 },
-    { ll: [116.270, -8.890], n: "KEK Mandalika", r: 18 },
-    { ll: [124.470, -10.170], n: "KEK Tanjung", r: 22 },
-    { ll: [115.560, -8.810], n: "KEK Sanur", r: 14 },
-    { ll: [134.040, -3.550], n: "KEK Bintuni", r: 30 },
-  ],
-  featured: [
-    { ll: [121.060, -2.531], k: "sulawesi-ni", label: "Nickel midstream · Sulawesi", ticket: "$400M" },
-    { ll: [99.450, 3.380], k: "sei-mangkei", label: "Palm + biorefinery · N. Sumatra", ticket: "$220M" },
-    { ll: [104.770, -3.720], k: "tj-api-api", label: "Coal-to-DME · S. Sumatra", ticket: "$1.2B" },
-    { ll: [104.030, 1.050], k: "batam-dc", label: "Hyperscale data centers · Batam", ticket: "$220M" },
-    { ll: [131.250, -0.880], k: "sorong", label: "LNG + petrochem · Sorong", ticket: "$680M" },
-    { ll: [136.080, -2.530], k: "bintuni", label: "Methanol · Teluk Bintuni", ticket: "$340M" },
-    { ll: [116.270, -8.890], k: "mandalika", label: "Tourism + EV grid · Lombok", ticket: "$180M" },
-    { ll: [124.470, -10.170], k: "tanjung-ntt", label: "Aquaculture cluster · NTT", ticket: "$95M" },
-    { ll: [140.700, -2.530], k: "jayapura", label: "Cold-chain hub · Jayapura", ticket: "$60M" },
-  ],
+  industrial: industrialData.estates.map((e) => ({
+    ll: e.coordinates, n: e.name, size: displayRadiusKm(e.area_ha),
+  })),
+  kek: kekData.estates.map((e) => ({
+    ll: e.coordinates, n: e.name, r: displayRadiusKm(e.area_ha, 20),
+  })),
+  featured: opportunitiesData.opportunities.map((o) => ({
+    ll: o.coordinates, k: o.id, label: o.label, ticket: o.ticket,
+  })),
 };
 
 function mbBlob([lng, lat], radiusKm, sides = 11, seed = 1, aspect = 1.0) {
@@ -181,7 +152,7 @@ function addMbOverlays(map, onPinClick) {
   const indFeats = MB_PINS.industrial.map((p, i) => ({
     type: "Feature",
     properties: { name: p.n, kind: "industrial" },
-    geometry: { type: "Polygon", coordinates: [mbBlob(p.ll, p.size, 11, 11 + i * 13, p.aspect)] },
+    geometry: { type: "Polygon", coordinates: [mbBlob(p.ll, p.size, 11, 11 + i * 13)] },
   }));
   addPolygonLayer(map, {
     id: "mb-industrial",

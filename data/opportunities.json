@@ -1,0 +1,23 @@
+{
+  "_meta": {
+    "title": "Featured Investment Opportunities",
+    "source": "Compiled from BKPM priority projects (hilirisasi/downstreaming) — illustrative",
+    "retrieved": "2026-06-19",
+    "disclaimer": "Prototype data. Ticket sizes, IRR and incentive notes are indicative estimates for demo purposes, NOT investment advice. Verify with BKPM/NSWI before real use.",
+    "coordinates": "[longitude, latitude]"
+  },
+  "opportunities": [
+    { "id": "sulawesi-ni", "label": "Nickel midstream · Sulawesi", "coordinates": [122.10, -2.83], "sector": "Critical minerals", "province": "Sulawesi Tengah", "ticket": "$400M", "ticketUsdM": 400, "irr": "16–19%", "foreignCap": "100%", "incentives": ["Tax holiday (Pioneer)", "Import duty exemption"], "status": "Open" },
+    { "id": "halmahera-hpal", "label": "HPAL battery-grade nickel · Halmahera", "coordinates": [127.95, 0.52], "sector": "EV battery", "province": "Maluku Utara", "ticket": "$1.2B", "ticketUsdM": 1200, "irr": "15–18%", "foreignCap": "100%", "incentives": ["Tax holiday (Pioneer)"], "status": "Open" },
+    { "id": "mempawah-sgar", "label": "Bauxite-to-alumina (SGAR) · W. Kalimantan", "coordinates": [109.20, 0.36], "sector": "Critical minerals", "province": "Kalimantan Barat", "ticket": "$1.0B", "ticketUsdM": 1000, "irr": "13–16%", "foreignCap": "100% (with conditions)", "incentives": ["Tax allowance"], "status": "Open" },
+    { "id": "gresik-copper", "label": "Copper cathode / smelter · Gresik", "coordinates": [112.60, -7.10], "sector": "Critical minerals", "province": "Jawa Timur", "ticket": "$3.0B", "ticketUsdM": 3000, "irr": "12–15%", "foreignCap": "100%", "incentives": ["Tax holiday", "KEK facility (JIIPE)"], "status": "Anchored" },
+    { "id": "sei-mangkei", "label": "Palm + biorefinery · N. Sumatra", "coordinates": [99.45, 3.04], "sector": "Agribusiness downstream", "province": "Sumatra Utara", "ticket": "$220M", "ticketUsdM": 220, "irr": "14–17%", "foreignCap": "95%", "incentives": ["KEK facility (Sei Mangkei)"], "status": "Open" },
+    { "id": "tanjung-enim-dme", "label": "Coal-to-DME / gasification · S. Sumatra", "coordinates": [103.77, -3.72], "sector": "Energy downstream", "province": "Sumatra Selatan", "ticket": "$2.1B", "ticketUsdM": 2100, "irr": "11–14%", "foreignCap": "100%", "incentives": ["Tax holiday (Pioneer)"], "status": "Open" },
+    { "id": "batam-dc", "label": "Hyperscale data centers · Batam", "coordinates": [104.13, 1.18], "sector": "Digital infrastructure", "province": "Kepulauan Riau", "ticket": "$220M", "ticketUsdM": 220, "irr": "13–16%", "foreignCap": "100%", "incentives": ["KEK facility (Nongsa)"], "status": "Open" },
+    { "id": "bintuni-methanol", "label": "Methanol / petrochemical · Teluk Bintuni", "coordinates": [133.50, -2.10], "sector": "Petrochemical", "province": "Papua Barat", "ticket": "$340M", "ticketUsdM": 340, "irr": "12–15%", "foreignCap": "100%", "incentives": ["Tax holiday (Pioneer)"], "status": "Open" },
+    { "id": "sarulla-geo", "label": "Geothermal expansion · N. Sumatra", "coordinates": [99.08, 2.05], "sector": "Renewable energy", "province": "Sumatra Utara", "ticket": "$1.6B", "ticketUsdM": 1600, "irr": "12–14%", "foreignCap": "95%", "incentives": ["Tax allowance", "Geothermal FiT"], "status": "Open" },
+    { "id": "kipi-green", "label": "Green industrial park · N. Kalimantan", "coordinates": [117.55, 2.95], "sector": "Green industry", "province": "Kalimantan Utara", "ticket": "$1.3B", "ticketUsdM": 1300, "irr": "13–16%", "foreignCap": "100%", "incentives": ["Tax holiday", "Hydropower offtake"], "status": "Development" },
+    { "id": "mandalika", "label": "Tourism + EV grid · Lombok", "coordinates": [116.28, -8.89], "sector": "Tourism", "province": "Nusa Tenggara Barat", "ticket": "$180M", "ticketUsdM": 180, "irr": "11–14%", "foreignCap": "100%", "incentives": ["KEK facility (Mandalika)"], "status": "Open" },
+    { "id": "ntt-aqua", "label": "Aquaculture cluster · NTT", "coordinates": [121.80, -9.65], "sector": "Fisheries", "province": "Nusa Tenggara Timur", "ticket": "$95M", "ticketUsdM": 95, "irr": "13–16%", "foreignCap": "100%", "incentives": ["Tax allowance"], "status": "Open" }
+  ]
+}
