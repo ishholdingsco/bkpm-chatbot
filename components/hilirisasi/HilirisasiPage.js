@@ -5,11 +5,13 @@
 // tracks the selected commodity (issue #24). Tree data is demo data only; the 8
 // language variants tie into the i18n issue (#8).
 
-import { useState as useHil, useRef as useHilRef, useEffect as useHilEffect, useMemo, useRef } from "react";
+import { useState as useHil, useRef as useHilRef, useEffect as useHilEffect, useMemo, useRef, useCallback, forwardRef, useImperativeHandle } from "react";
 import Link from "next/link";
 import { Search, MessageCircle, ChevronRight, Plus, Minus, Crosshair, ArrowUpRight, Loader2 } from "lucide-react";
 import { Avatar, TopBar, comingSoon, useI18n, LangToggle } from "@/components/ui";
+import { resolveCommodity } from "@/components/hilirisasi/treeActions";
 import { useChat } from "@/components/chat/useChat";
+import valueChains from "@/data/value-chains.json";
 import { useStickToBottom, JumpToLatest } from "@/components/chat/useStickToBottom";
 import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
 import { Markdown } from "@/components/chat/Markdown";
@@ -959,12 +961,18 @@ function HilirisasiPanel({ commodity, setCommodity, lang = 'id' }) {
 }
 
 // ─── Pan/zoom canvas ───
-function HilirisasiTree({ commodity, setCommodity, lang = 'id' }) {
+// forwardRef so the chat (via HilirisasiPage) can drive the diagram the same way
+// MapPage drives Mapbox: focus_node pans/zooms onto a product, set_commodity
+// swaps the tree (issue #24).
+const HilirisasiTree = forwardRef(function HilirisasiTree({ commodity, setCommodity, lang = 'id' }, ref) {
   const tree = COMMODITY_TREES[commodity] || COMMODITY_TREES['Nikel'];
   const u = UI[lang] || UI.en;
   const [hovered, setHovered] = useHil(null);
   const [pan,   setPan]   = useHil({ x: 0, y: 0 });
   const [scale, setScale] = useHil(0.86);
+  // True only for AI-driven / button moves so the transform eases smoothly;
+  // cleared on the next manual drag/zoom so dragging stays 1:1 with the cursor.
+  const [animate, setAnimate] = useHil(false);
   const dragging = useHilRef(false);
   const lastXY   = useHilRef({ x: 0, y: 0 });
   const wrapRef  = useHilRef(null);
@@ -982,23 +990,57 @@ function HilirisasiTree({ commodity, setCommodity, lang = 'id' }) {
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
   }, []);
 
-  function onMouseDown(e) { if (e.button !== 0) return; dragging.current = true; lastXY.current = { x: e.clientX, y: e.clientY }; wrapRef.current.style.cursor = 'grabbing'; }
+  function onMouseDown(e) { if (e.button !== 0) return; setAnimate(false); dragging.current = true; lastXY.current = { x: e.clientX, y: e.clientY }; wrapRef.current.style.cursor = 'grabbing'; }
   function onWheel(e) {
     e.preventDefault();
+    setAnimate(false);
     const rect = wrapRef.current.getBoundingClientRect(), mx = e.clientX - rect.left, my = e.clientY - rect.top;
     const factor = e.deltaY < 0 ? 1.1 : 0.91;
     setScale(s => { const ns = Math.min(Math.max(s * factor, 0.3), 2.5); setPan(p => ({ x: mx - (mx - p.x) * (ns / s), y: my - (my - p.y) * (ns / s) })); return ns; });
   }
   function handleHover(id) { if (!dragging.current) setHovered(id); }
 
-  const { nodes, edges, summary } = tree;
+  // Imperative handle: pan/zoom onto a node (centred in the visible canvas, i.e.
+  // to the right of the left panel) and highlight its tooltip; or reset the view.
+  // `lookupCommodity` lets a combined set_commodity+focus_node call target the
+  // tree we're switching to, even before the prop re-render lands.
+  function focusNode(query, lookupCommodity) {
+    const cTree = COMMODITY_TREES[lookupCommodity] || tree;
+    const q = String(query || '').trim().toLowerCase();
+    if (!q) return;
+    const flat = s => String(s || '').replace(/\n/g, ' ').trim().toLowerCase();
+    const node =
+      cTree.nodes.find(n => n.id.toLowerCase() === q) ||
+      cTree.nodes.find(n => flat(n.label) === q) ||
+      cTree.nodes.find(n => flat(getLabelForLang(n, 'en')) === q) ||
+      cTree.nodes.find(n => flat(n.label).includes(q) || q.includes(n.id.toLowerCase())) ||
+      cTree.nodes.find(n => flat(getLabelForLang(n, 'en')).includes(q));
+    if (!node) return;
+    const el = wrapRef.current;
+    const vw = el ? el.clientWidth : 960;
+    const vh = el ? el.clientHeight : 640;
+    const ts = 1.18;
+    const cx = nx(node) + HT.NODE_W / 2;
+    const cy = ny(node) + HT.NODE_H / 2;
+    setAnimate(true);
+    setScale(ts);
+    setPan({ x: (HT.PANEL_W + vw) / 2 - cx * ts, y: vh / 2 - cy * ts });
+    setHovered(node.id);
+  }
+  function resetView() { setAnimate(true); setPan({ x: 0, y: 0 }); setScale(0.86); setHovered(null); }
+  useImperativeHandle(ref, () => ({ focusNode, resetView }), [commodity]);
+
+  const { nodes, edges } = tree;
+  // Headline trade comes from sourced data (data/value-chains.json); node-level
+  // figures in the tree stay indicative (issue #24).
+  const summary = valueChains.commodities[commodity] || tree.summary;
   const stageLabels = getStageLabels(tree, lang);
 
   return (
     <div ref={wrapRef} onMouseDown={onMouseDown} onWheel={onWheel}
       style={{ position:'absolute', inset:0, overflow:'hidden', cursor:'grab', background:'var(--bg)', backgroundImage:'radial-gradient(var(--line-strong) 1px, transparent 1px)', backgroundSize:'28px 28px', userSelect:'none' }}
     >
-      <div style={{ position:'absolute', top:0, left:0, width:CANVAS_W, height:CANVAS_H, transform:`translate(${pan.x}px,${pan.y}px) scale(${scale})`, transformOrigin:'0 0', willChange:'transform' }}>
+      <div style={{ position:'absolute', top:0, left:0, width:CANVAS_W, height:CANVAS_H, transform:`translate(${pan.x}px,${pan.y}px) scale(${scale})`, transformOrigin:'0 0', transition: animate ? 'transform 0.55s cubic-bezier(0.22,1,0.36,1)' : 'none', willChange:'transform' }}>
         <TreeConnections nodes={nodes} edges={edges} hovered={hovered} />
         {stageLabels.map((label, i) => (
           <div key={i} style={{ position:'absolute', top:8, left: HT.PANEL_W + i * HT.COL_SPAN + 4, width:HT.NODE_W, textAlign:'center', fontSize:9, fontWeight:600, fontStyle:'italic', color: i === 4 ? 'var(--bkpm-green-deep)' : 'var(--warn)', fontFamily:'IBM Plex Mono, monospace', lineHeight:1.3 }}>{label}</div>
@@ -1008,13 +1050,13 @@ function HilirisasiTree({ commodity, setCommodity, lang = 'id' }) {
       </div>
 
       <HilirisasiPanel commodity={commodity} setCommodity={setCommodity} lang={lang} />
-      <TreeControls onZoomIn={() => setScale(s => Math.min(s*1.18, 2.5))} onZoomOut={() => setScale(s => Math.max(s*0.85, 0.3))} onReset={() => { setPan({x:0,y:0}); setScale(0.86); }} />
+      <TreeControls onZoomIn={() => { setAnimate(true); setScale(s => Math.min(s*1.18, 2.5)); }} onZoomOut={() => { setAnimate(true); setScale(s => Math.max(s*0.85, 0.3)); }} onReset={resetView} />
 
       {/* Compact single-row stats card */}
       <div onMouseDown={e => e.stopPropagation()} style={{ position:'absolute', top:12, left:`calc(${HT.PANEL_W}px + (100% - ${HT.PANEL_W}px) / 2)`, transform:'translateX(-50%)', zIndex:5 }}>
         <div className="card" style={{ padding:'6px 14px', display:'flex', gap:0, alignItems:'stretch', boxShadow:'var(--shadow-2)', whiteSpace:'nowrap' }}>
-          {/* Identity */}
-          <div style={{ paddingRight:12, marginRight:12, borderRight:'1px solid var(--line)', display:'flex', flexDirection:'column', justifyContent:'center' }}>
+          {/* Identity (hover for data source) */}
+          <div title={summary.source ? `Sumber: ${summary.source}` : undefined} style={{ paddingRight:12, marginRight:12, borderRight:'1px solid var(--line)', display:'flex', flexDirection:'column', justifyContent:'center', cursor: summary.source ? 'help' : 'default' }}>
             <div className="mono" style={{ fontSize:9, color:'var(--ink-3)', letterSpacing:'0.08em' }}>{(u.commNames[commodity] || commodity).toUpperCase()} · {summary.tahun}</div>
             <div className="mono" style={{ fontSize:11, fontWeight:600, color:'var(--ink)' }}>{nodes.length} {u.nodes} · {edges.length} {u.connections}</div>
           </div>
@@ -1041,7 +1083,7 @@ function HilirisasiTree({ commodity, setCommodity, lang = 'id' }) {
       </div>
     </div>
   );
-}
+});
 
 // ─── Popular investor questions (seed prompts for the live chat) ───
 // Per language × commodity. These used to head a scripted Q&A; now they just
@@ -1110,13 +1152,18 @@ function buildHilirisasiContext(commodity) {
     .slice(0, 5)
     .map((n) => `${n.label.replace(/\n/g, ' ')} (${n.mult}×)`)
     .join(', ');
-  const s = tree.summary;
+  const s = valueChains.commodities[commodity] || tree.summary;
+  // id — name list so focus_node can target a real node by id.
+  const nodeList = tree.nodes
+    .map((n) => `${n.id} — ${n.label.replace(/\n/g, ' ')}`)
+    .join("; ");
   return (
     `User is viewing the Wilaya value-chain (hilirisasi/downstreaming) tree for ${commodity}. ` +
-    `Trade summary (${s.tahun}): exports ${s.ekspor}, imports ${s.impor}, surplus ${s.surplus}. ` +
+    `Trade summary (${s.tahun}${s.source ? `, source: ${s.source}` : ""}): exports ${s.ekspor}, imports ${s.impor}, surplus ${s.surplus}. ` +
     `The tree maps ${tree.nodes.length} products across ${tree.stageLabels.length} stages, from raw material to finished applications. ` +
     `Highest value-add products (multiplier over raw material): ${topValueAdd}. ` +
-    `Answer about value-add, downstream processing, trade balance and investment opportunities along this chain; keep numbers consistent with this summary.`
+    `Answer about value-add, downstream processing, trade balance and investment opportunities along this chain; keep numbers consistent with this summary. ` +
+    `Nodes you can focus_node on (id — name): ${nodeList}.`
   );
 }
 
@@ -1227,10 +1274,33 @@ function HilirisasiPage({ hifi = false, chatOpen: chatOpenProp, setChatOpen: set
   const { lang: globalLang } = useI18n();
   const lang = langProp || (UI[globalLang] ? globalLang : 'id');
   const u = UI[lang] || UI.en;
+  const treeRef = useRef(null);
+
   // Live DeepSeek chat (issue #24). Context tracks the selected commodity so the
   // assistant's answers stay tied to the value-chain tree on screen.
   const context = useMemo(() => buildHilirisasiContext(commodity), [commodity]);
-  const chat = useChat({ context, lang });
+
+  // Dispatch the assistant's tool calls onto the real diagram, like MapPage does
+  // for the map: set_commodity swaps the tree, focus_node pans/zooms onto a node
+  // (in the freshly-switched tree when both are called together).
+  const onAction = useCallback((actions) => {
+    const batch = Array.isArray(actions) ? actions : [actions];
+    const commCall = batch.find((a) => a?.name === "set_commodity");
+    const focusCall = batch.find((a) => a?.name === "focus_node");
+
+    let target = null;
+    const apply = (raw) => {
+      const c = resolveCommodity(raw);
+      if (c) { target = c; setCommodity(c); }
+    };
+    if (commCall) apply(commCall.args?.commodity);
+    if (focusCall && focusCall.args?.commodity) apply(focusCall.args.commodity);
+
+    if (focusCall) treeRef.current?.focusNode(focusCall.args?.node, target);
+    else if (commCall) treeRef.current?.resetView();
+  }, []);
+
+  const chat = useChat({ context, lang, treeTools: true, onAction });
   return (
     <div className={'frame col ' + (hifi ? 'hifi' : '')}>
       <TopBar
@@ -1262,7 +1332,7 @@ function HilirisasiPage({ hifi = false, chatOpen: chatOpenProp, setChatOpen: set
       />
       <div className="row grow" style={{ minHeight:0 }}>
         <div className="grow" style={{ position:'relative', overflow:'hidden' }}>
-          <HilirisasiTree commodity={commodity} setCommodity={setCommodity} lang={lang} />
+          <HilirisasiTree ref={treeRef} commodity={commodity} setCommodity={setCommodity} lang={lang} />
         </div>
         <HilirisasiChat open={chatOpen} onToggle={() => setChatOpen(!chatOpen)} hifi={hifi} commodity={commodity} lang={lang} chat={chat} />
       </div>

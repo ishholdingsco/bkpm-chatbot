@@ -8,6 +8,7 @@ import sectors from "@/data/sectors.json";
 import economic from "@/data/economic-indicators.json";
 import hazard from "@/data/hazard.json";
 import { MAP_TOOLS } from "@/components/map/mapActions";
+import { TREE_TOOLS } from "@/components/hilirisasi/treeActions";
 
 const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
 
@@ -83,6 +84,13 @@ const MAP_TOOLS_INSTRUCTION = `You are looking at the same interactive map as th
 - filter_opportunities — filter & highlight the featured opportunity pins (by sector, province, commodity, or minimum foreign-ownership %).
 When the user asks to see, show, zoom to, highlight, filter or focus on something on the map, CALL the matching function instead of only describing it. You may call several in one turn (e.g. fly_to + filter_opportunities). Always also reply with one or two short sentences explaining what you changed. Only the four layers above carry data — wiup/gdp/infra cannot be toggled yet.`;
 
+// Added only when the hilirisasi (value-chain) view enables tree tools. Tells
+// the model it can drive the same diagram the user sees (issue #24).
+const TREE_TOOLS_INSTRUCTION = `You are looking at the same interactive value-chain (hilirisasi/downstreaming) diagram as the user and can CONTROL it by calling functions:
+- set_commodity — switch the tree to another commodity (Nikel/Sawit/Kelapa/Rumput Laut).
+- focus_node — pan/zoom to a specific product node and highlight its trade tooltip.
+When the user asks to see, show, zoom to, highlight or focus on a product/stage, or to look at another commodity, CALL the matching function instead of only describing it. You may combine set_commodity + focus_node in one turn (switch tree, then focus a node in it). Always also reply with one or two short sentences. Use the node ids/names from the node list in the context.`;
+
 // Build the JSON payload for a DeepSeek chat completion. Tools are attached
 // only when provided, so the workspace chat (no map) behaves exactly as before.
 function deepseekPayload(model, messages, tools) {
@@ -138,7 +146,7 @@ export async function POST(req) {
     return new Response("Invalid JSON body.", { status: 400 });
   }
 
-  const { messages = [], context, lang, mapTools = false } = body;
+  const { messages = [], context, lang, mapTools = false, treeTools = false } = body;
 
   // Reply in the user's active UI language (default Bahasa Indonesia). See #8.
   const LANGUAGE_INSTRUCTION = {
@@ -148,13 +156,16 @@ export async function POST(req) {
   };
   const langNote = LANGUAGE_INSTRUCTION[lang] || LANGUAGE_INSTRUCTION.id;
 
-  // The map view passes mapTools:true so the assistant can drive the map.
-  const toolsEnabled = mapTools === true;
+  // The map view passes mapTools:true and the hilirisasi view treeTools:true so
+  // the assistant can drive whichever surface the user is on.
+  const tools = mapTools === true ? MAP_TOOLS : treeTools === true ? TREE_TOOLS : null;
+  const toolsEnabled = tools != null;
+  const toolInstruction = mapTools === true ? MAP_TOOLS_INSTRUCTION : treeTools === true ? TREE_TOOLS_INSTRUCTION : null;
 
   const system = [
     BASE_SYSTEM_PROMPT,
     langNote,
-    toolsEnabled && MAP_TOOLS_INSTRUCTION,
+    toolInstruction,
     context && `Current context: ${context}`,
   ]
     .filter(Boolean)
@@ -176,7 +187,7 @@ export async function POST(req) {
 
   let upstream;
   try {
-    upstream = await callUpstream(chatMessages, toolsEnabled ? MAP_TOOLS : null);
+    upstream = await callUpstream(chatMessages, tools);
   } catch (err) {
     return new Response("Failed to reach DeepSeek API.", { status: 502 });
   }
