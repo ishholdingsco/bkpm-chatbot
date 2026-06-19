@@ -4,7 +4,7 @@
 // and live streamed messages (role/content). Used by the workspace thread.
 
 import { Loader2, Pin } from "lucide-react";
-import { DATA, Avatar, BKPM, Cite } from "@/components/ui";
+import { DATA, Avatar, BKPM, Cite, useI18n } from "@/components/ui";
 import { Markdown } from "@/components/chat/Markdown";
 
 // Small inline status dot (presence / accent) — replaces the "●" glyph.
@@ -14,29 +14,31 @@ function Dot({ color = "currentColor", size = 6 }) {
 
 // "AI is thinking" placeholder shown while a reply streams in.
 function Thinking() {
+  const { t } = useI18n();
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "var(--ink-3)" }}>
-      <Loader2 size={14} strokeWidth={2} className="spin" /> thinking…
+      <Loader2 size={14} strokeWidth={2} className="spin" /> {t("common.thinking")}
     </span>
   );
 }
 
 export function ChatTurn({ turn, loading }) {
+  const { t } = useI18n();
   const isUser = turn.who ? turn.who === "user" : turn.role === "user";
   const isSuggest = turn.kind === "suggest";
-  const name = turn.name || (isUser ? DATA.user.name : "BKPM Assistant");
+  const name = turn.name || (isUser ? DATA.user.name : t("chat.assistant"));
   const time = turn.time || "";
   const text = turn.text ?? turn.content;
 
   if (isSuggest) {
     return (
       <div style={{ background: "var(--surface-2)", border: "1px solid var(--line)", borderLeft: "3px solid var(--terracotta)", borderRadius: 6, padding: "12px 14px", maxWidth: 640 }}>
-        <div className="label" style={{ color: "var(--terracotta)", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}><Dot /> <BKPM /> AI · suggested handoff</div>
+        <div className="label" style={{ color: "var(--terracotta)", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}><Dot /> <BKPM /> {t("chat.suggestHandoff")}</div>
         <div style={{ fontSize: 13, lineHeight: 1.55 }}>{text}</div>
         <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
-          <button className="btn btn-sm btn-primary">Yes, ask Rina</button>
-          <button className="btn btn-sm">Schedule a call</button>
-          <button className="btn btn-sm btn-ghost">Not yet</button>
+          <button className="btn btn-sm btn-primary">{t("chat.askRina")}</button>
+          <button className="btn btn-sm">{t("chat.scheduleCall")}</button>
+          <button className="btn btn-sm btn-ghost">{t("chat.notYet")}</button>
         </div>
       </div>
     );
@@ -56,7 +58,7 @@ export function ChatTurn({ turn, loading }) {
       {turn.cite && (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
           {turn.cite.map((c) => <Cite key={c}>{c}</Cite>)}
-          {turn.pin && <span className="mono" style={{ fontSize: 10, color: "var(--jade)", display: "inline-flex", alignItems: "center", gap: 4 }}><Pin size={11} strokeWidth={1.75} /> pinned to canvas: {turn.pin}</span>}
+          {turn.pin && <span className="mono" style={{ fontSize: 10, color: "var(--jade)", display: "inline-flex", alignItems: "center", gap: 4 }}><Pin size={11} strokeWidth={1.75} /> {t("chat.pinnedToCanvas", { pin: turn.pin })}</span>}
         </div>
       )}
     </div>

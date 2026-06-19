@@ -12,7 +12,7 @@ import { useChat } from "@/components/chat/useChat";
 import { ChatTurn } from "@/components/chat/ChatTurn";
 import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
 import { DropdownMenu, Tooltip } from "@/components/ui/controls";
-import { DATA, Avatar, AvatarStack, ArtifactCard, BKPM, Logo, TopBar, comingSoon } from "@/components/ui";
+import { DATA, Avatar, AvatarStack, ArtifactCard, BKPM, Logo, TopBar, comingSoon, useI18n, LangToggle } from "@/components/ui";
 import { HandoffModal } from "@/components/workspace/HandoffModal";
 import { CanvasFocus } from "@/components/workspace/CanvasFocus";
 
@@ -31,6 +31,7 @@ const SEED_MESSAGES = DATA.turns.map((t) => ({
 
 // ─── Sidebar (collapsible) ───
 function Sidebar({ collapsed, onToggle }) {
+  const { t } = useI18n();
   if (collapsed) {
     return (
       <div className="col" style={{ width: 56, borderRight: "1px solid var(--line)", background: "var(--surface-2)", padding: "12px 6px", gap: 12, alignItems: "center" }}>
@@ -40,8 +41,8 @@ function Sidebar({ collapsed, onToggle }) {
           <div key={p.id} title={p.name} style={{ width: 36, height: 36, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", background: p.active ? "var(--terracotta-soft)" : "var(--surface)", border: "1px solid " + (p.active ? "var(--terracotta)" : "var(--line)"), fontFamily: "IBM Plex Mono, monospace", fontSize: 10, fontWeight: 600, color: p.active ? "var(--terracotta)" : "var(--ink-2)", cursor: "pointer" }}>{p.short.slice(0, 2)}</div>
         ))}
         <div className="grow" />
-        <Tooltip content="Expand sidebar" side="right">
-          <button className="btn btn-ghost ui-icon-btn" onClick={onToggle} aria-label="Expand sidebar">
+        <Tooltip content={t("workspace.expandSidebar")} side="right">
+          <button className="btn btn-ghost ui-icon-btn" onClick={onToggle} aria-label={t("workspace.expandSidebar")}>
             <ChevronRight size={16} strokeWidth={1.75} />
           </button>
         </Tooltip>
@@ -53,8 +54,8 @@ function Sidebar({ collapsed, onToggle }) {
       <div style={{ padding: "14px 14px 10px", display: "flex", alignItems: "center", gap: 8 }}>
         <Logo size={16} />
         <div className="grow" />
-        <Tooltip content="Collapse sidebar">
-          <button className="btn btn-ghost ui-icon-btn" onClick={onToggle} aria-label="Collapse sidebar">
+        <Tooltip content={t("workspace.collapseSidebar")}>
+          <button className="btn btn-ghost ui-icon-btn" onClick={onToggle} aria-label={t("workspace.collapseSidebar")}>
             <ChevronLeft size={16} strokeWidth={1.75} />
           </button>
         </Tooltip>
@@ -70,10 +71,10 @@ function Sidebar({ collapsed, onToggle }) {
             </button>
           }
           items={[
-            { label: "Switch organization", onSelect: () => comingSoon("Switch organization") },
-            { label: "Organization settings", onSelect: () => comingSoon("Organization settings") },
+            { label: t("workspace.switchOrg"), onSelect: () => comingSoon(t("workspace.switchOrg")) },
+            { label: t("workspace.orgSettings"), onSelect: () => comingSoon(t("workspace.orgSettings")) },
             { separator: true },
-            { label: "Invite teammates", icon: <Plus size={14} strokeWidth={1.75} />, onSelect: () => comingSoon("Invite teammates") },
+            { label: t("workspace.inviteTeammates"), icon: <Plus size={14} strokeWidth={1.75} />, onSelect: () => comingSoon(t("workspace.inviteTeammates")) },
           ]}
         />
       </div>
@@ -82,9 +83,9 @@ function Sidebar({ collapsed, onToggle }) {
 
       <div className="scroll col grow" style={{ padding: "12px 10px", gap: 2 }}>
         <div style={{ display: "flex", alignItems: "center", padding: "0 6px 6px" }}>
-          <span className="label">Projects · 4</span>
-          <Tooltip content="New project">
-            <Link href="/workspace/new" className="btn btn-ghost btn-sm ui-icon-btn" style={{ marginLeft: "auto" }} aria-label="New project"><Plus size={15} strokeWidth={1.75} /></Link>
+          <span className="label">{t("workspace.projects")} · {DATA.projects.length}</span>
+          <Tooltip content={t("workspace.newProject")}>
+            <Link href="/workspace/new" className="btn btn-ghost btn-sm ui-icon-btn" style={{ marginLeft: "auto" }} aria-label={t("workspace.newProject")}><Plus size={15} strokeWidth={1.75} /></Link>
           </Tooltip>
         </div>
 
@@ -108,7 +109,7 @@ function Sidebar({ collapsed, onToggle }) {
                   </div>
                 ))}
                 <Link href="/workspace/new" style={{ textDecoration: "none", color: "var(--ink-3)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 8px", fontSize: 11, cursor: "pointer" }}><Plus size={12} strokeWidth={1.75} /> new thread</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 8px", fontSize: 11, cursor: "pointer" }}><Plus size={12} strokeWidth={1.75} /> {t("workspace.newThread")}</div>
                 </Link>
               </div>
             )}
@@ -132,10 +133,10 @@ function Sidebar({ collapsed, onToggle }) {
             </button>
           }
           items={[
-            { label: "Account settings", onSelect: () => comingSoon("Account settings") },
-            { label: "Preferences", onSelect: () => comingSoon("Preferences") },
+            { label: t("workspace.accountSettings"), onSelect: () => comingSoon(t("workspace.accountSettings")) },
+            { label: t("workspace.preferences"), onSelect: () => comingSoon(t("workspace.preferences")) },
             { separator: true },
-            { label: "Sign out", onSelect: () => comingSoon("Accounts") },
+            { label: t("workspace.signOut"), onSelect: () => comingSoon("Accounts") },
           ]}
         />
       </div>
@@ -145,6 +146,7 @@ function Sidebar({ collapsed, onToggle }) {
 
 // ─── Analyst presence ribbon (top of chat) ───
 function PresenceRibbon({ onBookCall, onPullIn, show }) {
+  const { t } = useI18n();
   if (!show) return null;
   const lead = DATA.analysts[0];
   return (
@@ -153,25 +155,26 @@ function PresenceRibbon({ onBookCall, onPullIn, show }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 12 }}>
           <span style={{ fontWeight: 600 }}>{lead.name}</span>
-          <span style={{ color: "var(--ink-3)" }}> watching this thread · </span>
-          <span style={{ color: "var(--jade)", display: "inline-flex", alignItems: "center", gap: 4 }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "currentColor" }} />online now</span>
-          <span style={{ color: "var(--ink-3)" }}> · usually replies in ~2h · {lead.interactions} prior interactions with you</span>
+          <span style={{ color: "var(--ink-3)" }}> {t("workspace.watchingThread")}</span>
+          <span style={{ color: "var(--jade)", display: "inline-flex", alignItems: "center", gap: 4 }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "currentColor" }} />{t("workspace.onlineNow")}</span>
+          <span style={{ color: "var(--ink-3)" }}>{t("workspace.presenceSuffix", { n: lead.interactions })}</span>
         </div>
       </div>
-      <span className="mono" style={{ fontSize: 10, color: "var(--ink-3)" }}>+2 more on call</span>
+      <span className="mono" style={{ fontSize: 10, color: "var(--ink-3)" }}>{t("workspace.moreOnCall")}</span>
       <AvatarStack items={DATA.analysts} max={3} />
-      <button className="btn btn-sm" onClick={onBookCall}>Book 30m</button>
-      <button className="btn btn-sm btn-primary" onClick={onPullIn}>Pull in <ArrowRight size={14} strokeWidth={1.75} /></button>
+      <button className="btn btn-sm" onClick={onBookCall}>{t("workspace.book30m")}</button>
+      <button className="btn btn-sm btn-primary" onClick={onPullIn}>{t("workspace.pullIn")} <ArrowRight size={14} strokeWidth={1.75} /></button>
     </div>
   );
 }
 
 function FloatingChip({ onClick, show }) {
+  const { t } = useI18n();
   if (!show) return null;
   return (
     <div style={{ position: "absolute", top: 70, right: 24, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 999, padding: "5px 10px 5px 6px", boxShadow: "var(--shadow-2)", display: "flex", alignItems: "center", gap: 8, zIndex: 4, cursor: "pointer" }} onClick={onClick}>
       <Avatar name="RP" color="#b94a1f" size="sm" status="online" />
-      <span style={{ fontSize: 11, fontWeight: 500 }}>Rina is here</span>
+      <span style={{ fontSize: 11, fontWeight: 500 }}>{t("workspace.isHere", { name: DATA.analysts[0].name.split(" ")[0] })}</span>
       <ArrowUpRight size={13} strokeWidth={1.75} style={{ color: "var(--ink-3)" }} />
     </div>
   );
@@ -179,6 +182,7 @@ function FloatingChip({ onClick, show }) {
 
 // ─── Composer (live) ───
 function Composer({ input, setInput, onSend, loading, onReferHuman }) {
+  const { t } = useI18n();
   return (
     <div style={{ borderTop: "1px solid var(--line)", padding: "12px 20px 14px", background: "var(--surface-2)" }}>
       <div className="card" style={{ padding: "10px 12px" }}>
@@ -189,17 +193,17 @@ function Composer({ input, setInput, onSend, loading, onReferHuman }) {
           submitOn="mod-enter"
           rows={2}
           maxHeight={160}
-          placeholder="Ask about regulations, structure, comps — or @mention an analyst…"
+          placeholder={t("chat.placeholder")}
           style={{ width: "100%", border: "none", outline: "none", resize: "none", fontSize: 13, lineHeight: 1.5, fontFamily: "Inter, sans-serif", background: "transparent", color: "var(--ink)", minHeight: 38 }}
         />
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-          <button className="btn btn-sm btn-ghost" onClick={() => comingSoon("Attach files")}><Paperclip size={14} strokeWidth={1.75} /> Attach</button>
-          <button className="btn btn-sm btn-ghost" onClick={() => comingSoon("Mention an analyst")}><AtSign size={14} strokeWidth={1.75} /> Mention</button>
-          <button className="btn btn-sm btn-ghost" onClick={() => comingSoon("Slash commands")}><Slash size={14} strokeWidth={1.75} /> Slash</button>
-          <button className="btn btn-sm" onClick={onReferHuman} style={{ color: "var(--terracotta)", borderColor: "var(--terracotta-tint)" }}><ArrowUpRight size={14} strokeWidth={1.75} /> Refer to human</button>
+          <button className="btn btn-sm btn-ghost" onClick={() => comingSoon(t("chat.attach"))}><Paperclip size={14} strokeWidth={1.75} /> {t("chat.attach")}</button>
+          <button className="btn btn-sm btn-ghost" onClick={() => comingSoon(t("chat.mention"))}><AtSign size={14} strokeWidth={1.75} /> {t("chat.mention")}</button>
+          <button className="btn btn-sm btn-ghost" onClick={() => comingSoon(t("chat.slash"))}><Slash size={14} strokeWidth={1.75} /> {t("chat.slash")}</button>
+          <button className="btn btn-sm" onClick={onReferHuman} style={{ color: "var(--terracotta)", borderColor: "var(--terracotta-tint)" }}><ArrowUpRight size={14} strokeWidth={1.75} /> {t("chat.referHuman")}</button>
           <div className="grow" />
           <span className="mono" style={{ fontSize: 9, color: "var(--ink-4)" }}>
-            <span className="kbd">⌘</span> <span className="kbd">↵</span> send
+            <span className="kbd">⌘</span> <span className="kbd">↵</span> {t("chat.send")}
           </span>
           <SendButton className="btn btn-sm btn-jade" loading={loading} input={input} onSend={onSend} />
         </div>
@@ -210,6 +214,7 @@ function Composer({ input, setInput, onSend, loading, onReferHuman }) {
 
 // ─── Canvas rail (artifacts) ───
 function CanvasRail({ mode, onToggle, onPopout, onArtifactClick }) {
+  const { t } = useI18n();
   if (mode === "hidden") return null;
   const isPopout = mode === "popout";
   const width = isPopout ? 600 : 300;
@@ -217,23 +222,23 @@ function CanvasRail({ mode, onToggle, onPopout, onArtifactClick }) {
   return (
     <div className="col" style={{ width, borderLeft: "1px solid var(--line)", background: "var(--surface-2)", transition: "width 0.2s" }}>
       <div style={{ padding: "12px 14px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--line)" }}>
-        <span className="label">Shared canvas</span>
-        <span className="chip" style={{ marginLeft: 4 }}>{DATA.artifacts.length} artifacts</span>
+        <span className="label">{t("workspace.sharedCanvas")}</span>
+        <span className="chip" style={{ marginLeft: 4 }}>{t("workspace.artifacts", { n: DATA.artifacts.length })}</span>
         <div className="grow" />
-        <Tooltip content={isPopout ? "Shrink" : "Pop out"}>
-          <button className="btn btn-ghost btn-sm ui-icon-btn" onClick={onPopout} aria-label={isPopout ? "Shrink canvas" : "Pop out canvas"}>
+        <Tooltip content={isPopout ? t("workspace.shrink") : t("workspace.popOut")}>
+          <button className="btn btn-ghost btn-sm ui-icon-btn" onClick={onPopout} aria-label={isPopout ? t("workspace.shrinkCanvas") : t("workspace.popOutCanvas")}>
             {isPopout ? <Minimize2 size={15} strokeWidth={1.75} /> : <Maximize2 size={15} strokeWidth={1.75} />}
           </button>
         </Tooltip>
-        <Tooltip content="Collapse">
-          <button className="btn btn-ghost btn-sm ui-icon-btn" onClick={onToggle} aria-label="Collapse canvas">
+        <Tooltip content={t("common.collapse")}>
+          <button className="btn btn-ghost btn-sm ui-icon-btn" onClick={onToggle} aria-label={t("workspace.collapseCanvas")}>
             <X size={15} strokeWidth={1.75} />
           </button>
         </Tooltip>
       </div>
 
       <div className="scroll col grow" style={{ padding: 12, gap: 10 }}>
-        <div style={{ fontSize: 11, color: "var(--ink-3)", lineHeight: 1.4 }}>Pinned by AI + analyst as the thread evolves. Edits sync to project memory.</div>
+        <div style={{ fontSize: 11, color: "var(--ink-3)", lineHeight: 1.4 }}>{t("workspace.canvasHint")}</div>
 
         {isPopout ? (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -243,10 +248,10 @@ function CanvasRail({ mode, onToggle, onPopout, onArtifactClick }) {
           DATA.artifacts.map((a) => <ArtifactCard key={a.title} {...a} onClick={() => onArtifactClick(a)} />)
         )}
 
-        <div onClick={() => comingSoon("Pin / upload to canvas")} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, padding: 10, border: "1px dashed var(--line-strong)", borderRadius: 6, fontSize: 11, color: "var(--ink-3)", marginTop: 4, cursor: "pointer" }}><Plus size={13} strokeWidth={1.75} /> Pin from chat or upload</div>
+        <div onClick={() => comingSoon(t("workspace.pinFromChat"))} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, padding: 10, border: "1px dashed var(--line-strong)", borderRadius: 6, fontSize: 11, color: "var(--ink-3)", marginTop: 4, cursor: "pointer" }}><Plus size={13} strokeWidth={1.75} /> {t("workspace.pinFromChat")}</div>
 
         <div className="card" style={{ padding: 12, marginTop: 8 }}>
-          <div className="label" style={{ marginBottom: 8 }}>On call · <BKPM /></div>
+          <div className="label" style={{ marginBottom: 8 }}>{t("workspace.onCall")} <BKPM /></div>
           {DATA.analysts.map((a) => (
             <div key={a.short} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
               <Avatar name={a.short} color={a.color} size="sm" status={a.status} />
@@ -254,8 +259,8 @@ function CanvasRail({ mode, onToggle, onPopout, onArtifactClick }) {
                 <div style={{ fontSize: 11.5, fontWeight: 500 }}>{a.name}</div>
                 <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)" }}>{a.focus}</div>
               </div>
-              <Tooltip content={"Message " + a.name.split(" ")[0]}>
-                <button className="btn btn-sm btn-ghost ui-icon-btn" aria-label={"Message " + a.name} onClick={() => comingSoon("Message " + a.name.split(" ")[0])}><ArrowUpRight size={15} strokeWidth={1.75} /></button>
+              <Tooltip content={t("workspace.message", { name: a.name.split(" ")[0] })}>
+                <button className="btn btn-sm btn-ghost ui-icon-btn" aria-label={t("workspace.message", { name: a.name })} onClick={() => comingSoon(t("workspace.message", { name: a.name.split(" ")[0] }))}><ArrowUpRight size={15} strokeWidth={1.75} /></button>
               </Tooltip>
             </div>
           ))}
@@ -267,6 +272,7 @@ function CanvasRail({ mode, onToggle, onPopout, onArtifactClick }) {
 
 // ─── MAIN — Active thread screen ───
 export function ActiveThread() {
+  const { t, lang } = useI18n();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [canvasMode, setCanvasMode] = useState("rail");
   const [showPresence, setShowPresence] = useState(true);
@@ -274,7 +280,7 @@ export function ActiveThread() {
   const [handoffOpen, setHandoffOpen] = useState(false);
 
   const context = `User is in the Wilaya workspace, project "${DATA.projects[0].name}" (${DATA.projects[0].short}), thread "${DATA.threads[0].name}". They are a foreign institutional investor (Khazanah Nasional) doing diligence on nickel midstream co-investment with state-owned MIND ID.`;
-  const { messages, input, setInput, send, loading } = useChat({ initialMessages: SEED_MESSAGES, context });
+  const { messages, input, setInput, send, loading } = useChat({ initialMessages: SEED_MESSAGES, context, lang });
 
   return (
     <div className="frame col">
@@ -295,12 +301,13 @@ export function ActiveThread() {
         }
         right={
           <>
-            <button className="btn btn-sm btn-ghost" onClick={() => comingSoon("Search")}><Search size={14} strokeWidth={1.75} /> Search <span className="kbd">⌘K</span></button>
-            <Tooltip content="Notifications" side="bottom">
-              <Link href="/notifications" className="btn btn-sm btn-ghost ui-icon-btn" aria-label="Notifications"><Bell size={15} strokeWidth={1.75} /></Link>
+            <button className="btn btn-sm btn-ghost" onClick={() => comingSoon(t("workspace.search"))}><Search size={14} strokeWidth={1.75} /> {t("workspace.search")} <span className="kbd">⌘K</span></button>
+            <Tooltip content={t("common.notifications")} side="bottom">
+              <Link href="/notifications" className="btn btn-sm btn-ghost ui-icon-btn" aria-label={t("common.notifications")}><Bell size={15} strokeWidth={1.75} /></Link>
             </Tooltip>
+            <LangToggle />
             {canvasMode === "hidden" && (
-              <button className="btn btn-sm" onClick={() => setCanvasMode("rail")}>Show canvas <ArrowRight size={14} strokeWidth={1.75} /></button>
+              <button className="btn btn-sm" onClick={() => setCanvasMode("rail")}>{t("workspace.showCanvas")} <ArrowRight size={14} strokeWidth={1.75} /></button>
             )}
           </>
         }
@@ -320,21 +327,21 @@ export function ActiveThread() {
               <DropdownMenu
                 align="end"
                 trigger={
-                  <button className="btn btn-sm btn-ghost ui-icon-btn" aria-label="Thread options"><MoreHorizontal size={16} strokeWidth={1.75} /></button>
+                  <button className="btn btn-sm btn-ghost ui-icon-btn" aria-label={t("workspace.threadOptions")}><MoreHorizontal size={16} strokeWidth={1.75} /></button>
                 }
                 items={[
-                  { label: "Rename thread", onSelect: () => comingSoon("Rename thread") },
-                  { label: "Share thread", icon: <ArrowUpRight size={14} strokeWidth={1.75} />, onSelect: () => comingSoon("Share thread") },
-                  { label: "Add to canvas", icon: <Plus size={14} strokeWidth={1.75} />, onSelect: () => comingSoon("Add to canvas") },
+                  { label: t("workspace.renameThread"), onSelect: () => comingSoon(t("workspace.renameThread")) },
+                  { label: t("workspace.shareThread"), icon: <ArrowUpRight size={14} strokeWidth={1.75} />, onSelect: () => comingSoon(t("workspace.shareThread")) },
+                  { label: t("workspace.addToCanvas"), icon: <Plus size={14} strokeWidth={1.75} />, onSelect: () => comingSoon(t("workspace.addToCanvas")) },
                   { separator: true },
-                  { label: "Archive thread", onSelect: () => comingSoon("Archive thread") },
+                  { label: t("workspace.archiveThread"), onSelect: () => comingSoon(t("workspace.archiveThread")) },
                 ]}
               />
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 6, alignItems: "center" }}>
-              <span className="mono" style={{ fontSize: 10, color: "var(--ink-3)" }}>Started 26 Apr · live thread · 2 artifacts pinned</span>
-              <span className="chip">Regulatory</span>
-              <span className="chip">Structuring</span>
+              <span className="mono" style={{ fontSize: 10, color: "var(--ink-3)" }}>{t("workspace.threadMeta")}</span>
+              <span className="chip">{t("workspace.tagRegulatory")}</span>
+              <span className="chip">{t("workspace.tagStructuring")}</span>
             </div>
           </div>
 

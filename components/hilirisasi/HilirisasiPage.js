@@ -7,7 +7,7 @@
 import { useState as useHil, useRef as useHilRef, useEffect as useHilEffect } from "react";
 import Link from "next/link";
 import { Search, MessageCircle, ChevronRight, Plus, Minus, Crosshair } from "lucide-react";
-import { Avatar, TopBar, Cite, comingSoon } from "@/components/ui";
+import { Avatar, TopBar, Cite, comingSoon, useI18n, LangToggle } from "@/components/ui";
 
 // ─── Layout constants ───
 const HT = { PANEL_W: 192, NODE_W: 148, NODE_H: 62, COL_SPAN: 244, ROW_SPAN: 62, HDR: 44 };
@@ -1138,12 +1138,16 @@ function HilirisasiChat({ open, onToggle, hifi, commodity, lang = 'id' }) {
 }
 
 // ─── HILIRISASI PAGE ───
-function HilirisasiPage({ hifi = false, chatOpen: chatOpenProp, setChatOpen: setChatOpenProp, lang = 'id' }) {
+function HilirisasiPage({ hifi = false, chatOpen: chatOpenProp, setChatOpen: setChatOpenProp, lang: langProp }) {
   const [commodity, setCommodity] = useHil('Nikel');
   // Standalone route: own the chat panel state when no parent controls it.
   const [chatOpenState, setChatOpenState] = useHil(true);
   const chatOpen = chatOpenProp ?? chatOpenState;
   const setChatOpen = setChatOpenProp || setChatOpenState;
+  // Follow the global ID/EN/中 toggle unless a parent pins an explicit language
+  // (the HilirisasiPageEN/ZH/… wrappers do, for the extra demo locales).
+  const { lang: globalLang } = useI18n();
+  const lang = langProp || (UI[globalLang] ? globalLang : 'id');
   const u = UI[lang] || UI.en;
   return (
     <div className={'frame col ' + (hifi ? 'hifi' : '')}>
@@ -1167,7 +1171,7 @@ function HilirisasiPage({ hifi = false, chatOpen: chatOpenProp, setChatOpen: set
               <div className="grow" />
               <span className="kbd">⌘K</span>
             </div>
-            <button className="btn btn-sm btn-ghost" onClick={() => comingSoon('Language (i18n)')}>{u.langCode}</button>
+            <LangToggle />
             <Link href="/workspace" style={{ textDecoration:'none' }}>
               <button className="btn btn-sm btn-primary">{u.startProject}</button>
             </Link>

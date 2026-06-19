@@ -12,3 +12,4 @@ export {
   ArtifactCard,
 } from "./primitives";
 export { ToastHost, toast, comingSoon, ComingSoonButton } from "./Toast";
+export { LanguageProvider, useI18n, LangToggle, LANGUAGES } from "./i18n";
