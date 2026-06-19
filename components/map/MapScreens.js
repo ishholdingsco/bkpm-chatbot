@@ -6,7 +6,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ChevronDown, ChevronRight, Plus, Minus, Locate, Compass,
-  Search, MessageCircle, ArrowUpRight, ArrowRight, Loader2, X,
+  Search, MessageCircle, ArrowUpRight, ArrowRight, Loader2,
 } from "lucide-react";
 import MapboxMap from "@/components/map/MapboxMap";
 import { applyLayerChange, boundsOf, resolveFlyTo, selectOpportunities } from "@/components/map/mapActions";
@@ -282,7 +282,9 @@ export function MapPage({ hifi = false }) {
     if (filt) {
       setSelected(null); // an assistant filter supersedes a single clicked pin
       const sel = selectOpportunities(filt.args || {});
-      if (!sel.ids) setPinFilter(null);
+      // No matches (or an explicit clear) → drop the filter so every pin stays
+      // visible, rather than emphasizing an empty set.
+      if (!sel.ids || sel.ids.length === 0) setPinFilter(null);
       else {
         setPinFilter(sel);
         selCoords = sel.coords;
@@ -304,12 +306,13 @@ export function MapPage({ hifi = false }) {
 
   // Clicking a featured pin both surfaces the top card (via `selected`) and
   // pulls its context into the chat: open the panel and prefill a question about
-  // that opportunity. Clicking the same pin again clears the card.
+  // that opportunity. The card then stays put and just switches as you click
+  // around — there's no dismiss; another click/filter replaces it.
   const onPinClick = useCallback(
     (id) => {
       const opp = opportunitiesData.opportunities.find((o) => o.id === id);
       if (!opp) return;
-      setSelected((prev) => (prev === id ? null : id));
+      setSelected(id);
       setChatOpen(true);
       chat.setInput(t("map.pinPrompt", { label: opp.label }));
     },
@@ -323,10 +326,10 @@ export function MapPage({ hifi = false }) {
   const cardInfo = useMemo(() => {
     if (selected) {
       const o = opportunitiesData.opportunities.find((x) => x.id === selected);
-      if (o) return { count: 1, value: o.ticketUsdM || 0, label: o.label, onClose: () => setSelected(null) };
+      if (o) return { count: 1, value: o.ticketUsdM || 0, label: o.label };
     }
     if (pinFilter?.ids?.length) {
-      return { count: pinFilter.count, value: pinFilter.valueUsdM, label: pinFilter.label, onClose: () => setPinFilter(null) };
+      return { count: pinFilter.count, value: pinFilter.valueUsdM, label: pinFilter.label };
     }
     return null;
   }, [selected, pinFilter]);
@@ -397,19 +400,16 @@ export function MapPage({ hifi = false }) {
               derived from the matched data, never hardcoded. */}
           {cardInfo && (
             <div style={{ position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 3 }}>
-              <div className="card" style={{ padding: "8px 14px", display: "flex", gap: 14, alignItems: "center" }}>
-                <div>
+              <div className="card" style={{ padding: "8px 14px", display: "flex", gap: 12, alignItems: "center", maxWidth: 360 }}>
+                <div style={{ flexShrink: 0 }}>
                   <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)" }}>{t("map.oppsInView")}</div>
-                  <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "Source Serif 4" }}>{cardInfo.count} <span style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400, fontFamily: "Inter" }}>{t("map.oppsTracked", { value: formatUsdM(cardInfo.value) })}</span></div>
+                  <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "Source Serif 4", whiteSpace: "nowrap" }}>{cardInfo.count} <span style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400, fontFamily: "Inter" }}>{t("map.oppsTracked", { value: formatUsdM(cardInfo.value) })}</span></div>
                 </div>
-                <div style={{ width: 1, height: 30, background: "var(--line)" }} />
-                <div className="col">
-                  <span className="chip chip-terra chip-dot" style={{ fontSize: 9 }}>{t("map.featured", { n: cardInfo.count })}</span>
-                  <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 2 }}>{cardInfo.label}</span>
+                <div style={{ width: 1, height: 30, background: "var(--line)", flexShrink: 0 }} />
+                <div className="col" style={{ minWidth: 0 }}>
+                  <span className="chip chip-terra chip-dot" style={{ fontSize: 9, alignSelf: "flex-start" }}>{t("map.featured", { n: cardInfo.count })}</span>
+                  <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 200 }} title={cardInfo.label}>{cardInfo.label}</span>
                 </div>
-                <button className="btn btn-ghost btn-sm ui-icon-btn" onClick={cardInfo.onClose} aria-label={t("common.collapse")} style={{ marginLeft: 2 }}>
-                  <X size={14} strokeWidth={1.75} />
-                </button>
               </div>
             </div>
           )}

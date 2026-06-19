@@ -90,9 +90,6 @@ function addPolygonLayer(map, { id, features, fill, line }) {
   map.addLayer({ id: `${id}-line`, type: "line", source: id, paint: line });
 }
 
-// The featured-opportunity layers we filter when chat highlights a subset.
-const FEATURED_LAYERS = ["mb-featured-halo", "mb-featured-ring", "mb-featured-hit"];
-
 const MapboxMap = forwardRef(function MapboxMap({
   center = [118.0, -2.5],
   zoom = 4.0,
@@ -190,16 +187,23 @@ const MapboxMap = forwardRef(function MapboxMap({
     }
   }, [ready, layers]);
 
-  // Highlight a subset of featured opportunity pins when chat filters them.
-  // `pinFilter.ids` is an array of opportunity ids; null/undefined shows all.
+  // Emphasize a subset of featured opportunity pins when chat filters them.
+  // `pinFilter.ids` is an array of opportunity ids; null/empty shows all evenly.
+  // We DIM the non-matches instead of hiding them, so the data never disappears
+  // from the map (a filter only re-weights what's already there).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
     const ids = pinFilter?.ids;
-    const filter = Array.isArray(ids) ? ["in", ["get", "kind"], ["literal", ids]] : null;
-    FEATURED_LAYERS.forEach((id) => {
-      if (map.getLayer(id)) map.setFilter(id, filter);
-    });
+    const has = Array.isArray(ids) && ids.length > 0;
+    const isMatch = has ? ["in", ["get", "kind"], ["literal", ids]] : null;
+    if (map.getLayer("mb-featured-ring")) {
+      map.setPaintProperty("mb-featured-ring", "circle-opacity", has ? ["case", isMatch, 1, 0.22] : 1);
+      map.setPaintProperty("mb-featured-ring", "circle-stroke-opacity", has ? ["case", isMatch, 1, 0.22] : 1);
+    }
+    if (map.getLayer("mb-featured-halo")) {
+      map.setPaintProperty("mb-featured-halo", "circle-opacity", has ? ["case", isMatch, 0.18, 0.03] : 0.1);
+    }
   }, [ready, pinFilter]);
 
   return (

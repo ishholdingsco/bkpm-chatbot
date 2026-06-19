@@ -82,7 +82,8 @@ const MAP_TOOLS_INSTRUCTION = `You are looking at the same interactive map as th
 - set_layers — show/hide data layers (industrial, kek, minerals, ports).
 - fly_to — pan/zoom to a region or coordinate.
 - filter_opportunities — filter & highlight the featured opportunity pins (by sector, province, commodity, or minimum foreign-ownership %).
-When the user asks to see, show, zoom to, highlight, filter or focus on something on the map, CALL the matching function instead of only describing it. You may call several in one turn (e.g. fly_to + filter_opportunities). Always also reply with one or two short sentences explaining what you changed. Only the four layers above carry data — wiup/gdp/infra cannot be toggled yet.`;
+When the user asks to see, show, zoom to, highlight, filter or focus on something on the map, CALL the matching function instead of only describing it. You may call several in one turn (e.g. fly_to + filter_opportunities). Only the four layers above carry data — wiup/gdp/infra cannot be toggled yet.
+Your text reply must be exactly ONE short sentence in the user's language explaining what you changed — do not repeat it. NEVER write JSON, the word "actions", function names, or argument objects in your text; the system applies the calls, your prose is only for the human to read.`;
 
 // Added only when the hilirisasi (value-chain) view enables tree tools. Tells
 // the model it can drive the same diagram the user sees (issue #24).
