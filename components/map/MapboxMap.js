@@ -96,6 +96,14 @@ function mbBlob([lng, lat], radiusKm, sides = 11, seed = 1, aspect = 1.0) {
   return ring;
 }
 
+// Add a GeoJSON source plus its fill + outline layers in one call — the same
+// shape repeats per polygon category (industrial estates, KEK, …).
+function addPolygonLayer(map, { id, features, fill, line }) {
+  map.addSource(id, { type: "geojson", data: { type: "FeatureCollection", features } });
+  map.addLayer({ id: `${id}-fill`, type: "fill", source: id, paint: fill });
+  map.addLayer({ id: `${id}-line`, type: "line", source: id, paint: line });
+}
+
 export default function MapboxMap({
   center = [118.0, -2.5],
   zoom = 4.0,
@@ -175,18 +183,24 @@ function addMbOverlays(map, onPinClick) {
     properties: { name: p.n, kind: "industrial" },
     geometry: { type: "Polygon", coordinates: [mbBlob(p.ll, p.size, 11, 11 + i * 13, p.aspect)] },
   }));
-  map.addSource("mb-industrial", { type: "geojson", data: { type: "FeatureCollection", features: indFeats } });
-  map.addLayer({ id: "mb-industrial-fill", type: "fill", source: "mb-industrial", paint: { "fill-color": "#f7b500", "fill-opacity": 0.55 } });
-  map.addLayer({ id: "mb-industrial-line", type: "line", source: "mb-industrial", paint: { "line-color": "#b07900", "line-width": 1.2 } });
+  addPolygonLayer(map, {
+    id: "mb-industrial",
+    features: indFeats,
+    fill: { "fill-color": "#f7b500", "fill-opacity": 0.55 },
+    line: { "line-color": "#b07900", "line-width": 1.2 },
+  });
 
   const kekFeats = MB_PINS.kek.map((p, i) => ({
     type: "Feature",
     properties: { name: p.n, kind: "kek" },
     geometry: { type: "Polygon", coordinates: [mbBlob(p.ll, p.r, 9, 31 + i * 7, 1.1)] },
   }));
-  map.addSource("mb-kek", { type: "geojson", data: { type: "FeatureCollection", features: kekFeats } });
-  map.addLayer({ id: "mb-kek-fill", type: "fill", source: "mb-kek", paint: { "fill-color": "#7e4dd9", "fill-opacity": 0.30 } });
-  map.addLayer({ id: "mb-kek-line", type: "line", source: "mb-kek", paint: { "line-color": "#5a2eaa", "line-width": 1.2, "line-dasharray": [3, 2] } });
+  addPolygonLayer(map, {
+    id: "mb-kek",
+    features: kekFeats,
+    fill: { "fill-color": "#7e4dd9", "fill-opacity": 0.30 },
+    line: { "line-color": "#5a2eaa", "line-width": 1.2, "line-dasharray": [3, 2] },
+  });
 
   const featFeats = MB_PINS.featured.map((p) => ({
     type: "Feature",
@@ -221,29 +235,24 @@ function addMbOverlays(map, onPinClick) {
     });
   });
 
-  map.on("mouseenter", "mb-industrial-fill", (e) => {
-    map.getCanvas().style.cursor = "pointer";
-    const f = e.features?.[0];
-    if (!f) return;
-    popup.setLngLat(e.lngLat).setHTML(
-      `<div style="font:600 12px/1.3 Inter,system-ui,sans-serif;color:#1a1a2e;">${f.properties.name}</div>
-       <div style="font:500 10px/1.4 'IBM Plex Mono',monospace;color:#b07900;letter-spacing:0.06em;margin-top:2px;">KAWASAN INDUSTRI</div>`
-    ).addTo(map);
-  });
-  map.on("mouseleave", "mb-industrial-fill", leave);
-  map.on("mousemove", "mb-industrial-fill", (e) => popup.setLngLat(e.lngLat));
+  // Both polygon layers share a name + category-tag hover popup; only the tag
+  // text and accent colour differ.
+  const addFillHoverPopup = (layerId, tag, tagColor) => {
+    map.on("mouseenter", layerId, (e) => {
+      map.getCanvas().style.cursor = "pointer";
+      const f = e.features?.[0];
+      if (!f) return;
+      popup.setLngLat(e.lngLat).setHTML(
+        `<div style="font:600 12px/1.3 Inter,system-ui,sans-serif;color:#1a1a2e;">${f.properties.name}</div>
+         <div style="font:500 10px/1.4 'IBM Plex Mono',monospace;color:${tagColor};letter-spacing:0.06em;margin-top:2px;">${tag}</div>`
+      ).addTo(map);
+    });
+    map.on("mouseleave", layerId, leave);
+    map.on("mousemove", layerId, (e) => popup.setLngLat(e.lngLat));
+  };
 
-  map.on("mouseenter", "mb-kek-fill", (e) => {
-    map.getCanvas().style.cursor = "pointer";
-    const f = e.features?.[0];
-    if (!f) return;
-    popup.setLngLat(e.lngLat).setHTML(
-      `<div style="font:600 12px/1.3 Inter,system-ui,sans-serif;color:#1a1a2e;">${f.properties.name}</div>
-       <div style="font:500 10px/1.4 'IBM Plex Mono',monospace;color:#7e4dd9;letter-spacing:0.06em;margin-top:2px;">SPECIAL ECONOMIC ZONE</div>`
-    ).addTo(map);
-  });
-  map.on("mouseleave", "mb-kek-fill", leave);
-  map.on("mousemove", "mb-kek-fill", (e) => popup.setLngLat(e.lngLat));
+  addFillHoverPopup("mb-industrial-fill", "KAWASAN INDUSTRI", "#b07900");
+  addFillHoverPopup("mb-kek-fill", "SPECIAL ECONOMIC ZONE", "#7e4dd9");
 }
 
 // De-emphasize non-Indonesia using Mapbox's real country-boundaries source.

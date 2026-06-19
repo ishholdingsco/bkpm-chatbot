@@ -1,4 +1,4 @@
-import { MapPage } from "@/components/map-screens";
+import { MapPage } from "@/components/map/MapScreens";
 
 export default function Map() {
   return (

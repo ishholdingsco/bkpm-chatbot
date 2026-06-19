@@ -1,4 +1,4 @@
-import { ActiveThread } from "@/components/thread";
+import { ActiveThread } from "@/components/chat/ActiveThread";
 
 export default function Workspace() {
   return (

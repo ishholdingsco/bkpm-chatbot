@@ -1,4 +1,4 @@
-import { Landing } from "@/components/map-screens";
+import { Landing } from "@/components/map/MapScreens";
 
 export default function Home() {
   return (

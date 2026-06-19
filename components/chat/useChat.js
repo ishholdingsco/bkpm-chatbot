@@ -42,7 +42,6 @@ export function useChat({ initialMessages = [], context } = {}) {
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let acc = "";
-        // eslint-disable-next-line no-constant-condition
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
