@@ -1,0 +1,46 @@
+{
+  "_meta": {
+    "title": "Commodity downstreaming (hilirisasi) value chains — headline trade",
+    "purpose": "Sourced headline export totals for the value-chain explorer (/hilirisasi). They replace the previous placeholder summary figures.",
+    "retrieved": "2026-06-20",
+    "year": 2023,
+    "currency": "USD",
+    "disclaimer": "Export totals are from official/industry sources (BKPM, GAPKI, BPS, KKP/UNIDO) for the year noted. Import and surplus figures, and the per-node product values rendered in the tree, are INDICATIVE prototype approximations — verify against primary sources before real use.",
+    "sources": {
+      "Nikel": "Kementerian Investasi/BKPM — nickel downstreaming export value 2023 (~US$33.5B), via ANTARA",
+      "Sawit": "GAPKI — palm oil + derivatives export value 2023 (US$30.32B)",
+      "Kelapa": "BPS / UN Comtrade — coconut product exports 2023 (~US$1.55B)",
+      "Rumput Laut": "KKP / UNIDO — seaweed exports 2023 (dried + carrageenan + agar, ~US$0.60B)"
+    }
+  },
+  "commodities": {
+    "Nikel": {
+      "tahun": "2023",
+      "ekspor": "USD 33.5B",
+      "impor": "USD 1.6B",
+      "surplus": "USD 31.9B",
+      "source": "Kementerian Investasi/BKPM 2023 (hilirisasi nikel)"
+    },
+    "Sawit": {
+      "tahun": "2023",
+      "ekspor": "USD 30.3B",
+      "impor": "USD 0.1B",
+      "surplus": "USD 30.2B",
+      "source": "GAPKI 2023 (sawit + turunan)"
+    },
+    "Kelapa": {
+      "tahun": "2023",
+      "ekspor": "USD 1.55B",
+      "impor": "USD 0.2B",
+      "surplus": "USD 1.35B",
+      "source": "BPS / UN Comtrade 2023 (produk kelapa)"
+    },
+    "Rumput Laut": {
+      "tahun": "2023",
+      "ekspor": "USD 0.60B",
+      "impor": "USD 0.05B",
+      "surplus": "USD 0.55B",
+      "source": "KKP / UNIDO 2023 (rumput laut & olahan)"
+    }
+  }
+}

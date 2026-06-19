@@ -1,13 +1,20 @@
 "use client";
 // Pohon Hilirisasi — commodity value-chain tree page, ported from
 // content/hilirisasi-screens.jsx. Interactive pan/zoom canvas with per-commodity
-// trees, hover tooltips, and a scripted multilingual analyst chat. Demo data only;
-// the 8 language variants tie into the i18n issue (#8).
+// trees, hover tooltips, and a live DeepSeek analyst chat (useChat) whose context
+// tracks the selected commodity (issue #24). Tree data is demo data only; the 8
+// language variants tie into the i18n issue (#8).
 
-import { useState as useHil, useRef as useHilRef, useEffect as useHilEffect } from "react";
+import { useState as useHil, useRef as useHilRef, useEffect as useHilEffect, useMemo, useRef, useCallback, forwardRef, useImperativeHandle } from "react";
 import Link from "next/link";
-import { Search, MessageCircle, ChevronRight, Plus, Minus, Crosshair } from "lucide-react";
-import { Avatar, TopBar, Cite, comingSoon, useI18n, LangToggle } from "@/components/ui";
+import { Search, MessageCircle, ChevronRight, Plus, Minus, Crosshair, ArrowUpRight, Loader2 } from "lucide-react";
+import { Avatar, TopBar, comingSoon, useI18n, LangToggle } from "@/components/ui";
+import { resolveCommodity } from "@/components/hilirisasi/treeActions";
+import { useChat } from "@/components/chat/useChat";
+import valueChains from "@/data/value-chains.json";
+import { useStickToBottom, JumpToLatest } from "@/components/chat/useStickToBottom";
+import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
+import { Markdown } from "@/components/chat/Markdown";
 
 // ─── Layout constants ───
 const HT = { PANEL_W: 192, NODE_W: 148, NODE_H: 62, COL_SPAN: 244, ROW_SPAN: 62, HDR: 44 };
@@ -954,12 +961,18 @@ function HilirisasiPanel({ commodity, setCommodity, lang = 'id' }) {
 }
 
 // ─── Pan/zoom canvas ───
-function HilirisasiTree({ commodity, setCommodity, lang = 'id' }) {
+// forwardRef so the chat (via HilirisasiPage) can drive the diagram the same way
+// MapPage drives Mapbox: focus_node pans/zooms onto a product, set_commodity
+// swaps the tree (issue #24).
+const HilirisasiTree = forwardRef(function HilirisasiTree({ commodity, setCommodity, lang = 'id' }, ref) {
   const tree = COMMODITY_TREES[commodity] || COMMODITY_TREES['Nikel'];
   const u = UI[lang] || UI.en;
   const [hovered, setHovered] = useHil(null);
   const [pan,   setPan]   = useHil({ x: 0, y: 0 });
   const [scale, setScale] = useHil(0.86);
+  // True only for AI-driven / button moves so the transform eases smoothly;
+  // cleared on the next manual drag/zoom so dragging stays 1:1 with the cursor.
+  const [animate, setAnimate] = useHil(false);
   const dragging = useHilRef(false);
   const lastXY   = useHilRef({ x: 0, y: 0 });
   const wrapRef  = useHilRef(null);
@@ -977,23 +990,57 @@ function HilirisasiTree({ commodity, setCommodity, lang = 'id' }) {
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
   }, []);
 
-  function onMouseDown(e) { if (e.button !== 0) return; dragging.current = true; lastXY.current = { x: e.clientX, y: e.clientY }; wrapRef.current.style.cursor = 'grabbing'; }
+  function onMouseDown(e) { if (e.button !== 0) return; setAnimate(false); dragging.current = true; lastXY.current = { x: e.clientX, y: e.clientY }; wrapRef.current.style.cursor = 'grabbing'; }
   function onWheel(e) {
     e.preventDefault();
+    setAnimate(false);
     const rect = wrapRef.current.getBoundingClientRect(), mx = e.clientX - rect.left, my = e.clientY - rect.top;
     const factor = e.deltaY < 0 ? 1.1 : 0.91;
     setScale(s => { const ns = Math.min(Math.max(s * factor, 0.3), 2.5); setPan(p => ({ x: mx - (mx - p.x) * (ns / s), y: my - (my - p.y) * (ns / s) })); return ns; });
   }
   function handleHover(id) { if (!dragging.current) setHovered(id); }
 
-  const { nodes, edges, summary } = tree;
+  // Imperative handle: pan/zoom onto a node (centred in the visible canvas, i.e.
+  // to the right of the left panel) and highlight its tooltip; or reset the view.
+  // `lookupCommodity` lets a combined set_commodity+focus_node call target the
+  // tree we're switching to, even before the prop re-render lands.
+  function focusNode(query, lookupCommodity) {
+    const cTree = COMMODITY_TREES[lookupCommodity] || tree;
+    const q = String(query || '').trim().toLowerCase();
+    if (!q) return;
+    const flat = s => String(s || '').replace(/\n/g, ' ').trim().toLowerCase();
+    const node =
+      cTree.nodes.find(n => n.id.toLowerCase() === q) ||
+      cTree.nodes.find(n => flat(n.label) === q) ||
+      cTree.nodes.find(n => flat(getLabelForLang(n, 'en')) === q) ||
+      cTree.nodes.find(n => flat(n.label).includes(q) || q.includes(n.id.toLowerCase())) ||
+      cTree.nodes.find(n => flat(getLabelForLang(n, 'en')).includes(q));
+    if (!node) return;
+    const el = wrapRef.current;
+    const vw = el ? el.clientWidth : 960;
+    const vh = el ? el.clientHeight : 640;
+    const ts = 1.18;
+    const cx = nx(node) + HT.NODE_W / 2;
+    const cy = ny(node) + HT.NODE_H / 2;
+    setAnimate(true);
+    setScale(ts);
+    setPan({ x: (HT.PANEL_W + vw) / 2 - cx * ts, y: vh / 2 - cy * ts });
+    setHovered(node.id);
+  }
+  function resetView() { setAnimate(true); setPan({ x: 0, y: 0 }); setScale(0.86); setHovered(null); }
+  useImperativeHandle(ref, () => ({ focusNode, resetView }), [commodity]);
+
+  const { nodes, edges } = tree;
+  // Headline trade comes from sourced data (data/value-chains.json); node-level
+  // figures in the tree stay indicative (issue #24).
+  const summary = valueChains.commodities[commodity] || tree.summary;
   const stageLabels = getStageLabels(tree, lang);
 
   return (
     <div ref={wrapRef} onMouseDown={onMouseDown} onWheel={onWheel}
       style={{ position:'absolute', inset:0, overflow:'hidden', cursor:'grab', background:'var(--bg)', backgroundImage:'radial-gradient(var(--line-strong) 1px, transparent 1px)', backgroundSize:'28px 28px', userSelect:'none' }}
     >
-      <div style={{ position:'absolute', top:0, left:0, width:CANVAS_W, height:CANVAS_H, transform:`translate(${pan.x}px,${pan.y}px) scale(${scale})`, transformOrigin:'0 0', willChange:'transform' }}>
+      <div style={{ position:'absolute', top:0, left:0, width:CANVAS_W, height:CANVAS_H, transform:`translate(${pan.x}px,${pan.y}px) scale(${scale})`, transformOrigin:'0 0', transition: animate ? 'transform 0.55s cubic-bezier(0.22,1,0.36,1)' : 'none', willChange:'transform' }}>
         <TreeConnections nodes={nodes} edges={edges} hovered={hovered} />
         {stageLabels.map((label, i) => (
           <div key={i} style={{ position:'absolute', top:8, left: HT.PANEL_W + i * HT.COL_SPAN + 4, width:HT.NODE_W, textAlign:'center', fontSize:9, fontWeight:600, fontStyle:'italic', color: i === 4 ? 'var(--bkpm-green-deep)' : 'var(--warn)', fontFamily:'IBM Plex Mono, monospace', lineHeight:1.3 }}>{label}</div>
@@ -1003,13 +1050,13 @@ function HilirisasiTree({ commodity, setCommodity, lang = 'id' }) {
       </div>
 
       <HilirisasiPanel commodity={commodity} setCommodity={setCommodity} lang={lang} />
-      <TreeControls onZoomIn={() => setScale(s => Math.min(s*1.18, 2.5))} onZoomOut={() => setScale(s => Math.max(s*0.85, 0.3))} onReset={() => { setPan({x:0,y:0}); setScale(0.86); }} />
+      <TreeControls onZoomIn={() => { setAnimate(true); setScale(s => Math.min(s*1.18, 2.5)); }} onZoomOut={() => { setAnimate(true); setScale(s => Math.max(s*0.85, 0.3)); }} onReset={resetView} />
 
       {/* Compact single-row stats card */}
       <div onMouseDown={e => e.stopPropagation()} style={{ position:'absolute', top:12, left:`calc(${HT.PANEL_W}px + (100% - ${HT.PANEL_W}px) / 2)`, transform:'translateX(-50%)', zIndex:5 }}>
         <div className="card" style={{ padding:'6px 14px', display:'flex', gap:0, alignItems:'stretch', boxShadow:'var(--shadow-2)', whiteSpace:'nowrap' }}>
-          {/* Identity */}
-          <div style={{ paddingRight:12, marginRight:12, borderRight:'1px solid var(--line)', display:'flex', flexDirection:'column', justifyContent:'center' }}>
+          {/* Identity (hover for data source) */}
+          <div title={summary.source ? `Sumber: ${summary.source}` : undefined} style={{ paddingRight:12, marginRight:12, borderRight:'1px solid var(--line)', display:'flex', flexDirection:'column', justifyContent:'center', cursor: summary.source ? 'help' : 'default' }}>
             <div className="mono" style={{ fontSize:9, color:'var(--ink-3)', letterSpacing:'0.08em' }}>{(u.commNames[commodity] || commodity).toUpperCase()} · {summary.tahun}</div>
             <div className="mono" style={{ fontSize:11, fontWeight:600, color:'var(--ink)' }}>{nodes.length} {u.nodes} · {edges.length} {u.connections}</div>
           </div>
@@ -1036,11 +1083,103 @@ function HilirisasiTree({ commodity, setCommodity, lang = 'id' }) {
       </div>
     </div>
   );
+});
+
+// ─── Popular investor questions (seed prompts for the live chat) ───
+// Per language × commodity. These used to head a scripted Q&A; now they just
+// pre-fill the composer and fire a real DeepSeek turn (issue #24). The reply
+// language is driven by the chat `lang`, so the seed text matches the UI.
+const SUGGESTS = {
+  id: {
+    Nikel:        ['Berapa surplus total nikel 2021?', 'KEK mana yang fokus hilirisasi nikel?', 'Perbandingan NPI vs FeNi untuk investasi?'],
+    Sawit:        ['Nilai ekspor CPO Indonesia 2023?', 'Negara tujuan RBD Palm Olein terbesar?', 'Insentif investasi oleokimia?'],
+    Kelapa:       ['Daerah produksi kelapa terbesar?', 'Peluang investasi VCO organik?', 'Potensi ekspor ke pasar Eropa?'],
+    'Rumput Laut':['Daerah budidaya rumput laut terbesar?', 'Standar kualitas ekspor Eropa?', 'Peluang agar bakteriologis untuk riset?'],
+  },
+  en: {
+    Nikel:        ['Total nickel surplus in 2021?', 'Which special economic zones focus on nickel downstream?', 'NPI vs FeNi — which is better for investment?'],
+    Sawit:        ['Indonesia CPO export value 2023?', 'Top destinations for RBD Palm Olein?', 'Investment incentives for oleochemicals?'],
+    Kelapa:       ['Top coconut-producing regions?', 'Investment opportunities in organic VCO?', 'Export potential to European markets?'],
+    'Rumput Laut':['Top seaweed farming regions?', 'EU export quality standards?', 'Bacteriological agar opportunities in research?'],
+  },
+  zh: {
+    Nikel:        ['2021年镍总顺差是多少？', '哪些经济特区专注镍下游？', 'NPI与FeNi投资对比？'],
+    Sawit:        ['2023年印尼CPO出口额？', 'RBD棕榈液油主要目的地？', '油脂化工投资激励措施？'],
+    Kelapa:       ['印尼最大椰子产区？', '有机初榨椰子油投资机会？', '向欧洲市场出口潜力？'],
+    'Rumput Laut':['最大海藻养殖区域？', '欧盟出口质量标准？', '科研用细菌学琼脂机会？'],
+  },
+  fr: {
+    Nikel:        ['Surplus total nickel 2021 ?', 'Quelles ZES ciblent l\'aval nickel ?', 'NPI vs FeNi — lequel privilégier ?'],
+    Sawit:        ['Valeur export CPO indonésien 2023 ?', 'Principales destinations RBD Palm Olein ?', 'Incitations à l\'investissement oléochimique ?'],
+    Kelapa:       ['Principales régions productrices de noix de coco ?', 'Opportunités d\'investissement HVC bio ?', 'Potentiel export vers les marchés européens ?'],
+    'Rumput Laut':['Principales régions de culture d\'algues ?', 'Normes de qualité export UE ?', 'Opportunités agar bactériologique pour la recherche ?'],
+  },
+  no: {
+    Nikel:        ['Totalt nikkeloverskudd 2021?', 'Hvilke SEZ fokuserer på nikkel nedstrøms?', 'NPI vs FeNi — hva er best for investering?'],
+    Sawit:        ['CPO eksportverdi Indonesia 2023?', 'Topp destinasjoner RBD Palm Olein?', 'Investeringsincitamenter oleokjemikalier?'],
+    Kelapa:       ['Topp kokosnøttproduserende regioner?', 'Investeringsmuligheter organisk VCO?', 'Eksportpotensial til europeiske markeder?'],
+    'Rumput Laut':['Topp sjøgressdyrkingsregioner?', 'EU eksportkvalitetsstandarder?', 'Bakteriologisk agarmuligheter i forskning?'],
+  },
+  ms: {
+    Nikel:        ['Jumlah lebihan nikel 2021?', 'KEZ mana fokus hiliran nikel?', 'NPI vs FeNi — mana lebih baik untuk pelaburan?'],
+    Sawit:        ['Nilai eksport CPO Indonesia 2023?', 'Destinasi utama RBD Palm Olein?', 'Insentif pelaburan oleokimia?'],
+    Kelapa:       ['Kawasan pengeluaran kelapa terbesar?', 'Peluang pelaburan VCO organik?', 'Potensi eksport ke pasaran Eropah?'],
+    'Rumput Laut':['Kawasan penanaman rumpai laut terbesar?', 'Piawaian kualiti eksport EU?', 'Peluang agar bakteriologi untuk penyelidikan?'],
+  },
+  ar: {
+    Nikel:        ['إجمالي فائض النيكل 2021؟', 'أي المناطق الاقتصادية الخاصة تركز على مصب النيكل؟', 'NPI مقابل FeNi — أيهما أفضل للاستثمار؟'],
+    Sawit:        ['قيمة صادرات CPO إندونيسيا 2023؟', 'أهم وجهات RBD Palm Olein؟', 'حوافز الاستثمار في الكيماويات الدهنية؟'],
+    Kelapa:       ['أبرز مناطق إنتاج جوز الهند؟', 'فرص الاستثمار في VCO العضوي؟', 'إمكانية التصدير إلى الأسواق الأوروبية؟'],
+    'Rumput Laut':['أبرز مناطق زراعة عشب البحر؟', 'معايير جودة التصدير الأوروبي؟', 'فرص الأجار البكتيريولوجي للبحوث؟'],
+  },
+  hi: {
+    Nikel:        ['2021 में कुल निकेल अधिशेष?', 'कौन से SEZ निकेल डाउनस्ट्रीम पर ध्यान देते हैं?', 'NPI बनाम FeNi — निवेश के लिए कौन बेहतर?'],
+    Sawit:        ['इंडोनेशिया CPO निर्यात मूल्य 2023?', 'RBD Palm Olein के शीर्ष गंतव्य?', 'ओलियोकेमिकल निवेश प्रोत्साहन?'],
+    Kelapa:       ['शीर्ष नारियल उत्पादन क्षेत्र?', 'जैविक VCO में निवेश के अवसर?', 'यूरोपीय बाजारों में निर्यात संभावना?'],
+    'Rumput Laut':['शीर्ष समुद्री शैवाल खेती क्षेत्र?', 'EU निर्यात गुणवत्ता मानक?', 'अनुसंधान के लिए बैक्टीरियोलॉजिकल अगर अवसर?'],
+  },
+};
+
+// Build the English grounding context the assistant sees: which commodity tree
+// is on screen, its trade summary, and its highest value-add products — so the
+// reply stays tied to what the user is looking at. Reply language is handled by
+// the API from `lang`, so this stays English like the map context (issue #24).
+function buildHilirisasiContext(commodity) {
+  const tree = COMMODITY_TREES[commodity] || COMMODITY_TREES['Nikel'];
+  const topValueAdd = [...tree.nodes]
+    .filter((n) => n.mult)
+    .sort((a, b) => b.mult - a.mult)
+    .slice(0, 5)
+    .map((n) => `${n.label.replace(/\n/g, ' ')} (${n.mult}×)`)
+    .join(', ');
+  const s = valueChains.commodities[commodity] || tree.summary;
+  // id — name list so focus_node can target a real node by id.
+  const nodeList = tree.nodes
+    .map((n) => `${n.id} — ${n.label.replace(/\n/g, ' ')}`)
+    .join("; ");
+  return (
+    `User is viewing the Wilaya value-chain (hilirisasi/downstreaming) tree for ${commodity}. ` +
+    `Trade summary (${s.tahun}${s.source ? `, source: ${s.source}` : ""}): exports ${s.ekspor}, imports ${s.impor}, surplus ${s.surplus}. ` +
+    `The tree maps ${tree.nodes.length} products across ${tree.stageLabels.length} stages, from raw material to finished applications. ` +
+    `Highest value-add products (multiplier over raw material): ${topValueAdd}. ` +
+    `Answer about value-add, downstream processing, trade balance and investment opportunities along this chain; keep numbers consistent with this summary. ` +
+    `Nodes you can focus_node on (id — name): ${nodeList}.`
+  );
 }
 
-// ─── Chat sidebar ───
-function HilirisasiChat({ open, onToggle, hifi, commodity, lang = 'id' }) {
+// ─── Chat sidebar — LIVE via DeepSeek (issue #24) ───
+// Mirrors MapChat: presentational, the chat state lives in HilirisasiPage and is
+// passed in as `chat` so the context tracks the selected commodity.
+function HilirisasiChat({ open, onToggle, hifi, commodity, lang = 'id', chat }) {
   const u = UI[lang] || UI.en;
+  const { t } = useI18n();
+  const { messages, input, setInput, send, loading } = chat;
+  const { containerRef, onScroll, scrollToBottom, isFollowing } = useStickToBottom(messages);
+  const composerRef = useRef(null);
+  // Sending (composer or a suggestion) snaps to the bottom and re-engages following.
+  const handleSend = (text) => { scrollToBottom(); send(text); };
+  const suggests = (SUGGESTS[lang] || SUGGESTS.id)[commodity] || SUGGESTS.id.Nikel;
+
   if (!open) {
     return (
       <button className={'btn ' + (hifi ? 'hifi' : '')} onClick={onToggle}
@@ -1049,88 +1188,74 @@ function HilirisasiChat({ open, onToggle, hifi, commodity, lang = 'id' }) {
       </button>
     );
   }
-  const context = `${u.context} · ${u.commNames[commodity] || commodity}`;
-  const CHATS_EN = {
-    Nikel: { q1:'At which stage is the nickel value-add highest?', a1:<>Highest value-add is in the <b>EV battery chain (67×)</b>. MHP is the critical inflection — from there value jumps to Ni-SO₄ (8×) and Batteries (67×).<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Ministry of Industry 2021</Cite><Cite>BKPM Downstream 2024</Cite></div></>, q2:'Which products are still heavily imported?', a2:'SS Rod/Bar (deficit USD 125M), SS Bolt & Nut (deficit USD 51M), and Batteries (deficit USD 2.3B) — clear import-substitution opportunities.', suggests:['Total nickel surplus in 2021?','Which special economic zones focus on nickel downstream?','NPI vs FeNi — which is better for investment?'] },
-    Sawit: { q1:'Which palm oil product has the highest value-add?', a1:<>Cosmetic Base reaches <b>12×</b> value-add from FFB, followed by surfactants (10×) and oleochemicals (8×). Indonesia still dominates CPO exports — oleochemicals is the big downstream opportunity.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Ministry of Industry 2023</Cite><Cite>Palm Oil Board 2023</Cite></div></>, q2:'What is the outlook for palm biodiesel?', a2:'The B30/B40 program guarantees domestic absorption. Exports USD 2.2B, minimal import deficit. Attractive margins backed by strong government policy.', suggests:['Indonesia CPO export value 2023?','Top destinations for RBD Palm Olein?','Investment incentives for oleochemicals?'] },
-    Kelapa: { q1:'Which coconut product has the most potential?', a1:<>VCO delivers <b>8×</b> value-add and its derivative VCO Supplements reaches <b>15×</b>. Indonesia is the world\'s largest producer yet lags the Philippines in processed exports — a significant gap for investors.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Ministry of Industry 2023</Cite><Cite>Statistics Indonesia 2023</Cite></div></>, q2:'What is the activated carbon opportunity from coconut shells?', a2:'Indonesian coconut shell activated carbon serves water filtration, pharma, and environmental industries. Exports USD 0.9B with 6× value-add — market growing with global environmental regulation.', suggests:['Top coconut-producing regions?','Investment opportunities in organic VCO?','Export potential to European markets?'] },
-    'Rumput Laut': { q1:'Why is refined carrageenan more attractive than SRC?', a1:<>RC delivers <b>12×</b> value-add from raw material — nearly 1.5× more than SRC (8×). Price: RC USD 15–25/kg vs SRC USD 3–6/kg. Indonesia dominates SRC but is small in RC — a clear white space.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Marine Ministry 2023</Cite><Cite>BKPM Seaweed Report</Cite></div></>, q2:'How large is the global carrageenan market?', a2:'Global carrageenan market USD 1.2B (2023), growing 5.8% CAGR. Indonesia supplies 40% of world raw seaweed but holds only 15% of processed market share — a large gap to fill.', suggests:['Top seaweed farming regions?','EU export quality standards?','Bacteriological agar opportunities in research?'] },
-  };
-  const CHATS_ZH = {
-    Nikel: { q1:'镍的最高增值在哪个阶段？', a1:<>最高增值在<b>电动车电池链 (67×)</b>。MHP是关键转折点——从此处价值跃升至Ni-SO₄ (8×)，最终达到电池 (67×)。<div style={{display:'flex',gap:6,marginTop:8}}><Cite>工业部 2021</Cite><Cite>BKPM 下游化 2024</Cite></div></>, q2:'哪些产品仍大量进口？', a2:'不锈钢棒材（逆差1.25亿美元）、SS螺栓螺母（逆差5100万美元）和电池（逆差23亿美元）——明显的进口替代机会。', suggests:['2021年镍总顺差是多少？','哪些经济特区专注镍下游？','NPI与FeNi投资对比？'] },
-    Sawit: { q1:'哪种棕榈油产品增值最高？', a1:<>化妆品基料从FFB增值达<b>12×</b>，其次是表面活性剂 (10×) 和油脂化工 (8×)。印尼仍主导CPO出口——油脂化工是重大下游机会。<div style={{display:'flex',gap:6,marginTop:8}}><Cite>工业部 2023</Cite><Cite>棕油协会 2023</Cite></div></>, q2:'棕榈生物柴油的前景如何？', a2:'B30/B40政策保障国内消费。出口22亿美元，进口逆差极小，在强政策支持下利润可观。', suggests:['2023年印尼CPO出口额？','RBD棕榈液油主要目的地？','油脂化工投资激励措施？'] },
-    Kelapa: { q1:'哪种椰子产品最具潜力？', a1:<>VCO增值<b>8×</b>，其衍生品椰油补充剂高达<b>15×</b>。印尼是全球最大椰子产地，但加工出口远落后菲律宾——投资空间巨大。<div style={{display:'flex',gap:6,marginTop:8}}><Cite>工业部 2023</Cite><Cite>印尼统计局 2023</Cite></div></>, q2:'椰壳活性炭的机会如何？', a2:'印尼椰壳活性炭服务水净化、制药和环保行业。出口9亿美元，增值6×，随全球环境法规趋严市场持续增长。', suggests:['印尼最大椰子产区？','有机初榨椰子油投资机会？','向欧洲市场出口潜力？'] },
-    'Rumput Laut': { q1:'为何精制卡拉胶比SRC更具吸引力？', a1:<>RC增值<b>12×</b>——比SRC (8×) 高近1.5倍。价格：RC 15–25美元/千克 vs SRC 3–6美元/千克。印尼主导SRC但RC份额很小——明显的白色空间。<div style={{display:'flex',gap:6,marginTop:8}}><Cite>海洋部 2023</Cite><Cite>BKPM 海藻报告</Cite></div></>, q2:'全球卡拉胶市场有多大？', a2:'全球卡拉胶市场12亿美元 (2023)，CAGR 5.8%。印尼供应全球40%原料海藻，但精制市场份额仅15%——巨大差距待填补。', suggests:['最大海藻养殖区域？','欧盟出口质量标准？','科研用细菌学琼脂机会？'] },
-  };
-  const CHATS_FR = {
-    Nikel: { q1:'À quel stade la valeur ajoutée du nickel est-elle la plus haute ?', a1:<>La plus grande valeur ajoutée est dans la chaîne <b>batterie VE (67×)</b>. Le MHP est le point d'inflexion critique — de là, la valeur bondit vers Ni-SO₄ (8×) puis Batteries (67×).<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Min. Industrie ID 2021</Cite><Cite>BKPM Aval 2024</Cite></div></>, q2:'Quels produits sont encore fortement importés ?', a2:'Barre SS Rod (déficit 125M USD), SS Bolt & Nut (déficit 51M USD) et Batteries (déficit 2,3Md USD) — opportunités d\'import-substitution évidentes.', suggests:['Surplus total nickel 2021 ?','Quelles ZES ciblent l\'aval nickel ?','NPI vs FeNi — lequel privilégier ?'] },
-    Sawit: { q1:'Quel produit palmier a la valeur ajoutée la plus élevée ?', a1:<>La base cosmétique atteint <b>12×</b> de valeur ajoutée depuis les FFB, suivie des tensioactifs (10×) et des oléochimiques (8×). L'Indonésie domine encore les exportations CPO — les oléochimiques sont la grande opportunité aval.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Min. Industrie ID 2023</Cite><Cite>GAPKI 2023</Cite></div></>, q2:'Quelles sont les perspectives pour le biodiesel palmier ?', a2:'Le programme B30/B40 garantit l\'absorption domestique. Exportations 2,2Md USD, déficit d\'importation minimal. Marges attractives soutenues par la politique gouvernementale.', suggests:['Valeur export CPO indonésien 2023 ?','Principales destinations RBD Palm Olein ?','Incitations à l\'investissement oléochimique ?'] },
-    Kelapa: { q1:'Quel produit de noix de coco est le plus prometteur ?', a1:<>L'HVC (VCO) apporte <b>8×</b> de valeur ajoutée et ses compléments atteignent <b>15×</b>. L'Indonésie est le premier producteur mondial mais reste loin derrière les Philippines en exportations transformées — un écart important pour les investisseurs.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Min. Industrie ID 2023</Cite><Cite>Stat. Indonésie 2023</Cite></div></>, q2:'Quelle est l\'opportunité du charbon actif de coco ?', a2:'Le charbon actif de coco indonésien sert la filtration d\'eau, la pharmacie et l\'environnement. Exportations 0,9Md USD avec 6× de valeur ajoutée — marché en croissance avec les réglementations environnementales mondiales.', suggests:['Principales régions productrices de noix de coco ?','Opportunités d\'investissement HVC bio ?','Potentiel export vers les marchés européens ?'] },
-    'Rumput Laut': { q1:'Pourquoi le carraghénane raffiné est-il plus attractif que le SRC ?', a1:<>Le RC délivre <b>12×</b> de valeur ajoutée — presque 1,5× plus que le SRC (8×). Prix : RC 15–25 USD/kg vs SRC 3–6 USD/kg. L'Indonésie domine le SRC mais est minoritaire sur le RC — un espace blanc évident.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Min. Maritime ID 2023</Cite><Cite>BKPM Algues</Cite></div></>, q2:'Quelle est la taille du marché mondial des carraghénanes ?', a2:'Marché mondial 1,2Md USD (2023), CAGR 5,8 %. L\'Indonésie fournit 40 % des algues brutes mondiales mais ne détient que 15 % du marché transformé — un écart important à combler.', suggests:['Principales régions de culture d\'algues ?','Normes de qualité export UE ?','Opportunités agar bactériologique pour la recherche ?'] },
-  };
-  const CHATS = {
-    Nikel: { q1:'Di tahap mana nilai tambah nikel tertinggi?', a1:<>Nilai tambah tertinggi di rantai <b>baterai EV (67×)</b>. MHP adalah titik kritis—setelah sini nilai melonjak drastis ke Ni-SO₄ (8×) dan akhirnya Batteries (67×).<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Kemenperin 2021</Cite><Cite>BKPM Hilirisasi 2024</Cite></div></>, q2:'Produk mana yang masih banyak diimpor?', a2:'SS Rod/Bar (defisit USD 125M), SS Bolt & Nut (defisit USD 51M), dan Batteries (defisit USD 2.3B). Ini peluang substitusi impor yang sangat jelas.', suggests:['Berapa surplus total nikel 2021?','KEK mana yang fokus hilirisasi nikel?','Perbandingan NPI vs FeNi untuk investasi?'] },
-    Sawit: { q1:'Produk sawit mana yang nilai tambahnya paling tinggi?', a1:<>Kosmetik Base mencapai <b>12×</b> nilai tambah dari TBS, diikuti surfaktan (10×) dan oleokimia (8×). Indonesia masih dominan ekspor CPO mentah—hilirisasi ke oleokimia adalah peluang besar.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Kemenperin 2023</Cite><Cite>GAPKI 2023</Cite></div></>, q2:'Bagaimana peluang biodiesel sawit?', a2:'Program B30/B40 menjamin penyerapan domestik. Ekspor USD 2.2B, defisit impor minimal. Margin menarik dengan policy support yang kuat dari pemerintah.', suggests:['Nilai ekspor CPO Indonesia 2023?','Negara tujuan RBD Palm Olein terbesar?','Insentif investasi oleokimia?'] },
-    Kelapa: { q1:'Produk kelapa mana yang paling potensial?', a1:<>VCO memiliki nilai tambah <b>8×</b> dan turunannya suplemen VCO mencapai <b>15×</b>. Indonesia penghasil terbesar tapi masih kalah Filipina di ekspor produk olahan—gap besar untuk investor.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Kemenperin 2023</Cite><Cite>BPS 2023</Cite></div></>, q2:'Potensi karbon aktif dari tempurung kelapa?', a2:'Karbon aktif dari tempurung kelapa Indonesia digunakan industri filter air, farmasi, dan lingkungan. Ekspor USD 0.9B dengan nilai tambah 6×—pasar tumbuh seiring regulasi lingkungan global.', suggests:['Daerah produksi kelapa terbesar?','Peluang investasi VCO organik?','Potensi ekspor ke pasar Eropa?'] },
-    'Rumput Laut': { q1:'Mengapa refined carrageenan lebih menarik dari SRC?', a1:<>RC memiliki nilai tambah <b>12×</b> dari bahan mentah—hampir 1.5× dari SRC (8×). Harga RC USD 15–25/kg vs SRC USD 3–6/kg. Indonesia dominan di SRC tapi masih kecil di RC.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>KKP 2023</Cite><Cite>BKPM Seaweed</Cite></div></>, q2:'Berapa besar pasar carrageenan global?', a2:'Pasar carrageenan global USD 1.2B (2023), tumbuh 5.8% CAGR. Indonesia 40% produksi bahan baku dunia tapi hanya 15% market share produk olahan—gap besar untuk diisi.', suggests:['Daerah budidaya rumput laut terbesar?','Standar kualitas ekspor Eropa?','Peluang agar bakteriologis untuk riset?'] },
-  };
-  const CHATS_NO = {
-    Nikel: { q1:'Hvilken fase har høyest nikkel verdiskapning?', a1:<>Høyest verdiskapning er i <b>EV-batterikjeden (67×)</b>. MHP er det kritiske vendepunktet — derfra hopper verdien til Ni-SO₄ (8×) og Batterier (67×).<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Industridept. ID 2021</Cite><Cite>BKPM Nedstrøms 2024</Cite></div></>, q2:'Hvilke produkter importeres fortsatt mye?', a2:'SS-stenger (underskudd 125M USD), SS-bolter & muttere (underskudd 51M USD) og Batterier (underskudd 2,3Md USD) — klare importsubstitusjons­muligheter.', suggests:['Totalt nikkel­overskudd 2021?','Hvilke SEZ fokuserer på nikkel nedstrøms?','NPI vs FeNi — hva er best for investering?'] },
-    Sawit: { q1:'Hvilket palmeproduktet har høyest verdiskapning?', a1:<>Kosmetikkbase når <b>12×</b> verdiskapning fra FFB, etterfulgt av tensider (10×) og oleokjemikalier (8×). Indonesia dominerer CPO-eksporten — oleokjemikalier er den store nedstrøms­muligheten.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Industridept. ID 2023</Cite><Cite>GAPKI 2023</Cite></div></>, q2:'Hva er utsiktene for palmebio­diesel?', a2:'B30/B40-programmet garanterer innenlands absorpsjon. Eksport 2,2Md USD, minimalt importunderskudd. Attraktive marginer støttet av sterk myndighetspolitikk.', suggests:['CPO eksportverdi Indonesia 2023?','Topp destinasjoner RBD Palm Olein?','Investeringsincitamenter oleokjemikalier?'] },
-    Kelapa: { q1:'Hvilket kokosnøttprodukt har mest potensial?', a1:<>VCO gir <b>8×</b> verdiskapning og dets derivat VCO-tilskudd når <b>15×</b>. Indonesia er verdens største produsent, men henger etter Filippinene i bearbeidede eksporter — en betydelig mulighet for investorer.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Industridept. ID 2023</Cite><Cite>Statistikk Indonesia 2023</Cite></div></>, q2:'Hva er muligheten med aktivt kull fra kokosskall?', a2:'Indonesisk kokosskall-kullstoff brukes i vannrensing, farmasi og miljøindustrien. Eksport 0,9Md USD med 6× verdiskapning — voksende marked med global miljøregulering.', suggests:['Topp kokosnøtt­produserende regioner?','Investeringsmuligheter organisk VCO?','Eksportpotensial til europeiske markeder?'] },
-    'Rumput Laut': { q1:'Hvorfor er raffinert karragén mer attraktivt enn SRC?', a1:<>RC gir <b>12×</b> verdiskapning — nesten 1,5× mer enn SRC (8×). Pris: RC 15–25 USD/kg vs SRC 3–6 USD/kg. Indonesia dominerer SRC men er liten i RC — et klart hvitt rom.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Havdept. ID 2023</Cite><Cite>BKPM Sjøgress</Cite></div></>, q2:'Hvor stort er det globale karragén­markedet?', a2:'Globalt karragén­marked 1,2Md USD (2023), vokser 5,8 % CAGR. Indonesia leverer 40 % av verdens råsjøgress men har bare 15 % markedsandel i bearbeidet — et stort gap å fylle.', suggests:['Topp sjøgress­dyrkingsregioner?','EU eksport­kvalitetsstandarder?','Bakteriologisk agar­muligheter i forskning?'] },
-  };
-  const CHATS_MS = {
-    Nikel: { q1:'Di peringkat manakah nilai tambah nikel tertinggi?', a1:<>Nilai tambah tertinggi dalam rantai <b>bateri EV (67×)</b>. MHP adalah titik kritikal — dari sini nilai melompat ke Ni-SO₄ (8×) dan Bateri (67×).<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Kemenperin 2021</Cite><Cite>BKPM Hiliran 2024</Cite></div></>, q2:'Produk mana yang masih banyak diimport?', a2:'SS Rod/Bar (defisit 125M USD), SS Bolt & Nat (defisit 51M USD) dan Bateri (defisit 2.3B USD) — peluang substitusi import yang jelas.', suggests:['Jumlah lebihan nikel 2021?','KEZ mana fokus hiliran nikel?','NPI vs FeNi — mana lebih baik untuk pelaburan?'] },
-    Sawit: { q1:'Produk sawit mana yang nilai tambahnya paling tinggi?', a1:<>Asas kosmetik mencapai <b>12×</b> nilai tambah dari TBS, diikuti surfaktan (10×) dan oleokimia (8×). Indonesia masih menguasai eksport CPO mentah — oleokimia adalah peluang hiliran yang besar.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Kemenperin 2023</Cite><Cite>GAPKI 2023</Cite></div></>, q2:'Bagaimana prospek biodiesel sawit?', a2:'Program B30/B40 menjamin penyerapan domestik. Eksport 2.2B USD, defisit import minimum. Margin menarik disokong dasar kerajaan yang kukuh.', suggests:['Nilai eksport CPO Indonesia 2023?','Destinasi utama RBD Palm Olein?','Insentif pelaburan oleokimia?'] },
-    Kelapa: { q1:'Produk kelapa mana yang paling berpotensi?', a1:<>VCO mempunyai nilai tambah <b>8×</b> dan turunannya suplemen VCO mencapai <b>15×</b>. Indonesia pengeluar terbesar di dunia tetapi masih ketinggalan Filipina dalam eksport produk olahan — jurang besar untuk pelabur.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>Kemenperin 2023</Cite><Cite>Statistik Indonesia 2023</Cite></div></>, q2:'Potensi karbon aktif dari tempurung kelapa?', a2:'Karbon aktif tempurung kelapa Indonesia digunakan dalam penapis air, farmasi dan industri alam sekitar. Eksport 0.9B USD dengan nilai tambah 6× — pasaran berkembang seiring regulasi alam sekitar global.', suggests:['Kawasan pengeluaran kelapa terbesar?','Peluang pelaburan VCO organik?','Potensi eksport ke pasaran Eropah?'] },
-    'Rumput Laut': { q1:'Mengapa karagenan halus lebih menarik daripada SRC?', a1:<>RC mempunyai nilai tambah <b>12×</b> — hampir 1.5× daripada SRC (8×). Harga RC USD 15–25/kg vs SRC USD 3–6/kg. Indonesia dominan di SRC tetapi kecil di RC — ruang putih yang jelas.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>KKP 2023</Cite><Cite>BKPM Rumpai Laut</Cite></div></>, q2:'Berapa besar pasaran karagenan global?', a2:'Pasaran karagenan global 1.2B USD (2023), berkembang 5.8% CAGR. Indonesia membekal 40% rumpai laut mentah dunia tetapi hanya 15% bahagian pasaran produk olahan — jurang besar untuk diisi.', suggests:['Kawasan penanaman rumpai laut terbesar?','Piawaian kualiti eksport EU?','Peluang agar bakteriologi untuk penyelidikan?'] },
-  };
-  const CHATS_AR = {
-    Nikel: { q1:'في أي مرحلة تكون القيمة المضافة للنيكل الأعلى؟', a1:<>أعلى قيمة مضافة في سلسلة <b>بطاريات السيارات الكهربائية (67×)</b>. MHP هو نقطة التحول الحرجة — من هناك تقفز القيمة إلى Ni-SO₄ (8×) ثم البطاريات (67×).<div style={{display:'flex',gap:6,marginTop:8}}><Cite>وزارة الصناعة 2021</Cite><Cite>BKPM 2024</Cite></div></>, q2:'ما المنتجات التي لا تزال تُستورد بكثرة؟', a2:'SS Rod/Bar (عجز 125M دولار)، SS Bolt & Nut (عجز 51M دولار)، والبطاريات (عجز 2.3B دولار) — فرص واضحة لاستبدال الواردات.', suggests:['إجمالي فائض النيكل 2021؟','أي المناطق الاقتصادية الخاصة تركز على مصب النيكل؟','NPI مقابل FeNi — أيهما أفضل للاستثمار؟'] },
-    Sawit: { q1:'أي منتجات زيت النخيل له أعلى قيمة مضافة؟', a1:<>قاعدة مستحضرات التجميل تصل إلى <b>12×</b> قيمة مضافة من FFB، تليها المواد الفاعلة بالسطح (10×) والمواد الكيميائية الدهنية (8×). لا تزال إندونيسيا تهيمن على صادرات CPO — الكيماويات الدهنية هي الفرصة الكبرى.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>وزارة الصناعة 2023</Cite><Cite>رابطة النخيل 2023</Cite></div></>, q2:'ما آفاق وقود النخيل الحيوي؟', a2:'برنامج B30/B40 يضمن الاستهلاك المحلي. صادرات 2.2B دولار، عجز استيراد ضئيل. هوامش ربحية جذابة مدعومة بسياسة حكومية قوية.', suggests:['قيمة صادرات CPO إندونيسيا 2023؟','أهم وجهات RBD Palm Olein؟','حوافز الاستثمار في الكيماويات الدهنية؟'] },
-    Kelapa: { q1:'أي منتجات جوز الهند الأكثر إمكانات؟', a1:<>VCO يوفر قيمة مضافة <b>8×</b> ومكملاته تصل إلى <b>15×</b>. إندونيسيا أكبر منتج عالمي لكنها تتخلف عن الفلبين في الصادرات المصنعة — فجوة كبيرة للمستثمرين.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>وزارة الصناعة 2023</Cite><Cite>إحصاءات إندونيسيا 2023</Cite></div></>, q2:'ما فرصة الكربون المفعّل من قشور جوز الهند؟', a2:'يخدم الكربون المفعّل الإندونيسي تصفية المياه والصيدلة والصناعات البيئية. صادرات 0.9B دولار مع قيمة مضافة 6× — سوق متنامٍ مع تشديد اللوائح البيئية العالمية.', suggests:['أبرز مناطق إنتاج جوز الهند؟','فرص الاستثمار في VCO العضوي؟','إمكانية التصدير إلى الأسواق الأوروبية؟'] },
-    'Rumput Laut': { q1:'لماذا الكاراجينان المكرر أكثر جاذبية من SRC؟', a1:<>RC يوفر قيمة مضافة <b>12×</b> — تقريباً 1.5× أكثر من SRC (8×). السعر: RC 15–25 دولار/كغ مقابل SRC 3–6 دولار/كغ. إندونيسيا تهيمن على SRC لكنها صغيرة في RC — مساحة بيضاء واضحة.<div style={{display:'flex',gap:6,marginTop:8}}><Cite>وزارة البحرية 2023</Cite><Cite>BKPM البحر</Cite></div></>, q2:'ما حجم السوق العالمية للكاراجينان؟', a2:'السوق العالمية للكاراجينان 1.2B دولار (2023)، بنمو 5.8% CAGR. إندونيسيا تورد 40% من عشب البحر الخام العالمي لكنها تحتل 15% فقط من حصة سوق المنتجات المصنعة — فجوة كبيرة لملأها.', suggests:['أبرز مناطق زراعة عشب البحر؟','معايير جودة التصدير الأوروبي؟','فرص الأجار البكتيريولوجي للبحوث؟'] },
-  };
-  const CHATS_HI = {
-    Nikel: { q1:'निकेल की सबसे अधिक मूल्य वृद्धि किस चरण में है?', a1:<>सबसे अधिक मूल्य वृद्धि <b>EV बैटरी श्रृंखला (67×)</b> में है। MHP महत्वपूर्ण मोड़ है — वहाँ से मूल्य Ni-SO₄ (8×) और बैटरियों (67×) तक उछलता है।<div style={{display:'flex',gap:6,marginTop:8}}><Cite>उद्योग मंत्रालय 2021</Cite><Cite>BKPM डाउनस्ट्रीम 2024</Cite></div></>, q2:'कौन से उत्पाद अभी भी भारी मात्रा में आयात होते हैं?', a2:'SS Rod/Bar (घाटा 125M USD), SS Bolt & Nut (घाटा 51M USD), और बैटरियाँ (घाटा 2.3B USD) — स्पष्ट आयात-प्रतिस्थापन अवसर।', suggests:['2021 में कुल निकेल अधिशेष?','कौन से SEZ निकेल डाउनस्ट्रीम पर ध्यान देते हैं?','NPI बनाम FeNi — निवेश के लिए कौन बेहतर?'] },
-    Sawit: { q1:'किस पाम तेल उत्पाद में सबसे अधिक मूल्य वृद्धि है?', a1:<>कॉस्मेटिक बेस FFB से <b>12×</b> मूल्य वृद्धि तक पहुँचता है, उसके बाद सर्फेक्टेंट (10×) और ओलियोकेमिकल (8×)। इंडोनेशिया अभी भी CPO निर्यात में प्रभुत्व रखता है — ओलियोकेमिकल बड़ा डाउनस्ट्रीम अवसर है।<div style={{display:'flex',gap:6,marginTop:8}}><Cite>उद्योग मंत्रालय 2023</Cite><Cite>GAPKI 2023</Cite></div></>, q2:'पाम बायोडीजल की क्या संभावनाएँ हैं?', a2:'B30/B40 कार्यक्रम घरेलू खपत की गारंटी देता है। निर्यात 2.2B USD, न्यूनतम आयात घाटा। मजबूत सरकारी नीति समर्थन के साथ आकर्षक मार्जिन।', suggests:['इंडोनेशिया CPO निर्यात मूल्य 2023?','RBD Palm Olein के शीर्ष गंतव्य?','ओलियोकेमिकल निवेश प्रोत्साहन?'] },
-    Kelapa: { q1:'कौन सा नारियल उत्पाद सबसे अधिक संभावनाशील है?', a1:<>VCO <b>8×</b> मूल्य वृद्धि देता है और इसका व्युत्पन्न VCO पूरक <b>15×</b> तक पहुँचता है। इंडोनेशिया दुनिया का सबसे बड़ा उत्पादक है लेकिन प्रसंस्कृत निर्यात में फिलीपींस से पीछे है — निवेशकों के लिए बड़ा अंतर।<div style={{display:'flex',gap:6,marginTop:8}}><Cite>उद्योग मंत्रालय 2023</Cite><Cite>इंडोनेशिया सांख्यिकी 2023</Cite></div></>, q2:'नारियल खोल से सक्रिय कार्बन का अवसर क्या है?', a2:'इंडोनेशियाई नारियल खोल का सक्रिय कार्बन जल फ़िल्टरेशन, फार्मा और पर्यावरण उद्योगों में उपयोग होता है। निर्यात 0.9B USD, 6× मूल्य वृद्धि — वैश्विक पर्यावरण नियमों के साथ बाजार बढ़ रहा है।', suggests:['शीर्ष नारियल उत्पादन क्षेत्र?','जैविक VCO में निवेश के अवसर?','यूरोपीय बाजारों में निर्यात संभावना?'] },
-    'Rumput Laut': { q1:'परिष्कृत कैरेजीनन SRC से अधिक आकर्षक क्यों है?', a1:<>RC कच्चे माल से <b>12×</b> मूल्य वृद्धि देता है — SRC (8×) से लगभग 1.5× अधिक। कीमत: RC 15–25 USD/kg बनाम SRC 3–6 USD/kg। इंडोनेशिया SRC में प्रभुत्व रखता है लेकिन RC में छोटा है।<div style={{display:'flex',gap:6,marginTop:8}}><Cite>समुद्र मंत्रालय 2023</Cite><Cite>BKPM समुद्री शैवाल</Cite></div></>, q2:'वैश्विक कैरेजीनन बाजार कितना बड़ा है?', a2:'वैश्विक कैरेजीनन बाजार 1.2B USD (2023), 5.8% CAGR पर बढ़ रहा है। इंडोनेशिया विश्व के 40% कच्चे समुद्री शैवाल की आपूर्ति करता है लेकिन प्रसंस्कृत बाजार में केवल 15% हिस्सेदारी है।', suggests:['शीर्ष समुद्री शैवाल खेती क्षेत्र?','EU निर्यात गुणवत्ता मानक?','अनुसंधान के लिए बैक्टीरियोलॉजिकल अगर अवसर?'] },
-  };
-  const CHAT_BY_LANG = { en: CHATS_EN, zh: CHATS_ZH, fr: CHATS_FR, no: CHATS_NO, ms: CHATS_MS, ar: CHATS_AR, hi: CHATS_HI };
-  const chatData = CHAT_BY_LANG[lang] || CHATS;
-  const chat = chatData[commodity] || chatData['Nikel'];
+
+  const contextLabel = `${u.context} · ${u.commNames[commodity] || commodity}`;
   return (
-    <div className={'col ' + (hifi ? 'hifi' : '')} style={{ width:340, borderLeft:'1px solid var(--line)', background:'var(--surface)', flexShrink:0 }}>
+    <div className={'col ' + (hifi ? 'hifi' : '')} style={{ width:340, borderLeft:'1px solid var(--line)', background:'var(--surface)', flexShrink:0, position:'relative' }}>
       <div style={{ padding:'12px 14px', borderBottom:'1px solid var(--line)', display:'flex', alignItems:'center', gap:8 }}>
         <Avatar name="AI" color="#1a1a2e" size="sm" status="online" />
         <div style={{ flex:1 }}>
           <div style={{ fontSize:12, fontWeight:600 }}>{u.chatTitle}</div>
-          <div className="mono" style={{ fontSize:9, color:'var(--ink-3)' }}>{context}</div>
+          <div className="mono" style={{ fontSize:9, color:'var(--ink-3)' }}>{contextLabel}</div>
         </div>
         <button className="btn btn-ghost btn-sm ui-icon-btn" onClick={onToggle} aria-label="Collapse chat"><ChevronRight size={16} strokeWidth={1.75} /></button>
       </div>
-      <div className="scroll col grow" style={{ padding:14, gap:14 }}>
-        <div style={{ background:'var(--surface-2)', border:'1px solid var(--line)', borderRadius:8, padding:12 }}>
-          <div className="label" style={{ marginBottom:6 }}>{u.popularQ}</div>
-          <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
-            {chat.suggests.map(s => <div key={s} style={{ fontSize:11.5, padding:'6px 8px', background:'#fff', borderRadius:6, border:'1px solid var(--line)', cursor:'pointer', lineHeight:1.4 }}>↗ {s}</div>)}
+
+      <div ref={containerRef} onScroll={onScroll} className="scroll col grow" style={{ padding:14, gap:14 }}>
+        {messages.length === 0 && (
+          <div style={{ background:'var(--surface-2)', border:'1px solid var(--line)', borderRadius:8, padding:12 }}>
+            <div className="label" style={{ marginBottom:6 }}>{u.popularQ}</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+              {suggests.map((s) => (
+                <div key={s} onClick={() => !loading && handleSend(s)}
+                  style={{ display:'flex', alignItems:'flex-start', gap:6, fontSize:11.5, padding:'6px 8px', background:'#fff', borderRadius:6, border:'1px solid var(--line)', cursor: loading ? 'default' : 'pointer', lineHeight:1.4 }}>
+                  <ArrowUpRight size={14} strokeWidth={1.75} style={{ flexShrink:0, marginTop:1, color:'var(--ink-3)' }} /> {s}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-        <div style={{ alignSelf:'flex-end', background:'var(--surface-3)', padding:'8px 12px', borderRadius:10, fontSize:13, maxWidth:'85%' }}>{chat.q1}</div>
-        <div style={{ fontSize:13, lineHeight:1.6 }}>{chat.a1}</div>
-        <div style={{ alignSelf:'flex-end', background:'var(--surface-3)', padding:'8px 12px', borderRadius:10, fontSize:13, maxWidth:'85%' }}>{chat.q2}</div>
-        <div style={{ fontSize:13, lineHeight:1.6 }}>{chat.a2}</div>
-        <div style={{ fontSize:13, color:'var(--ink-3)' }}>{u.loading}</div>
+        )}
+
+        {messages.map((m, i) =>
+          m.role === 'user' ? (
+            <div key={i} style={{ alignSelf:'flex-end', background:'var(--surface-3)', padding:'8px 12px', borderRadius:10, fontSize:13, maxWidth:'85%', whiteSpace:'pre-wrap' }}>
+              {m.content}
+            </div>
+          ) : (
+            <div key={i} style={{ fontSize:13, lineHeight:1.6 }}>
+              {m.content ? (
+                <Markdown>{m.content}</Markdown>
+              ) : loading ? (
+                <span style={{ display:'inline-flex', alignItems:'center', gap:7, color:'var(--ink-3)' }}>
+                  <Loader2 size={14} strokeWidth={2} className="spin" /> {u.loading}
+                </span>
+              ) : ''}
+            </div>
+          )
+        )}
       </div>
-      <div style={{ borderTop:'1px solid var(--line)', padding:12 }}>
-        <div className="card" style={{ padding:'8px 10px' }}>
-          <div style={{ fontSize:12, color:'var(--ink-4)' }}>{u.chatPlaceholder}</div>
+
+      <JumpToLatest show={!isFollowing && messages.length > 0} onClick={() => scrollToBottom('smooth')} label={t('chat.toLatest')} anchorRef={composerRef} />
+
+      <div ref={composerRef} style={{ borderTop:'1px solid var(--line)', padding:12 }}>
+        <div className="card" style={{ padding:'8px 10px', display:'flex', alignItems:'flex-end', gap:8 }}>
+          <ChatTextarea
+            value={input}
+            onChange={setInput}
+            onSend={() => handleSend()}
+            submitOn="enter"
+            rows={1}
+            maxHeight={120}
+            placeholder={u.chatPlaceholder}
+            style={{ flex:1, border:'none', outline:'none', resize:'none', fontSize:12.5, fontFamily:'Inter, sans-serif', background:'transparent', color:'var(--ink)' }}
+          />
+          <SendButton className="btn btn-sm btn-primary" loading={loading} input={input} onSend={() => handleSend()} />
         </div>
         <div style={{ display:'flex', gap:6, marginTop:6 }}>
-          <span className="chip">{u.saveAnalysis}</span>
-          <span className="chip chip-terra">{u.openWorkspace}</span>
+          <span className="chip" style={{ cursor:'pointer' }} onClick={() => comingSoon(u.saveAnalysis)}>{u.saveAnalysis}</span>
+          <Link href="/workspace" style={{ textDecoration:'none' }}>
+            <span className="chip chip-terra" style={{ cursor:'pointer' }}>{u.openWorkspace}</span>
+          </Link>
         </div>
       </div>
     </div>
@@ -1149,6 +1274,33 @@ function HilirisasiPage({ hifi = false, chatOpen: chatOpenProp, setChatOpen: set
   const { lang: globalLang } = useI18n();
   const lang = langProp || (UI[globalLang] ? globalLang : 'id');
   const u = UI[lang] || UI.en;
+  const treeRef = useRef(null);
+
+  // Live DeepSeek chat (issue #24). Context tracks the selected commodity so the
+  // assistant's answers stay tied to the value-chain tree on screen.
+  const context = useMemo(() => buildHilirisasiContext(commodity), [commodity]);
+
+  // Dispatch the assistant's tool calls onto the real diagram, like MapPage does
+  // for the map: set_commodity swaps the tree, focus_node pans/zooms onto a node
+  // (in the freshly-switched tree when both are called together).
+  const onAction = useCallback((actions) => {
+    const batch = Array.isArray(actions) ? actions : [actions];
+    const commCall = batch.find((a) => a?.name === "set_commodity");
+    const focusCall = batch.find((a) => a?.name === "focus_node");
+
+    let target = null;
+    const apply = (raw) => {
+      const c = resolveCommodity(raw);
+      if (c) { target = c; setCommodity(c); }
+    };
+    if (commCall) apply(commCall.args?.commodity);
+    if (focusCall && focusCall.args?.commodity) apply(focusCall.args.commodity);
+
+    if (focusCall) treeRef.current?.focusNode(focusCall.args?.node, target);
+    else if (commCall) treeRef.current?.resetView();
+  }, []);
+
+  const chat = useChat({ context, lang, treeTools: true, onAction });
   return (
     <div className={'frame col ' + (hifi ? 'hifi' : '')}>
       <TopBar
@@ -1180,9 +1332,9 @@ function HilirisasiPage({ hifi = false, chatOpen: chatOpenProp, setChatOpen: set
       />
       <div className="row grow" style={{ minHeight:0 }}>
         <div className="grow" style={{ position:'relative', overflow:'hidden' }}>
-          <HilirisasiTree commodity={commodity} setCommodity={setCommodity} lang={lang} />
+          <HilirisasiTree ref={treeRef} commodity={commodity} setCommodity={setCommodity} lang={lang} />
         </div>
-        <HilirisasiChat open={chatOpen} onToggle={() => setChatOpen(!chatOpen)} hifi={hifi} commodity={commodity} lang={lang} />
+        <HilirisasiChat open={chatOpen} onToggle={() => setChatOpen(!chatOpen)} hifi={hifi} commodity={commodity} lang={lang} chat={chat} />
       </div>
     </div>
   );

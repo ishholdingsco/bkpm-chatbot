@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 // app/api/chat/route.js). Prose never contains NUL, so we can slice frames out.
 const FRAME = "\u0000";
 
-export function useChat({ initialMessages = [], context, lang, mapTools = false, onAction } = {}) {
+export function useChat({ initialMessages = [], context, lang, mapTools = false, treeTools = false, onAction } = {}) {
   const [messages, setMessages] = useState(initialMessages);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -52,6 +52,7 @@ export function useChat({ initialMessages = [], context, lang, mapTools = false,
             context,
             lang,
             mapTools,
+            treeTools,
           }),
         });
         if (!res.ok || !res.body) throw new Error("Request failed: " + res.status);
@@ -120,7 +121,7 @@ export function useChat({ initialMessages = [], context, lang, mapTools = false,
         setLoading(false);
       }
     },
-    [input, context, lang, mapTools]
+    [input, context, lang, mapTools, treeTools]
   );
 
   return { messages, setMessages, input, setInput, send, loading };
