@@ -2,13 +2,14 @@
 // Workspace active-thread screen, ported from content/midfi-thread.jsx.
 // The composer + message list are wired to DeepSeek via useChat.
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import {
   ChevronLeft, ChevronRight, ChevronDown, Plus, X, ArrowRight, ArrowUpRight,
   Paperclip, AtSign, Slash, Bell, Search, MoreHorizontal, Maximize2, Minimize2,
 } from "lucide-react";
 import { useChat } from "@/components/chat/useChat";
+import { useStickToBottom, JumpToLatest } from "@/components/chat/useStickToBottom";
 import { ChatTurn } from "@/components/chat/ChatTurn";
 import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
 import { DropdownMenu, Tooltip } from "@/components/ui/controls";
@@ -281,6 +282,10 @@ export function ActiveThread() {
 
   const context = `User is in the Wilaya workspace, project "${DATA.projects[0].name}" (${DATA.projects[0].short}), thread "${DATA.threads[0].name}". They are a foreign institutional investor (Khazanah Nasional) doing diligence on nickel midstream co-investment with state-owned MIND ID.`;
   const { messages, input, setInput, send, loading } = useChat({ initialMessages: SEED_MESSAGES, context, lang });
+  const { containerRef, onScroll, scrollToBottom, isFollowing } = useStickToBottom(messages);
+  const composerRef = useRef(null);
+  // Sending always snaps to the bottom and re-engages following.
+  const handleSend = () => { scrollToBottom(); send(); };
 
   return (
     <div className="frame col">
@@ -345,13 +350,17 @@ export function ActiveThread() {
             </div>
           </div>
 
-          <div className="scroll col grow" style={{ padding: "20px 28px", gap: 18 }}>
+          <div ref={containerRef} onScroll={onScroll} className="scroll col grow" style={{ padding: "20px 28px", gap: 18 }}>
             {messages.map((m, i) => (
               <ChatTurn key={i} turn={m} loading={loading && i === messages.length - 1} />
             ))}
           </div>
 
-          <Composer input={input} setInput={setInput} onSend={() => send()} loading={loading} onReferHuman={() => setHandoffOpen(true)} />
+          <JumpToLatest show={!isFollowing} onClick={() => scrollToBottom("smooth")} label={t("chat.toLatest")} anchorRef={composerRef} />
+
+          <div ref={composerRef}>
+            <Composer input={input} setInput={setInput} onSend={handleSend} loading={loading} onReferHuman={() => setHandoffOpen(true)} />
+          </div>
         </div>
 
         <CanvasRail

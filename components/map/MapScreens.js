@@ -11,6 +11,7 @@ import {
 import MapboxMap, { MB_LAYER_KEYS } from "@/components/map/MapboxMap";
 import { applyLayerChange, boundsOf, resolveFlyTo, selectOpportunities } from "@/components/map/mapActions";
 import { useChat } from "@/components/chat/useChat";
+import { useStickToBottom, JumpToLatest } from "@/components/chat/useStickToBottom";
 import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
 import { Markdown } from "@/components/chat/Markdown";
 import { Switch, Tooltip } from "@/components/ui/controls";
@@ -106,6 +107,10 @@ function MapControls() {
 function MapChat({ open, onToggle, hifi, activeLayers, viewLabel, chat }) {
   const { t } = useI18n();
   const { messages, input, setInput, send, loading } = chat;
+  const { containerRef, onScroll, scrollToBottom, isFollowing } = useStickToBottom(messages);
+  const composerRef = useRef(null);
+  // Sending (composer or a suggestion) snaps to the bottom and re-engages following.
+  const handleSend = (text) => { scrollToBottom(); send(text); };
   const suggestions = t("map.suggestions");
 
   if (!open) {
@@ -121,7 +126,7 @@ function MapChat({ open, onToggle, hifi, activeLayers, viewLabel, chat }) {
   }
 
   return (
-    <div className={"col " + (hifi ? "hifi" : "")} style={{ width: 340, borderLeft: "1px solid var(--line)", background: "var(--surface)" }}>
+    <div className={"col " + (hifi ? "hifi" : "")} style={{ width: 340, borderLeft: "1px solid var(--line)", background: "var(--surface)", position: "relative" }}>
       <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 8 }}>
         <Avatar name="AI" color="#1a1a2e" size="sm" status="online" />
         <div style={{ flex: 1 }}>
@@ -138,7 +143,7 @@ function MapChat({ open, onToggle, hifi, activeLayers, viewLabel, chat }) {
         </Tooltip>
       </div>
 
-      <div className="scroll col grow" style={{ padding: "14px", gap: 14 }}>
+      <div ref={containerRef} onScroll={onScroll} className="scroll col grow" style={{ padding: "14px", gap: 14 }}>
         {messages.length === 0 && (
           <>
             <div style={{ fontSize: 13, lineHeight: 1.55, color: "var(--ink-2)" }}>
@@ -150,7 +155,7 @@ function MapChat({ open, onToggle, hifi, activeLayers, viewLabel, chat }) {
                 {suggestions.map((s) => (
                   <div
                     key={s}
-                    onClick={() => !loading && send(s)}
+                    onClick={() => !loading && handleSend(s)}
                     style={{ display: "flex", alignItems: "flex-start", gap: 6, fontSize: 12, padding: "6px 8px", background: "#fff", borderRadius: 6, border: "1px solid var(--line)", cursor: loading ? "default" : "pointer" }}
                   >
                     <ArrowUpRight size={14} strokeWidth={1.75} style={{ flexShrink: 0, marginTop: 2, color: "var(--ink-3)" }} /> {s}
@@ -182,19 +187,21 @@ function MapChat({ open, onToggle, hifi, activeLayers, viewLabel, chat }) {
         )}
       </div>
 
-      <div style={{ borderTop: "1px solid var(--line)", padding: 12 }}>
+      <JumpToLatest show={!isFollowing && messages.length > 0} onClick={() => scrollToBottom("smooth")} label={t("chat.toLatest")} anchorRef={composerRef} />
+
+      <div ref={composerRef} style={{ borderTop: "1px solid var(--line)", padding: 12 }}>
         <div className="card" style={{ padding: "8px 10px", display: "flex", alignItems: "flex-end", gap: 8 }}>
           <ChatTextarea
             value={input}
             onChange={setInput}
-            onSend={() => send()}
+            onSend={() => handleSend()}
             submitOn="enter"
             rows={1}
             maxHeight={120}
             placeholder={t("map.chatPlaceholder")}
             style={{ flex: 1, border: "none", outline: "none", resize: "none", fontSize: 12.5, fontFamily: "Inter, sans-serif", background: "transparent", color: "var(--ink)" }}
           />
-          <SendButton className="btn btn-sm btn-primary" loading={loading} input={input} onSend={() => send()} />
+          <SendButton className="btn btn-sm btn-primary" loading={loading} input={input} onSend={() => handleSend()} />
         </div>
         <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
           <span className="chip" style={{ cursor: "pointer" }} onClick={() => comingSoon("Save view")}><Plus size={11} strokeWidth={2} /> {t("map.saveView")}</span>
