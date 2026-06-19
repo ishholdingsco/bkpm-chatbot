@@ -68,6 +68,8 @@
     "oppsTracked": "· {value} terlacak",
     "featured": "{n} unggulan",
     "matchedThesis": "cocok dengan tesis Anda",
+    "foreignChip": "Asing {cap}",
+    "moreOpps": "+{n} peluang lain",
     "askAboutMap": "Tanya tentang peta ini",
     "askNusantara": "Tanya Nusantara",
     "viewDefault": "Sulawesi",

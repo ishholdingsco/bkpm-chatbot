@@ -34,12 +34,6 @@ const LAYERS = [
   { id: "ports", color: "#1a1a2e", count: portsData.ports.length },
 ];
 
-// Sum of ticket sizes (millions USD) → a compact "$X.XB" / "$XXXM" string.
-function formatUsdM(m) {
-  if (!m) return "$0";
-  return m >= 1000 ? `$${(m / 1000).toFixed(1)}B` : `$${Math.round(m)}M`;
-}
-
 function Wordmark({ name, tag = "BKPM", hifi = false, size = 17 }) {
   return <Logo size={size} showTag={!!tag} />;
 }
@@ -319,17 +313,20 @@ export function MapPage({ hifi = false }) {
     [chat, t]
   );
 
-  // What the top "opportunities" card shows. A clicked pin takes precedence over
-  // a chat filter (most-recent explicit action wins); null hides the card. The
+  // The detail card shows ONE opportunity's real data (IMIP-style): a clicked
+  // pin takes precedence, otherwise the first pin of a chat filter. `more` is how
+  // many other opportunities the filter also matched. null hides the card. The
   // click path is deterministic, so the card always appears on a click even if
   // the assistant chose not to call a map tool.
-  const cardInfo = useMemo(() => {
+  const card = useMemo(() => {
+    const find = (id) => opportunitiesData.opportunities.find((o) => o.id === id) || null;
     if (selected) {
-      const o = opportunitiesData.opportunities.find((x) => x.id === selected);
-      if (o) return { count: 1, value: o.ticketUsdM || 0, label: o.label };
+      const o = find(selected);
+      if (o) return { opp: o, more: 0 };
     }
     if (pinFilter?.ids?.length) {
-      return { count: pinFilter.count, value: pinFilter.valueUsdM, label: pinFilter.label };
+      const o = find(pinFilter.ids[0]);
+      if (o) return { opp: o, more: (pinFilter.count || pinFilter.ids.length) - 1 };
     }
     return null;
   }, [selected, pinFilter]);
@@ -395,22 +392,24 @@ export function MapPage({ hifi = false }) {
             </div>
           </div>
 
-          {/* Opportunities card — hidden until a pin is clicked (human) or the
-              chat filters/highlights a set (AI). Count and tracked value are
-              derived from the matched data, never hardcoded. */}
-          {cardInfo && (
-            <div style={{ position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 3 }}>
-              <div className="card" style={{ padding: "8px 14px", display: "flex", gap: 12, alignItems: "center", maxWidth: 360 }}>
-                <div style={{ flexShrink: 0 }}>
-                  <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)" }}>{t("map.oppsInView")}</div>
-                  <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "Source Serif 4", whiteSpace: "nowrap" }}>{cardInfo.count} <span style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400, fontFamily: "Inter" }}>{t("map.oppsTracked", { value: formatUsdM(cardInfo.value) })}</span></div>
-                </div>
-                <div style={{ width: 1, height: 30, background: "var(--line)", flexShrink: 0 }} />
-                <div className="col" style={{ minWidth: 0 }}>
-                  <span className="chip chip-terra chip-dot" style={{ fontSize: 9, alignSelf: "flex-start" }}>{t("map.featured", { n: cardInfo.count })}</span>
-                  <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 200 }} title={cardInfo.label}>{cardInfo.label}</span>
-                </div>
+          {/* Opportunity detail card (IMIP-style) — hidden until a pin is clicked
+              (human) or the chat filters/highlights a set (AI). Every value is the
+              real data of that opportunity, never hardcoded. */}
+          {card && (
+            <div className="map-tooltip" style={{ top: 16, left: "50%", transform: "translateX(-50%)", width: 264 }}>
+              <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{card.opp.province}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, marginTop: 2, lineHeight: 1.25 }}>{card.opp.label}</div>
+              <div style={{ fontSize: 11, color: "var(--ink-2)", marginTop: 4, lineHeight: 1.4 }}>
+                {card.opp.sector}{card.opp.irr ? ` · IRR ${card.opp.irr}` : ""}
               </div>
+              <div style={{ display: "flex", gap: 4, marginTop: 7, flexWrap: "wrap" }}>
+                {card.opp.status && <span className="chip chip-jade chip-dot" style={{ fontSize: 8 }}>{card.opp.status}</span>}
+                {card.opp.ticket && <span className="chip" style={{ fontSize: 8 }}>{card.opp.ticket}</span>}
+                {card.opp.foreignCap && <span className="chip" style={{ fontSize: 8 }}>{t("map.foreignChip", { cap: card.opp.foreignCap })}</span>}
+              </div>
+              {card.more > 0 && (
+                <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)", marginTop: 7 }}>{t("map.moreOpps", { n: card.more })}</div>
+              )}
             </div>
           )}
         </div>
@@ -486,7 +485,7 @@ export function Landing({ name = "Wilaya", hifi = false, mapStyle }) {
 
       <div style={{ position: "absolute", top: 92, right: 18, zIndex: 5, background: "rgba(255,255,255,0.94)", backdropFilter: "blur(6px)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6, boxShadow: "0 4px 14px rgba(0,0,0,0.08)" }}>
         <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)", letterSpacing: "0.14em" }}>{t("landing.overlays")}</span>
-        {[["#f7b500", t("landing.overlayIndustrial")], ["#7e4dd9", t("landing.overlayKek", { kek: kekData.estates.length })], ["#c44a36", t("landing.overlayFeatured")]].map(([c, l]) => (
+        {[["#f7b500", t("landing.overlayIndustrial")], ["#7e4dd9", t("landing.overlayKek", { kek: kekData.estates.length })], ["#0055a6", t("landing.overlayFeatured")]].map(([c, l]) => (
           <div key={l} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "var(--ink-2)" }}>
             <span style={{ width: 10, height: 10, borderRadius: 3, background: c, opacity: 0.7, border: `1px solid ${c}` }} />
             {l}

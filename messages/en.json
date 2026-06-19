@@ -68,6 +68,8 @@
     "oppsTracked": "· {value} tracked",
     "featured": "{n} featured",
     "matchedThesis": "matched to your thesis",
+    "foreignChip": "{cap} foreign",
+    "moreOpps": "+{n} more nearby",
     "askAboutMap": "Ask about this map",
     "askNusantara": "Ask Nusantara",
     "viewDefault": "Sulawesi",

@@ -188,9 +188,9 @@ const MapboxMap = forwardRef(function MapboxMap({
   }, [ready, layers]);
 
   // Emphasize a subset of featured opportunity pins when chat filters them.
-  // `pinFilter.ids` is an array of opportunity ids; null/empty shows all evenly.
-  // We DIM the non-matches instead of hiding them, so the data never disappears
-  // from the map (a filter only re-weights what's already there).
+  // `pinFilter.ids` is an array of opportunity ids; null/empty treats all evenly.
+  // Every pin stays FULLY OPAQUE (no transparency/grey — it looked washed out);
+  // matches are just drawn a bit larger, so the data never disappears.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
@@ -198,11 +198,11 @@ const MapboxMap = forwardRef(function MapboxMap({
     const has = Array.isArray(ids) && ids.length > 0;
     const isMatch = has ? ["in", ["get", "kind"], ["literal", ids]] : null;
     if (map.getLayer("mb-featured-ring")) {
-      map.setPaintProperty("mb-featured-ring", "circle-opacity", has ? ["case", isMatch, 1, 0.22] : 1);
-      map.setPaintProperty("mb-featured-ring", "circle-stroke-opacity", has ? ["case", isMatch, 1, 0.22] : 1);
+      map.setPaintProperty("mb-featured-ring", "circle-radius", has ? ["case", isMatch, 7, 5] : 5);
+      map.setPaintProperty("mb-featured-ring", "circle-stroke-width", has ? ["case", isMatch, 2.2, 1.5] : 1.5);
     }
     if (map.getLayer("mb-featured-halo")) {
-      map.setPaintProperty("mb-featured-halo", "circle-opacity", has ? ["case", isMatch, 0.18, 0.03] : 0.1);
+      map.setPaintProperty("mb-featured-halo", "circle-radius", has ? ["case", isMatch, 18, 14] : 14);
     }
   }, [ready, pinFilter]);
 
@@ -260,9 +260,9 @@ function addMbOverlays(map, onPinClick) {
   }));
   map.addSource("mb-featured", { type: "geojson", data: { type: "FeatureCollection", features: featFeats } });
 
-  map.addLayer({ id: "mb-featured-halo", type: "circle", source: "mb-featured", paint: { "circle-radius": 14, "circle-color": "#c44a36", "circle-opacity": 0.10, "circle-blur": 0.3 } });
+  map.addLayer({ id: "mb-featured-halo", type: "circle", source: "mb-featured", paint: { "circle-radius": 14, "circle-color": "#0055a6", "circle-opacity": 0.12, "circle-blur": 0.3 } });
   map.addLayer({ id: "mb-featured-hit", type: "circle", source: "mb-featured", paint: { "circle-radius": 20, "circle-color": "#000", "circle-opacity": 0.001 } });
-  map.addLayer({ id: "mb-featured-ring", type: "circle", source: "mb-featured", paint: { "circle-radius": 5, "circle-color": "#c44a36", "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 } });
+  map.addLayer({ id: "mb-featured-ring", type: "circle", source: "mb-featured", paint: { "circle-radius": 5, "circle-color": "#0055a6", "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 } });
 
   // Mineral / resource deposit clusters and strategic sea ports. Both start
   // hidden (visibility:none) — they're off by default in LayerPanel and never
