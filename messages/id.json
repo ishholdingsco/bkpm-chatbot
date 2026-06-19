@@ -55,20 +55,14 @@
     "layerNames": {
       "industrial": "Kawasan Industri",
       "kek": "Kawasan Ekonomi Khusus",
-      "wiup": "WIUP — Konsesi Tambang",
       "minerals": "Endapan Mineral & Sumber Daya",
-      "gdp": "PDB per kapita",
-      "infra": "Jaringan listrik & koridor",
       "ports": "Pelabuhan laut"
     },
     "layerDesc": {
-      "industrial": "Kawasan industri · {n} terpetakan",
-      "kek": "Kawasan Ekonomi Khusus · {n}",
-      "wiup": "Konsesi aktif · 4.210",
-      "minerals": "Ni · Cu · Au · Bauksit · Batu bara · Timah",
-      "gdp": "Koroplet · 2025",
-      "infra": "Tulang punggung PLN + rencana",
-      "ports": "{n} pelabuhan strategis"
+      "industrial": "{n} terpetakan",
+      "kek": "{n} terpetakan",
+      "minerals": "{n} terpetakan",
+      "ports": "{n} terpetakan"
     },
     "oppsInView": "PELUANG DALAM PANDANGAN",
     "oppsTracked": "· {value} terlacak",

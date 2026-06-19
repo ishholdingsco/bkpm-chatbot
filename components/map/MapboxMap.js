@@ -63,7 +63,7 @@ const MB_PINS = {
     ll: e.coordinates, n: e.name, r: displayRadiusKm(e.area_ha, 20),
   })),
   featured: opportunitiesData.opportunities.map((o) => ({
-    ll: o.coordinates, k: o.id, label: o.label, ticket: o.ticket,
+    ll: o.coordinates, k: o.id, label: o.label, ticket: o.ticket, province: o.province, status: o.status,
   })),
 };
 
@@ -120,6 +120,21 @@ const MapboxMap = forwardRef(function MapboxMap({
     fitBounds(bounds, opts) {
       const map = mapRef.current;
       if (map && bounds) map.fitBounds(bounds, { padding: 80, maxZoom: 8, duration: 1200, ...opts });
+    },
+    // Map-control buttons (issue #25): the +/−, GPS and compass live in
+    // MapScreens but need the real instance, so we expose thin wrappers.
+    zoomIn() { mapRef.current?.zoomIn(); },
+    zoomOut() { mapRef.current?.zoomOut(); },
+    // Compass: bring the camera back to north and flat.
+    resetNorth() { mapRef.current?.easeTo({ bearing: 0, pitch: 0 }); },
+    // GPS: fly to the browser's geolocation; silently no-op if denied/unavailable.
+    locate() {
+      const map = mapRef.current;
+      if (!map || typeof navigator === "undefined" || !navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => map.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 9, essential: true }),
+        () => {}
+      );
     },
   }), []);
 
@@ -236,7 +251,7 @@ function addMbOverlays(map, onPinClick) {
 
   const featFeats = MB_PINS.featured.map((p) => ({
     type: "Feature",
-    properties: { label: p.label, kind: p.k, ticket: p.ticket || "" },
+    properties: { label: p.label, kind: p.k, ticket: p.ticket || "", province: p.province || "", status: p.status || "" },
     geometry: { type: "Point", coordinates: p.ll },
   }));
   map.addSource("mb-featured", { type: "geojson", data: { type: "FeatureCollection", features: featFeats } });
@@ -271,10 +286,13 @@ function addMbOverlays(map, onPinClick) {
     map.getCanvas().style.cursor = "pointer";
     const f = e.features?.[0];
     if (!f) return;
-    const { label, ticket } = f.properties;
+    const { label, ticket, province, status } = f.properties;
+    const chip = (text, color) =>
+      `<span style="font:600 8px/1 'IBM Plex Mono',monospace;color:${color};letter-spacing:0.06em;border:1px solid ${color}33;background:${color}14;border-radius:5px;padding:3px 5px;white-space:nowrap;">${text}</span>`;
     const html = `
-      <div style="font:600 12px/1.3 Inter,system-ui,sans-serif;color:#1a1a2e;">${label}</div>
-      ${ticket ? `<div style="font:500 10px/1.4 'IBM Plex Mono',monospace;color:#e8533f;letter-spacing:0.06em;margin-top:2px;">${ticket} · TICKET</div>` : ""}
+      ${province ? `<div style="font:500 9px/1.4 'IBM Plex Mono',monospace;color:#8a8a9a;letter-spacing:0.08em;text-transform:uppercase;">${province}</div>` : ""}
+      <div style="font:600 12px/1.3 Inter,system-ui,sans-serif;color:#1a1a2e;margin-top:2px;">${label}</div>
+      ${ticket || status ? `<div style="display:flex;gap:4px;margin-top:6px;">${ticket ? chip(ticket + " · TICKET", "#e8533f") : ""}${status ? chip(status, "#1a8a5a") : ""}</div>` : ""}
     `;
     popup.setLngLat(f.geometry.coordinates.slice()).setHTML(html).addTo(map);
   };

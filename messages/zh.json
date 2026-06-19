@@ -55,20 +55,14 @@
     "layerNames": {
       "industrial": "工业园区 (Kawasan Industri)",
       "kek": "经济特区 (KEK)",
-      "wiup": "WIUP — 采矿特许权",
       "minerals": "矿产与资源矿床",
-      "gdp": "人均 GDP",
-      "infra": "电网与走廊",
       "ports": "海港"
     },
     "layerDesc": {
-      "industrial": "工业园区 · 已标注 {n} 个",
-      "kek": "经济特区 · {n}",
-      "wiup": "活跃特许权 · 4,210",
-      "minerals": "镍 · 铜 · 金 · 铝土 · 煤 · 锡",
-      "gdp": "分级统计图 · 2025",
-      "infra": "PLN 主干网 + 规划中",
-      "ports": "{n} 个战略港口"
+      "industrial": "已标注 {n} 个",
+      "kek": "已标注 {n} 个",
+      "minerals": "已标注 {n} 个",
+      "ports": "已标注 {n} 个"
     },
     "oppsInView": "视野内的机会",
     "oppsTracked": "· 已追踪 {value}",

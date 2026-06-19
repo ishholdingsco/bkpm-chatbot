@@ -129,6 +129,9 @@ export function selectOpportunities(args = {}) {
   const ids = matches.map((o) => o.id);
   const coords = matches.map((o) => o.coordinates);
   const bounds = matches.length ? boundsOf(coords) : null;
+  // Tracked value of the matched pins, summed from ticketUsdM (millions). Lets
+  // the "Opportunities in view" panel show a real total instead of a literal.
+  const valueUsdM = matches.reduce((s, o) => s + (Number(o.ticketUsdM) || 0), 0);
 
   const parts = [];
   if (args.sector) parts.push(args.sector);
@@ -136,7 +139,7 @@ export function selectOpportunities(args = {}) {
   if (args.province) parts.push(args.province);
   if (minPct != null) parts.push("asing ≥" + minPct + "%");
   const label = parts.join(" · ") || "Semua peluang";
-  return { ids, coords, bounds, count: matches.length, label };
+  return { ids, coords, bounds, count: matches.length, valueUsdM, label };
 }
 
 // Apply a set_layers call to the current active-layer state → next state. Only
