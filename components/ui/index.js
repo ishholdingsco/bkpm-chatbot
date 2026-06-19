@@ -11,3 +11,4 @@ export {
   Cite,
   ArtifactCard,
 } from "./primitives";
+export { ToastHost, toast, comingSoon, ComingSoonButton } from "./Toast";

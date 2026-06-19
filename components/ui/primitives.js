@@ -1,9 +1,11 @@
 // Pure render primitives reused across every screen, ported from
 // content/midfi-shared.jsx. No hooks — safe to import anywhere.
 
+import Link from "next/link";
 import { DATA, KIND_COLOR } from "./data";
 
 const LOGO_SRC = "/assets/bkpm-logo.png";
+const BKPM_URL = "https://www.bkpm.go.id";
 
 // ─────────────────────────────────────────────────────────────
 // Avatars + presence
@@ -45,28 +47,34 @@ export function AvatarStack({ items, max = 3 }) {
 }
 
 // Logo — "Wilaya.." in Georgia regular with BKPM-blue/green trailing dots,
-// next to the official BKPM agency mark.
-export function Logo({ size = 18, showTag = true, mono = false }) {
+// next to the official BKPM agency mark. The wordmark links home (`href`); the
+// BKPM mark opens the agency site in a new tab (`bkpmHref`). Both are
+// overridable so the logo can sit somewhere that shouldn't navigate.
+export function Logo({ size = 18, showTag = true, mono = false, href = "/", bkpmHref = BKPM_URL }) {
   const dotL = mono ? "currentColor" : "#0055a6";
   const dotR = mono ? "currentColor" : "#51b749";
   const inkColor = mono ? "currentColor" : "#1c1a14";
   return (
     <div style={{ display: "flex", alignItems: "center", gap: Math.round(size * 0.55) }}>
-      <span style={{
-        fontFamily: 'Georgia, "Source Serif 4", serif',
-        fontSize: size,
-        fontWeight: 400,
-        letterSpacing: "-0.01em",
-        color: inkColor,
-        lineHeight: 1,
-      }}>
-        Wilaya<span style={{ color: dotL }}>.</span><span style={{ color: dotR }}>.</span>
-      </span>
+      <Link href={href} aria-label="Wilaya — home" style={{ textDecoration: "none", display: "inline-flex" }}>
+        <span style={{
+          fontFamily: 'Georgia, "Source Serif 4", serif',
+          fontSize: size,
+          fontWeight: 400,
+          letterSpacing: "-0.01em",
+          color: inkColor,
+          lineHeight: 1,
+        }}>
+          Wilaya<span style={{ color: dotL }}>.</span><span style={{ color: dotR }}>.</span>
+        </span>
+      </Link>
       {showTag && (
         <>
           <span style={{ display: "inline-block", width: 1, height: Math.round(size * 0.85), background: "rgba(28,26,20,0.18)" }} />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={LOGO_SRC} alt="BKPM" style={{ height: Math.round(size * 1.25), width: "auto", display: "block", filter: mono ? "grayscale(1)" : "none" }} />
+          <a href={bkpmHref} target="_blank" rel="noopener noreferrer" aria-label="BKPM official website" style={{ display: "inline-flex" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={LOGO_SRC} alt="BKPM" style={{ height: Math.round(size * 1.25), width: "auto", display: "block", filter: mono ? "grayscale(1)" : "none" }} />
+          </a>
         </>
       )}
     </div>
@@ -74,9 +82,14 @@ export function Logo({ size = 18, showTag = true, mono = false }) {
 }
 
 // Inline "BKPM" mention — small image of the agency mark, baseline-aligned.
+// Links to the official BKPM site (new tab), matching the Logo's BKPM mark.
 export function BKPM({ size = 14 }) {
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={LOGO_SRC} alt="BKPM" style={{ height: size, width: "auto", verticalAlign: "-0.18em", display: "inline-block" }} />;
+  return (
+    <a href={BKPM_URL} target="_blank" rel="noopener noreferrer" aria-label="BKPM official website" style={{ display: "inline-block" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={LOGO_SRC} alt="BKPM" style={{ height: size, width: "auto", verticalAlign: "-0.18em", display: "inline-block" }} />
+    </a>
+  );
 }
 
 // ─── Shared TopBar — used by every screen so the chrome is consistent. ───

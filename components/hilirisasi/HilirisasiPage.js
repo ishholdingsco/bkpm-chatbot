@@ -5,8 +5,9 @@
 // the 8 language variants tie into the i18n issue (#8).
 
 import { useState as useHil, useRef as useHilRef, useEffect as useHilEffect } from "react";
+import Link from "next/link";
 import { Search, MessageCircle, ChevronRight, Plus, Minus, Crosshair } from "lucide-react";
-import { Avatar, TopBar, Cite } from "@/components/ui";
+import { Avatar, TopBar, Cite, comingSoon } from "@/components/ui";
 
 // ─── Layout constants ───
 const HT = { PANEL_W: 192, NODE_W: 148, NODE_H: 62, COL_SPAN: 244, ROW_SPAN: 62, HDR: 44 };
@@ -1150,21 +1151,26 @@ function HilirisasiPage({ hifi = false, chatOpen: chatOpenProp, setChatOpen: set
         showOrg={false}
         left={
           <div style={{ display:'flex', gap:4 }}>
-            {u.navItems.map((t, i) => (
-              <span key={t} style={{ padding:'6px 10px', fontSize:12.5, fontWeight: i===1 ? 600 : 500, color: i===1 ? 'var(--terracotta)' : 'var(--ink-2)', borderBottom: i===1 ? '2px solid var(--terracotta)' : '2px solid transparent', cursor:'pointer' }}>{t}</span>
-            ))}
+            {u.navItems.map((t, i) => {
+              const style = { padding:'6px 10px', fontSize:12.5, fontWeight: i===1 ? 600 : 500, color: i===1 ? 'var(--terracotta)' : 'var(--ink-2)', borderBottom: i===1 ? '2px solid var(--terracotta)' : '2px solid transparent', cursor:'pointer' };
+              if (i === 0) return <Link key={t} href="/map" style={{ ...style, textDecoration:'none' }}>{t}</Link>;
+              if (i === 1) return <span key={t} style={style}>{t}</span>;
+              return <span key={t} onClick={() => comingSoon(t)} style={style}>{t}</span>;
+            })}
           </div>
         }
         right={
           <>
-            <div className="card" style={{ display:'flex', alignItems:'center', padding:'4px 10px', gap:8, background:'var(--surface-2)', minWidth:240 }}>
+            <div className="card" onClick={() => comingSoon('Search')} style={{ display:'flex', alignItems:'center', padding:'4px 10px', gap:8, background:'var(--surface-2)', minWidth:240, cursor:'pointer' }}>
               <Search size={14} strokeWidth={1.75} style={{ color:'var(--ink-4)' }} />
               <span style={{ fontSize:12.5, color:'var(--ink-4)' }}>{u.searchPlaceholder}</span>
               <div className="grow" />
               <span className="kbd">⌘K</span>
             </div>
-            <button className="btn btn-sm btn-ghost">{u.langCode}</button>
-            <button className="btn btn-sm btn-primary">{u.startProject}</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => comingSoon('Language (i18n)')}>{u.langCode}</button>
+            <Link href="/workspace" style={{ textDecoration:'none' }}>
+              <button className="btn btn-sm btn-primary">{u.startProject}</button>
+            </Link>
           </>
         }
       />

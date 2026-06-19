@@ -2,6 +2,7 @@ import "./globals.css";
 import "./midfi-styles.css";
 import "./map-styles.css";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { ToastHost } from "@/components/ui";
 
 export const metadata = {
   title: "Wilaya · BKPM Investment Explorer",
@@ -12,7 +13,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <ToastHost />
+      </body>
     </html>
   );
 }
