@@ -183,8 +183,9 @@ function MapChat({ open, onToggle, hifi, activeLayers }) {
             onSend={() => send()}
             submitOn="enter"
             rows={1}
+            maxHeight={120}
             placeholder="Ask, or try /filter, /compare…"
-            style={{ flex: 1, border: "none", outline: "none", resize: "none", fontSize: 12.5, fontFamily: "Inter, sans-serif", background: "transparent", color: "var(--ink)", maxHeight: 90 }}
+            style={{ flex: 1, border: "none", outline: "none", resize: "none", fontSize: 12.5, fontFamily: "Inter, sans-serif", background: "transparent", color: "var(--ink)" }}
           />
           <SendButton className="btn btn-sm btn-primary" loading={loading} input={input} onSend={() => send()} />
         </div>
