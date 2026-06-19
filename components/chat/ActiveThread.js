@@ -188,6 +188,7 @@ function Composer({ input, setInput, onSend, loading, onReferHuman }) {
           onSend={onSend}
           submitOn="mod-enter"
           rows={2}
+          maxHeight={160}
           placeholder="Ask about regulations, structure, comps — or @mention an analyst…"
           style={{ width: "100%", border: "none", outline: "none", resize: "none", fontSize: 13, lineHeight: 1.5, fontFamily: "Inter, sans-serif", background: "transparent", color: "var(--ink)", minHeight: 38 }}
         />

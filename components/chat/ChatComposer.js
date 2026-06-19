@@ -4,13 +4,30 @@
 // enabled/label logic so neither surface re-implements it. Layout & styling
 // stay with the caller, so each surface keeps its exact look.
 
+import { useLayoutEffect, useRef } from "react";
 import { Send, Loader2 } from "lucide-react";
 
-// Textarea that submits on a configurable key combo.
+// Textarea that submits on a configurable key combo and auto-grows with its
+// content (like most modern chat inputs).
 //   submitOn="enter"      → Enter (Shift+Enter inserts a newline)
 //   submitOn="mod-enter"  → ⌘/Ctrl+Enter
-// All other props (rows, placeholder, style…) pass through to <textarea>.
-export function ChatTextarea({ value, onChange, onSend, submitOn = "enter", ...rest }) {
+// It grows up to `maxHeight` px, then scrolls internally; when `value` is
+// cleared after a send it snaps back to a single line. All other props
+// (placeholder, style…) pass through to <textarea>.
+export function ChatTextarea({ value, onChange, onSend, submitOn = "enter", maxHeight = 140, ...rest }) {
+  const ref = useRef(null);
+
+  // Re-measure on every value change so it grows while typing and resets to
+  // one line once the input is cleared on send.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const next = Math.min(el.scrollHeight, maxHeight);
+    el.style.height = next + "px";
+    el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
+  }, [value, maxHeight]);
+
   const onKeyDown = (e) => {
     if (e.key !== "Enter") return;
     const hasMod = e.metaKey || e.ctrlKey;
@@ -22,6 +39,7 @@ export function ChatTextarea({ value, onChange, onSend, submitOn = "enter", ...r
   };
   return (
     <textarea
+      ref={ref}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       onKeyDown={onKeyDown}
