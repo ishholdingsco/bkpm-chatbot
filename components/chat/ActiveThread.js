@@ -11,8 +11,10 @@ import {
 import { useChat } from "@/components/chat/useChat";
 import { ChatTurn } from "@/components/chat/ChatTurn";
 import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
-import { DropdownMenu, Dialog, Tooltip } from "@/components/ui/controls";
+import { DropdownMenu, Tooltip } from "@/components/ui/controls";
 import { DATA, Avatar, AvatarStack, ArtifactCard, BKPM, Logo, TopBar } from "@/components/ui";
+import { HandoffModal } from "@/components/workspace/HandoffModal";
+import { CanvasFocus } from "@/components/workspace/CanvasFocus";
 
 // Seed the thread from the canned demo turns. Each carries both the API
 // fields (role/content) and the richer render fields used by ChatTurn.
@@ -82,7 +84,7 @@ function Sidebar({ collapsed, onToggle }) {
         <div style={{ display: "flex", alignItems: "center", padding: "0 6px 6px" }}>
           <span className="label">Projects · 4</span>
           <Tooltip content="New project">
-            <button className="btn btn-ghost btn-sm ui-icon-btn" style={{ marginLeft: "auto" }} aria-label="New project"><Plus size={15} strokeWidth={1.75} /></button>
+            <Link href="/workspace/new" className="btn btn-ghost btn-sm ui-icon-btn" style={{ marginLeft: "auto" }} aria-label="New project"><Plus size={15} strokeWidth={1.75} /></Link>
           </Tooltip>
         </div>
 
@@ -105,7 +107,9 @@ function Sidebar({ collapsed, onToggle }) {
                     <span className="mono" style={{ fontSize: 9, color: "var(--ink-4)" }}>{t.updated}</span>
                   </div>
                 ))}
-                <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 8px", fontSize: 11, color: "var(--ink-3)", cursor: "pointer" }}><Plus size={12} strokeWidth={1.75} /> new thread</div>
+                <Link href="/workspace/new" style={{ textDecoration: "none", color: "var(--ink-3)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 8px", fontSize: 11, cursor: "pointer" }}><Plus size={12} strokeWidth={1.75} /> new thread</div>
+                </Link>
               </div>
             )}
           </div>
@@ -266,6 +270,7 @@ export function ActiveThread() {
   const [canvasMode, setCanvasMode] = useState("rail");
   const [showPresence, setShowPresence] = useState(true);
   const [focusArtifact, setFocusArtifact] = useState(null);
+  const [handoffOpen, setHandoffOpen] = useState(false);
 
   const context = `User is in the Wilaya workspace, project "${DATA.projects[0].name}" (${DATA.projects[0].short}), thread "${DATA.threads[0].name}". They are a foreign institutional investor (Khazanah Nasional) doing diligence on nickel midstream co-investment with state-owned MIND ID.`;
   const { messages, input, setInput, send, loading } = useChat({ initialMessages: SEED_MESSAGES, context });
@@ -291,7 +296,7 @@ export function ActiveThread() {
           <>
             <button className="btn btn-sm btn-ghost"><Search size={14} strokeWidth={1.75} /> Search <span className="kbd">⌘K</span></button>
             <Tooltip content="Notifications" side="bottom">
-              <button className="btn btn-sm btn-ghost ui-icon-btn" aria-label="Notifications"><Bell size={15} strokeWidth={1.75} /></button>
+              <Link href="/notifications" className="btn btn-sm btn-ghost ui-icon-btn" aria-label="Notifications"><Bell size={15} strokeWidth={1.75} /></Link>
             </Tooltip>
             {canvasMode === "hidden" && (
               <button className="btn btn-sm" onClick={() => setCanvasMode("rail")}>Show canvas <ArrowRight size={14} strokeWidth={1.75} /></button>
@@ -304,8 +309,8 @@ export function ActiveThread() {
         <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
 
         <div className="col grow" style={{ minWidth: 0, position: "relative", background: "var(--surface)" }}>
-          <PresenceRibbon show={showPresence} onBookCall={() => setShowPresence(true)} onPullIn={() => setShowPresence(true)} />
-          <FloatingChip show={showPresence} onClick={() => {}} />
+          <PresenceRibbon show={showPresence} onBookCall={() => setHandoffOpen(true)} onPullIn={() => setHandoffOpen(true)} />
+          <FloatingChip show={showPresence} onClick={() => setHandoffOpen(true)} />
 
           <div style={{ padding: "20px 28px 12px", borderBottom: "1px solid var(--line)", background: "var(--surface)" }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
@@ -338,7 +343,7 @@ export function ActiveThread() {
             ))}
           </div>
 
-          <Composer input={input} setInput={setInput} onSend={() => send()} loading={loading} onReferHuman={() => setShowPresence(true)} />
+          <Composer input={input} setInput={setInput} onSend={() => send()} loading={loading} onReferHuman={() => setHandoffOpen(true)} />
         </div>
 
         <CanvasRail
@@ -349,31 +354,8 @@ export function ActiveThread() {
         />
       </div>
 
-      <Dialog
-        open={!!focusArtifact}
-        onOpenChange={(o) => !o && setFocusArtifact(null)}
-        title={focusArtifact?.title || ""}
-        width={560}
-      >
-        {focusArtifact && (
-          <>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <span className="chip">{focusArtifact.kind}</span>
-              <span className="mono" style={{ fontSize: 10, color: "var(--ink-3)" }}>{focusArtifact.meta}</span>
-            </div>
-            <ArtifactCard {...focusArtifact} onClick={() => {}} />
-            {focusArtifact.highlight && (
-              <div style={{ marginTop: 14, fontSize: 13, lineHeight: 1.6, color: "var(--ink-2)", fontStyle: "italic", borderLeft: "3px solid var(--terracotta)", paddingLeft: 12 }}>
-                &quot;{focusArtifact.highlight}&quot;
-              </div>
-            )}
-            <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
-              <button className="btn btn-sm btn-primary">Open in canvas</button>
-              <button className="btn btn-sm"><ArrowUpRight size={14} strokeWidth={1.75} /> Share</button>
-            </div>
-          </>
-        )}
-      </Dialog>
+      <CanvasFocus artifact={focusArtifact} onOpenChange={(o) => !o && setFocusArtifact(null)} />
+      <HandoffModal open={handoffOpen} onOpenChange={setHandoffOpen} />
     </div>
   );
 }
