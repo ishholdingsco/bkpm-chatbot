@@ -1,0 +1,194 @@
+/* Map + landing styles — extends midfi-styles.css */
+
+:root {
+  /* Mapbox-inspired palette */
+  --mb-blue: #4264fb;
+  --mb-blue-soft: #e8edff;
+  --mb-pink: #f74565;
+  --mb-saffron: #f7b500;
+  --mb-saffron-soft: #fff3cf;
+  --mb-teal: #29b0a4;
+  --mb-teal-soft: #d4f0ec;
+  --mb-purple: #7e4dd9;
+  --mb-coral: #e8533f;
+
+  --mb-water: #c7e0f4;
+  --mb-water-2: #a5cae8;
+  --mb-water-deep: #7fb1d8;
+  --mb-land: #f5efe1;
+  --mb-land-2: #ebe3d0;
+  --mb-coast: #d4c8a8;
+  --mb-text-strong: #1a1a2e;
+  --mb-text-soft: #5a5a6e;
+  --mb-graticule: rgba(122,116,102,0.18);
+}
+
+/* hi-fi specific */
+.hifi {
+  font-family: 'Inter', system-ui, sans-serif;
+  --shadow-1: 0 1px 3px rgba(20,20,40,0.06), 0 1px 0 rgba(20,20,40,0.03);
+  --shadow-2: 0 12px 32px rgba(20,20,40,0.10), 0 4px 8px rgba(20,20,40,0.04);
+}
+.hifi .card {
+  border-radius: 10px;
+  border-color: #e8e3d4;
+  box-shadow: var(--shadow-1);
+}
+.hifi .btn {
+  border-radius: 6px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+.hifi .chip {
+  border-radius: 6px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+/* Map canvas */
+.map-canvas {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.4), transparent 60%),
+    linear-gradient(180deg, var(--mb-water) 0%, var(--mb-water-2) 100%);
+  overflow: hidden;
+}
+.map-canvas.dark {
+  background: linear-gradient(180deg, #0f1729 0%, #1a223e 100%);
+}
+
+/* Graticule lines */
+.graticule {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(to right, var(--mb-graticule) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--mb-graticule) 1px, transparent 1px);
+  background-size: 80px 80px;
+  pointer-events: none;
+}
+
+/* Layer pill */
+.layer-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  transition: background 0.12s;
+}
+.layer-pill:hover { background: rgba(0,0,0,0.03); }
+.layer-pill.active {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.layer-swatch {
+  width: 14px; height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* Map controls */
+.map-control {
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(20,20,40,0.12), 0 0 0 1px rgba(20,20,40,0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.map-control button {
+  width: 32px; height: 32px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  color: var(--mb-text-strong);
+  border-bottom: 1px solid var(--line);
+}
+.map-control button:last-child { border-bottom: none; }
+.map-control button:hover { background: var(--surface-3); }
+
+/* Pin / marker */
+.map-pin {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Wordmark variants */
+.wordmark {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.wordmark .dot { color: var(--terracotta); }
+.wordmark-mono {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
+}
+
+/* Tooltip */
+.map-tooltip {
+  position: absolute;
+  background: white;
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 24px rgba(20,20,40,0.16), 0 0 0 1px rgba(20,20,40,0.05);
+  pointer-events: none;
+  z-index: 5;
+  font-size: 12px;
+  min-width: 180px;
+}
+
+/* Marquee animation for "live data" */
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.6); opacity: 0.4; }
+}
+.pulse-dot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Compare grid */
+.compare-grid {
+  display: grid;
+  grid-template-columns: 200px 1fr 1fr 1fr;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.compare-grid > div {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 12.5px;
+}
+.compare-grid > div:nth-child(4n) { border-right: none; }
+.compare-grid .row-head {
+  background: var(--surface-2);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.compare-grid .col-head {
+  background: var(--surface-2);
+  font-weight: 600;
+}

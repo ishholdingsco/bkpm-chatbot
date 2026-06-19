@@ -1,0 +1,20 @@
+/* Base resets for the Wilaya prototype. Design tokens live in midfi-styles.css. */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#__next,
+body > div {
+  height: 100%;
+}
+
+/* Full-viewport shell for each screen — the mockups were authored as
+   100%×100% `.frame`s, so we give them a full-bleed container. */
+.screen {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}

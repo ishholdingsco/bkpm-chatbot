@@ -80,7 +80,6 @@
 <script type="text/babel" src="map-globe.jsx"></script>
 <script type="text/babel" src="map-mapbox.jsx"></script>
 <script type="text/babel" src="map-screens.jsx"></script>
-<script type="text/babel" src="hilirisasi-screens.jsx"></script>
 
 <script type="text/babel">
 const { useState } = React;
@@ -114,30 +113,6 @@ function App() {
           </DCArtboard>
           <DCArtboard id="map" label="Map page — chat sidebar contextual to layers" width={W} height={H}>
             <MapPage hifi={t.hifi} chatOpen={chatOpen} setChatOpen={setChatOpen} />
-          </DCArtboard>
-          <DCArtboard id="hilirisasi" label="Hilirisasi — pohon nilai tambah & ekspor-impor komoditas" width={W} height={H}>
-            <HilirisasiPage hifi={t.hifi} chatOpen={chatOpen} setChatOpen={setChatOpen} />
-          </DCArtboard>
-          <DCArtboard id="hilirisasi-en" label="Hilirisasi — commodity value chain (English)" width={W} height={H}>
-            <HilirisasiPageEN hifi={t.hifi} chatOpen={chatOpen} setChatOpen={setChatOpen} />
-          </DCArtboard>
-          <DCArtboard id="hilirisasi-zh" label="价值链 — 商品价值链（中文）" width={W} height={H}>
-            <HilirisasiPageZH hifi={t.hifi} chatOpen={chatOpen} setChatOpen={setChatOpen} />
-          </DCArtboard>
-          <DCArtboard id="hilirisasi-fr" label="Chaîne de valeur — chaîne de valeur des matières premières (Français)" width={W} height={H}>
-            <HilirisasiPageFR hifi={t.hifi} chatOpen={chatOpen} setChatOpen={setChatOpen} />
-          </DCArtboard>
-          <DCArtboard id="hilirisasi-no" label="Verdikjede — råvare verdikjede (Norsk)" width={W} height={H}>
-            <HilirisasiPageNO hifi={t.hifi} chatOpen={chatOpen} setChatOpen={setChatOpen} />
-          </DCArtboard>
-          <DCArtboard id="hilirisasi-ms" label="Rantai Nilai — rantai nilai komoditi (Bahasa Melayu)" width={W} height={H}>
-            <HilirisasiPageMS hifi={t.hifi} chatOpen={chatOpen} setChatOpen={setChatOpen} />
-          </DCArtboard>
-          <DCArtboard id="hilirisasi-ar" label="سلسلة القيمة — سلسلة قيمة السلع (العربية)" width={W} height={H}>
-            <HilirisasiPageAR hifi={t.hifi} chatOpen={chatOpen} setChatOpen={setChatOpen} />
-          </DCArtboard>
-          <DCArtboard id="hilirisasi-hi" label="मूल्य श्रृंखला — जिंस मूल्य श्रृंखला (हिन्दी)" width={W} height={H}>
-            <HilirisasiPageHI hifi={t.hifi} chatOpen={chatOpen} setChatOpen={setChatOpen} />
           </DCArtboard>
         </DCSection>
 

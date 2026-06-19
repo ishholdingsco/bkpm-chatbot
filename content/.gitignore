@@ -1,0 +1,12 @@
+# Debug files
+debug-*.png
+
+# Design tool state
+.design-canvas.state.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node modules (jika nanti ada)
+node_modules/
