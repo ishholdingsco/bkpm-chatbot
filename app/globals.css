@@ -6,11 +6,6 @@ body {
   padding: 0;
 }
 
-#__next,
-body > div {
-  height: 100%;
-}
-
 /* Full-viewport shell for each screen — the mockups were authored as
    100%×100% `.frame`s, so we give them a full-bleed container. */
 .screen {
