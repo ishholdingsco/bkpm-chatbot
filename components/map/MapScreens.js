@@ -414,7 +414,7 @@ export function MapPage({ hifi = false }) {
 // ─── PUBLIC LANDING — full-bleed Mapbox map, floating chrome on top ───
 export function Landing({ name = "Wilaya", hifi = false, mapStyle }) {
   const { t } = useI18n();
-  const navItems = [t("nav.exploreMap"), t("nav.sectors"), t("nav.whyIndonesia"), t("nav.analysts"), t("nav.pricing")];
+  const navItems = [t("nav.exploreMap"), t("nav.valueChain"), t("nav.sectors"), t("nav.whyIndonesia"), t("nav.analysts"), t("nav.pricing")];
   return (
     <div className={"frame col " + (hifi ? "hifi" : "")} style={{ background: "var(--bg)", position: "relative" }}>
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
@@ -425,13 +425,11 @@ export function Landing({ name = "Wilaya", hifi = false, mapStyle }) {
         <Wordmark name={name} hifi={hifi} />
         <div className="grow" />
         <div style={{ display: "flex", gap: 22, fontSize: 13 }}>
-          {navItems.map((label, i) =>
-            i === 0 ? (
-              <Link key={label} href="/map" style={{ color: "#1a1a2e", fontWeight: 600, cursor: "pointer", textDecoration: "none" }}>{label}</Link>
-            ) : (
-              <span key={label} onClick={() => comingSoon(label)} style={{ color: "var(--ink-2)", fontWeight: 400, cursor: "pointer" }}>{label}</span>
-            )
-          )}
+          {navItems.map((label, i) => {
+            if (i === 0) return <Link key={label} href="/map" style={{ color: "#1a1a2e", fontWeight: 600, cursor: "pointer", textDecoration: "none" }}>{label}</Link>;
+            if (i === 1) return <Link key={label} href="/hilirisasi" style={{ color: "var(--ink-2)", fontWeight: 400, cursor: "pointer", textDecoration: "none" }}>{label}</Link>;
+            return <span key={label} onClick={() => comingSoon(label)} style={{ color: "var(--ink-2)", fontWeight: 400, cursor: "pointer" }}>{label}</span>;
+          })}
         </div>
         <span style={{ width: 1, height: 22, background: "var(--line)" }} />
         <button className="btn btn-sm btn-ghost" onClick={() => comingSoon("Accounts")}>{t("common.signIn")}</button>
