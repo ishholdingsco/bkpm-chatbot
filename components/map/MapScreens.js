@@ -2,13 +2,14 @@
 // Map page (hero) + Landing, ported from content/map-screens.jsx.
 // The chat sidebar ("Ask Nusantara") is wired to DeepSeek via useChat.
 
-import { useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ChevronDown, ChevronRight, Plus, Minus, Locate, Compass,
   Search, MessageCircle, ArrowUpRight, ArrowRight, Loader2,
 } from "lucide-react";
 import MapboxMap, { MB_LAYER_KEYS } from "@/components/map/MapboxMap";
+import { applyLayerChange, boundsOf, resolveFlyTo, selectOpportunities } from "@/components/map/mapActions";
 import { useChat } from "@/components/chat/useChat";
 import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
 import { Markdown } from "@/components/chat/Markdown";
@@ -18,6 +19,7 @@ import industrialData from "@/data/industrial-estates.json";
 import kekData from "@/data/kek.json";
 import mineralsData from "@/data/minerals.json";
 import portsData from "@/data/ports.json";
+import opportunitiesData from "@/data/opportunities.json";
 
 // Counts come straight from the static JSON in data/ so the panel and the map
 // can never drift apart. WIUP/GDP/infra are future layers without point data yet.
@@ -99,11 +101,11 @@ function MapControls() {
 }
 
 // ─── Chat sidebar (collapsible, contextual to map) — LIVE via DeepSeek ───
-function MapChat({ open, onToggle, hifi, activeLayers }) {
-  const { t, lang } = useI18n();
-  const layerNames = LAYERS.filter((l) => activeLayers[l.id]).map((l) => t("map.layerNames." + l.id)).join(", ");
-  const context = `User is on the Wilaya map view. Active map layers: ${layerNames || "none"}. They are looking at Indonesia (default focus: Sulawesi nickel belt). Answer in the context of what's visible on the map.`;
-  const { messages, input, setInput, send, loading } = useChat({ context, lang });
+// Presentational: the chat state + map-action wiring live in MapPage so the
+// assistant's tool calls can drive the same `active` / map the panel reflects.
+function MapChat({ open, onToggle, hifi, activeLayers, viewLabel, chat }) {
+  const { t } = useI18n();
+  const { messages, input, setInput, send, loading } = chat;
   const suggestions = t("map.suggestions");
 
   if (!open) {
@@ -125,7 +127,10 @@ function MapChat({ open, onToggle, hifi, activeLayers }) {
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 12, fontWeight: 600 }}>{t("map.askNusantara")}</div>
           <div className="mono" style={{ fontSize: 9, color: "var(--ink-3)" }}>
-            {t("map.reading", { n: Object.values(activeLayers).filter(Boolean).length })}
+            {t("map.reading", {
+              n: Object.values(activeLayers).filter(Boolean).length,
+              view: viewLabel,
+            })}
           </div>
         </div>
         <Tooltip content={t("common.collapse")} side="bottom">
@@ -217,13 +222,95 @@ function MapTooltip() {
   );
 }
 
+// Is a point inside a bounding box, allowing a degree margin (~111 km/deg)?
+function inBounds([lng, lat], [[minLng, minLat], [maxLng, maxLat]], margin = 1.0) {
+  return lng >= minLng - margin && lng <= maxLng + margin && lat >= minLat - margin && lat <= maxLat + margin;
+}
+
 // ─── MAP PAGE — hero ───
 export function MapPage({ hifi = false }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [chatOpen, setChatOpen] = useState(true);
   const [active, setActive] = useState({
     industrial: true, kek: true, wiup: false, minerals: true, gdp: false, infra: false, ports: true,
   });
+  const [pinFilter, setPinFilter] = useState(null);
+  const [viewLabel, setViewLabel] = useState(t("map.viewDefault"));
+  const mapRef = useRef(null);
+
+  // Chat context the assistant sees — kept in sync with what's on screen so its
+  // answers (and tool calls) match the visible map.
+  const activeLayerNames = LAYERS.filter((l) => active[l.id]).map((l) => t("map.layerNames." + l.id)).join(", ");
+  const context = useMemo(
+    () =>
+      `User is on the Wilaya map view. Active map layers: ${activeLayerNames || "none"}. Current view: ${viewLabel}.` +
+      (pinFilter ? ` Opportunity pins filtered to: ${pinFilter.label} (${pinFilter.ids?.length ?? 0} shown).` : "") +
+      ` You can change all of this with the map tools.`,
+    [activeLayerNames, viewLabel, pinFilter]
+  );
+
+  // Frame the camera tightly on a set of points: a lone point flies in close, a
+  // group fits with little padding so the move actually "zooms in".
+  const frameCoords = (coords) => {
+    if (coords.length === 1) mapRef.current?.flyTo({ center: coords[0], zoom: 8.5 });
+    else mapRef.current?.fitBounds(boundsOf(coords), { padding: 64, maxZoom: 9 });
+  };
+
+  // Dispatch a batch of assistant tool calls onto the real map. Handling the
+  // whole batch at once keeps the camera coherent: when a fly_to and a filter
+  // arrive together (e.g. "zoom to the Sulawesi nickel cluster") we frame the
+  // filtered pins that fall inside the region — so the camera dives onto the
+  // actual cluster instead of fitting the whole island from far away.
+  const onAction = useCallback((actions) => {
+    const batch = Array.isArray(actions) ? actions : [actions];
+
+    // Layers: fold every set_layers call onto the live state.
+    const layerCalls = batch.filter((a) => a?.name === "set_layers");
+    if (layerCalls.length) {
+      setActive((prev) => layerCalls.reduce((acc, a) => applyLayerChange(acc, a.args || {}), prev));
+    }
+
+    const fly = batch.find((a) => a?.name === "fly_to");
+    const filt = batch.find((a) => a?.name === "filter_opportunities");
+
+    const region = fly ? resolveFlyTo(fly.args || {}) : null;
+    if (region?.label) setViewLabel(region.label);
+
+    let selCoords = null;
+    if (filt) {
+      const sel = selectOpportunities(filt.args || {});
+      if (!sel.ids) setPinFilter(null);
+      else {
+        setPinFilter(sel);
+        selCoords = sel.coords;
+      }
+    }
+
+    // Pick the tightest correct thing to frame.
+    if (selCoords?.length) {
+      const rb = region?.bounds || (region?.center ? boundsOf([region.center]) : null);
+      const within = rb ? selCoords.filter((c) => inBounds(c, rb)) : selCoords;
+      frameCoords(within.length ? within : selCoords);
+    } else if (region) {
+      if (region.bounds) mapRef.current?.fitBounds(region.bounds, { padding: 56, maxZoom: 9 });
+      else mapRef.current?.flyTo({ center: region.center, zoom: region.zoom });
+    }
+  }, []);
+
+  const chat = useChat({ context, lang, mapTools: true, onAction });
+
+  // Clicking a featured pin pulls its context into the chat: open the panel and
+  // prefill a question about that opportunity for the user to send.
+  const onPinClick = useCallback(
+    (id) => {
+      const opp = opportunitiesData.opportunities.find((o) => o.id === id);
+      if (!opp) return;
+      setChatOpen(true);
+      chat.setInput(t("map.pinPrompt", { label: opp.label }));
+    },
+    [chat, t]
+  );
+
   const navItems = [t("nav.map"), t("nav.sectors"), t("nav.opportunities"), t("nav.analysts")];
   return (
     <div className={"frame col " + (hifi ? "hifi" : "")}>
@@ -262,7 +349,16 @@ export function MapPage({ hifi = false }) {
 
       <div className="row grow" style={{ minHeight: 0 }}>
         <div className="map-canvas grow" style={{ position: "relative" }}>
-          <MapboxMap center={[120.0, -2.0]} zoom={3.9} bearing={-12} interactive={true} layers={active} />
+          <MapboxMap
+            ref={mapRef}
+            center={[120.0, -2.0]}
+            zoom={3.9}
+            bearing={-12}
+            interactive={true}
+            layers={active}
+            pinFilter={pinFilter}
+            onPinClick={onPinClick}
+          />
 
           <LayerPanel active={active} onToggle={(id) => setActive({ ...active, [id]: !active[id] })} hifi={hifi} />
           <MapControls />
@@ -293,7 +389,14 @@ export function MapPage({ hifi = false }) {
           </div>
         </div>
 
-        <MapChat open={chatOpen} onToggle={() => setChatOpen(!chatOpen)} hifi={hifi} activeLayers={active} />
+        <MapChat
+          open={chatOpen}
+          onToggle={() => setChatOpen(!chatOpen)}
+          hifi={hifi}
+          activeLayers={active}
+          viewLabel={viewLabel}
+          chat={chat}
+        />
       </div>
     </div>
   );

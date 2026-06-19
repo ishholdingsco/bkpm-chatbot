@@ -75,14 +75,16 @@
     "matchedThesis": "cocok dengan tesis Anda",
     "askAboutMap": "Tanya tentang peta ini",
     "askNusantara": "Tanya Nusantara",
-    "reading": "Membaca: {n} layer aktif · melihat Sulawesi",
+    "viewDefault": "Sulawesi",
+    "reading": "Membaca: {n} layer aktif · melihat {view}",
+    "pinPrompt": "Ceritakan peluang {label} — ukuran tiket, insentif, dan risiko utamanya.",
     "collapseChat": "Tutup chat",
     "intro": "Tanyakan apa saja tentang yang ada di peta — sektor, kawasan ekonomi khusus, aturan kepemilikan, atau peluang tertentu.",
     "tryAsking": "Coba tanyakan",
     "suggestions": [
-      "Apa yang mendorong klaster lokasi nikel di Sulawesi?",
-      "Sektor mana yang kini mengizinkan kepemilikan asing 100%?",
-      "Bandingkan infrastruktur nikel Sulawesi vs Halmahera"
+      "Tampilkan hanya layer KEK dan mineral",
+      "Zoom ke klaster nikel Sulawesi",
+      "Tampilkan proyek dengan kepemilikan asing 100%"
     ],
     "chatPlaceholder": "Tanya, atau coba /filter, /compare…",
     "saveView": "simpan tampilan",

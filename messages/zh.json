@@ -75,14 +75,16 @@
     "matchedThesis": "与您的投资主题匹配",
     "askAboutMap": "询问此地图",
     "askNusantara": "询问 Nusantara",
-    "reading": "正在读取：{n} 个图层启用 · 查看苏拉威西",
+    "viewDefault": "苏拉威西",
+    "reading": "正在读取：{n} 个图层启用 · 查看{view}",
+    "pinPrompt": "介绍一下{label}这个投资机会——投资规模、激励政策和主要风险。",
     "collapseChat": "收起对话",
     "intro": "尽管询问地图上的任何内容——行业、经济特区、所有权规则或某个具体机会。",
     "tryAsking": "试着问",
     "suggestions": [
-      "苏拉威西镍矿点集群的驱动力是什么？",
-      "目前哪些行业允许 100% 外资持股？",
-      "比较苏拉威西与哈马黑拉的镍基础设施"
+      "只显示 KEK 和矿产图层",
+      "缩放到苏拉威西镍矿集群",
+      "显示外资持股 100% 的项目"
     ],
     "chatPlaceholder": "提问，或尝试 /filter、/compare…",
     "saveView": "保存视图",
