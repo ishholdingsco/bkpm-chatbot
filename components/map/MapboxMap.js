@@ -5,6 +5,8 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
+import { Loader2 } from "lucide-react";
+import { useI18n } from "@/components/ui";
 import industrialData from "@/data/industrial-estates.json";
 import kekData from "@/data/kek.json";
 import opportunitiesData from "@/data/opportunities.json";
@@ -101,7 +103,9 @@ const MapboxMap = forwardRef(function MapboxMap({
   style,
   layers,
   pinFilter,
+  onReady,
 }, apiRef) {
+  const { t } = useI18n();
   const ref = useRef(null);
   const mapRef = useRef(null);
   const [ready, setReady] = useState(false);
@@ -164,7 +168,17 @@ const MapboxMap = forwardRef(function MapboxMap({
     map.on("load", () => {
       if (deemphasizeOthers) addCountryMask(map);
       if (showOverlays) addMbOverlays(map, onPinClick);
-      setReady(true);
+      // Only reveal once the basemap tiles + our overlay layers have actually
+      // settled (first `idle`), so the user never sees a half-painted map with
+      // pins popping in (issue #39). A timeout is a safety net in case `idle`
+      // is delayed; `done` is idempotent so firing twice is harmless.
+      let done = () => {
+        done = () => {};
+        setReady(true);
+        onReady?.();
+      };
+      map.once("idle", () => done());
+      setTimeout(() => done(), 2500);
     });
 
     const ro = new ResizeObserver(() => map.resize());
@@ -209,18 +223,41 @@ const MapboxMap = forwardRef(function MapboxMap({
   return (
     <div style={{ width: "100%", height: "100%", position: "relative", background: "#cfe6f2" }}>
       <div ref={ref} style={{ width: "100%", height: "100%" }} />
-      {!ready && !errored && (
-        <div style={{
-          position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-          color: "#5a6b88", fontFamily: "IBM Plex Mono, monospace", fontSize: 11, letterSpacing: "0.12em",
-          pointerEvents: "none",
-        }}>LOADING ATLAS…</div>
+
+      {/* Loading skeleton — an on-brand dotted "atlas" surface with a centered
+          brand pill, kept mounted and faded out once the map settles so the
+          reveal is smooth with no half-painted flash (issue #39). */}
+      {!errored && (
+        <div
+          aria-hidden={ready}
+          style={{
+            position: "absolute", inset: 0, zIndex: 4,
+            background: "var(--surface)",
+            backgroundImage: "radial-gradient(var(--line-strong) 1px, transparent 1px)",
+            backgroundSize: "26px 26px",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            opacity: ready ? 0 : 1,
+            pointerEvents: ready ? "none" : "auto",
+            transition: "opacity 0.45s ease",
+          }}
+        >
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: 9,
+            padding: "9px 16px", background: "var(--surface)", border: "1px solid var(--line)",
+            borderRadius: 24, boxShadow: "var(--shadow-2)",
+            color: "var(--ink-2)", fontSize: 12.5, fontWeight: 500,
+          }}>
+            <Loader2 size={15} strokeWidth={2} className="spin" style={{ color: "var(--bkpm-blue)" }} />
+            {t("map.loading")}
+          </span>
+        </div>
       )}
+
       {errored && (
         <div style={{
           position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-          color: "#a55", fontFamily: "IBM Plex Mono, monospace", fontSize: 11, textAlign: "center", padding: 24,
-        }}>MAP FAILED TO LOAD — check NEXT_PUBLIC_MAPBOX_TOKEN</div>
+          color: "var(--terracotta)", fontSize: 12, textAlign: "center", padding: 24, lineHeight: 1.5,
+        }}>{t("map.loadFailed")}</div>
       )}
     </div>
   );

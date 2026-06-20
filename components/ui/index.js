@@ -12,5 +12,6 @@ export {
   ArtifactCard,
 } from "./primitives";
 export { ToastHost, toast, comingSoon, ComingSoonButton } from "./Toast";
+export { Skeleton } from "./Skeleton";
 export { LanguageProvider, useI18n, LangToggle, LANGUAGES } from "./i18n";
 export { DesktopOnlyGate } from "./DesktopOnlyGate";

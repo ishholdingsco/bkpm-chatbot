@@ -52,6 +52,8 @@
     "locate": "Locate me",
     "resetBearing": "Reset bearing",
     "compass": "Compass",
+    "loading": "Loading map…",
+    "loadFailed": "Map failed to load — check NEXT_PUBLIC_MAPBOX_TOKEN",
     "layerNames": {
       "industrial": "Kawasan Industri",
       "kek": "Kawasan Ekonomi Khusus",
