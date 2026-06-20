@@ -9,6 +9,7 @@
     "exploreMap": "Jelajahi peta",
     "notifications": "Notifikasi",
     "cancel": "Batal",
+    "save": "Simpan",
     "soon": "segera",
     "collapse": "Tutup",
     "expand": "Buka",
@@ -90,7 +91,7 @@
     "startWorkspace": "buka workspace"
   },
   "chat": {
-    "assistant": "Asisten BKPM",
+    "assistant": "Nusantara",
     "placeholder": "Tanya tentang regulasi, struktur, pembanding — atau @sebut seorang analis…",
     "attach": "Lampirkan",
     "mention": "Sebut",
@@ -130,6 +131,7 @@
     "showCanvas": "Tampilkan kanvas",
     "threadOptions": "Opsi utas",
     "renameThread": "Ganti nama utas",
+    "renameThreadPrompt": "Nama utas",
     "shareThread": "Bagikan utas",
     "addToCanvas": "Tambah ke kanvas",
     "archiveThread": "Arsipkan utas",
@@ -144,7 +146,17 @@
     "popOutCanvas": "Lepas kanvas",
     "collapseCanvas": "Tutup kanvas",
     "canvasHint": "Disematkan oleh AI + analis seiring utas berkembang. Suntingan tersinkron ke memori proyek.",
+    "canvasEmpty": "Belum ada artefak. Minta Nusantara membuat ringkasan regulasi, model pembanding, atau diagram struktur — nanti muncul di sini.",
     "pinFromChat": "Sematkan dari chat atau unggah",
+    "freshThreadMeta": "Utas baru · belum ada artefak",
+    "chatIntro": "Tanyakan apa saja tentang investasi di Indonesia untuk proyek ini — regulasi, kepemilikan asing, insentif pajak, struktur deal, atau lokasi. Minta Nusantara menyiapkan artefak dan ia akan menyematkannya ke kanvas.",
+    "tryAsking": "Coba tanyakan",
+    "chatSuggestions": [
+      "Berapa batas kepemilikan asing di sektor ini?",
+      "Buatkan ringkasan regulasi yang relevan ke kanvas",
+      "Sketsa struktur SPV dengan mitra BUMN ke kanvas",
+      "Insentif pajak apa yang berlaku untuk proyek ini?"
+    ],
     "onCall": "Sedang siap ·",
     "message": "Pesan {name}"
   },

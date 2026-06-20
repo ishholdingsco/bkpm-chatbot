@@ -617,3 +617,15 @@ body {
   text-transform: uppercase;
   color: var(--ink-4);
 }
+
+/* Workspace thread rows — reveal the rename pencil on hover (issue #26). */
+.ws-thread-rename {
+  opacity: 0;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.ws-thread-row:hover .ws-thread-rename,
+.ws-thread-rename:focus-visible {
+  opacity: 1;
+}

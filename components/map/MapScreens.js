@@ -205,7 +205,7 @@ function MapChat({ open, onToggle, hifi, activeLayers, viewLabel, chat }) {
         </div>
         <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
           <span className="chip" style={{ cursor: "pointer" }} onClick={() => comingSoon("Save view")}><Plus size={11} strokeWidth={2} /> {t("map.saveView")}</span>
-          <Link href="/workspace" style={{ textDecoration: "none" }}>
+          <Link href="/workspace/new" style={{ textDecoration: "none" }}>
             <span className="chip chip-terra" style={{ cursor: "pointer" }}><ArrowUpRight size={11} strokeWidth={2} /> {t("map.startWorkspace")}</span>
           </Link>
         </div>

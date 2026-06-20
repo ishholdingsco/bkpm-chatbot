@@ -1297,7 +1297,7 @@ function HilirisasiChat({ open, onToggle, hifi, commodity, lang = 'id', chat }) 
         </div>
         <div style={{ display:'flex', gap:6, marginTop:6 }}>
           <span className="chip" style={{ cursor:'pointer' }} onClick={() => comingSoon(u.saveAnalysis)}>{u.saveAnalysis}</span>
-          <Link href="/workspace" style={{ textDecoration:'none' }}>
+          <Link href="/workspace/new" style={{ textDecoration:'none' }}>
             <span className="chip chip-terra" style={{ cursor:'pointer' }}>{u.openWorkspace}</span>
           </Link>
         </div>
