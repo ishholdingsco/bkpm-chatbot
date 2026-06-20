@@ -98,15 +98,18 @@ function Sidebar({ collapsed, onToggle, projects, activeId, onSelectProject, thr
 
       <div className="div-h" />
 
-      <div className="scroll col grow" style={{ padding: "12px 10px", gap: 2 }}>
-        <div style={{ display: "flex", alignItems: "center", padding: "0 6px 6px" }}>
+      <div className="col grow" style={{ minHeight: 0 }}>
+        {/* Fixed header — the label + new-project button stay put while only the
+            project cards below scroll. */}
+        <div style={{ display: "flex", alignItems: "center", padding: "12px 16px 8px", flexShrink: 0, borderBottom: "1px solid var(--line)" }}>
           <span className="label">{t("workspace.projects")}</span>
           <Tooltip content={t("workspace.newProject")}>
             <Link href="/workspace/new" className="btn btn-ghost btn-sm ui-icon-btn" style={{ marginLeft: "auto" }} aria-label={t("workspace.newProject")}><Plus size={15} strokeWidth={1.75} /></Link>
           </Tooltip>
         </div>
 
-        {projects.map((p) => {
+        <div className="scroll col grow" style={{ padding: "10px 10px 12px", gap: 2, minHeight: 0 }}>
+          {projects.map((p) => {
           const active = p.id === activeId;
           return (
             <div key={p.id} style={{ padding: "7px 10px", borderRadius: 6, background: active ? "var(--terracotta-soft)" : "transparent", position: "relative" }}>
@@ -143,6 +146,7 @@ function Sidebar({ collapsed, onToggle, projects, activeId, onSelectProject, thr
             </div>
           );
         })}
+        </div>
       </div>
 
       <div className="div-h" />
