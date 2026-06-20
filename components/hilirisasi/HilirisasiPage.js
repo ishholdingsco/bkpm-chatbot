@@ -7,7 +7,7 @@
 
 import { useState as useHil, useRef as useHilRef, useEffect as useHilEffect, useMemo, useRef, useCallback, forwardRef, useImperativeHandle } from "react";
 import Link from "next/link";
-import { Search, MessageCircle, ChevronRight, Plus, Minus, Crosshair, ArrowUpRight, Loader2 } from "lucide-react";
+import { Search, MessageCircle, ChevronRight, Plus, Minus, Crosshair, ArrowRight, ArrowUpRight, Loader2 } from "lucide-react";
 import { Avatar, TopBar, comingSoon, useI18n, LangToggle } from "@/components/ui";
 import { resolveCommodity } from "@/components/hilirisasi/treeActions";
 import { useChat } from "@/components/chat/useChat";
@@ -582,7 +582,7 @@ const UI = {
     commNames:{ Nikel:'Nikel', Sawit:'Sawit', Kelapa:'Kelapa', 'Rumput Laut':'Rumput Laut' },
     navLabel:'Hilirisasi',
     navItems:['Peta','Hilirisasi','Sektor','Peluang','Analis'],
-    langCode:'ID', startProject:'Mulai proyek →',
+    langCode:'ID', startProject:'Mulai proyek',
     valueAddFrom:'nilai tambah dari bahan mentah',
     askTree:'Tanya tentang pohon ini', chatTitle:'Tanya Nusantara',
     popularQ:'Pertanyaan populer investor',
@@ -602,7 +602,7 @@ const UI = {
     commNames:{ Nikel:'Nickel', Sawit:'Palm Oil', Kelapa:'Coconut', 'Rumput Laut':'Seaweed' },
     navLabel:'Value Chain',
     navItems:['Map','Value Chain','Sectors','Opportunities','Analysts'],
-    langCode:'EN', startProject:'Start a project →',
+    langCode:'EN', startProject:'Start a project',
     valueAddFrom:'value-add from raw material',
     askTree:'Ask about this chain', chatTitle:'Ask Nusantara',
     popularQ:'Top investor questions',
@@ -622,7 +622,7 @@ const UI = {
     commNames:{ Nikel:'镍', Sawit:'棕榈油', Kelapa:'椰子', 'Rumput Laut':'海藻' },
     navLabel:'价值链',
     navItems:['地图','价值链','行业','投资机会','分析师'],
-    langCode:'中', startProject:'开始项目 →',
+    langCode:'中', startProject:'开始项目',
     valueAddFrom:'原材料增值',
     askTree:'咨询价值链', chatTitle:'问问努山塔拉',
     popularQ:'投资者热门问题',
@@ -642,7 +642,7 @@ const UI = {
     commNames:{ Nikel:'Nickel', Sawit:'Huile de palme', Kelapa:'Noix de coco', 'Rumput Laut':'Algues marines' },
     navLabel:'Chaîne de valeur',
     navItems:['Carte','Chaîne de valeur','Secteurs','Opportunités','Analystes'],
-    langCode:'FR', startProject:'Démarrer →',
+    langCode:'FR', startProject:'Démarrer',
     valueAddFrom:'valeur ajoutée depuis la matière première',
     askTree:'Interroger cette chaîne', chatTitle:'Demander à Nusantara',
     popularQ:'Questions investisseurs',
@@ -662,7 +662,7 @@ const UI = {
     commNames:{ Nikel:'Nikkel', Sawit:'Palmeolje', Kelapa:'Kokosnøtt', 'Rumput Laut':'Sjøgress' },
     navLabel:'Verdikjede',
     navItems:['Kart','Verdikjede','Sektorer','Muligheter','Analytikere'],
-    langCode:'NO', startProject:'Start et prosjekt →',
+    langCode:'NO', startProject:'Start et prosjekt',
     valueAddFrom:'verdiøkning fra råvare',
     askTree:'Spør om denne kjeden', chatTitle:'Spør Nusantara',
     popularQ:'Populære investorspørsmål',
@@ -682,7 +682,7 @@ const UI = {
     commNames:{ Nikel:'Nikel', Sawit:'Sawit', Kelapa:'Kelapa', 'Rumput Laut':'Rumpai Laut' },
     navLabel:'Rantai Nilai',
     navItems:['Peta','Rantai Nilai','Sektor','Peluang','Analis'],
-    langCode:'MY', startProject:'Mulakan projek →',
+    langCode:'MY', startProject:'Mulakan projek',
     valueAddFrom:'nilai tambah dari bahan mentah',
     askTree:'Tanya tentang rantai ini', chatTitle:'Tanya Nusantara',
     popularQ:'Soalan popular pelabur',
@@ -702,7 +702,7 @@ const UI = {
     commNames:{ Nikel:'النيكل', Sawit:'زيت النخيل', Kelapa:'جوز الهند', 'Rumput Laut':'عشب البحر' },
     navLabel:'سلسلة القيمة',
     navItems:['الخريطة','سلسلة القيمة','القطاعات','الفرص','المحللون'],
-    langCode:'AR', startProject:'ابدأ مشروعًا ←',
+    langCode:'AR', startProject:'ابدأ مشروعًا',
     valueAddFrom:'القيمة المضافة من المواد الخام',
     askTree:'استفسر عن هذه السلسلة', chatTitle:'اسأل نوسانتارا',
     popularQ:'أسئلة المستثمرين الشائعة',
@@ -722,7 +722,7 @@ const UI = {
     commNames:{ Nikel:'निकेल', Sawit:'पाम तेल', Kelapa:'नारियल', 'Rumput Laut':'समुद्री शैवाल' },
     navLabel:'मूल्य श्रृंखला',
     navItems:['मानचित्र','मूल्य श्रृंखला','क्षेत्र','अवसर','विश्लेषक'],
-    langCode:'HI', startProject:'प्रोजेक्ट शुरू करें →',
+    langCode:'HI', startProject:'प्रोजेक्ट शुरू करें',
     valueAddFrom:'कच्चे माल से मूल्य वृद्धि',
     askTree:'इस श्रृंखला के बारे में पूछें', chatTitle:'नुसंतारा से पूछें',
     popularQ:'निवेशकों के लोकप्रिय प्रश्न',
@@ -1325,7 +1325,7 @@ function HilirisasiPage({ hifi = false, chatOpen: chatOpenProp, setChatOpen: set
             </div>
             <LangToggle />
             <Link href="/workspace" style={{ textDecoration:'none' }}>
-              <button className="btn btn-sm btn-primary">{u.startProject}</button>
+              <button className="btn btn-sm btn-primary">{u.startProject} <ArrowRight size={14} strokeWidth={1.75} /></button>
             </Link>
           </>
         }
