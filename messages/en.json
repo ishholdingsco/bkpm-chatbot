@@ -293,5 +293,12 @@
     "body": "Wilaya is currently optimized for desktop screens. The phone & tablet experience is still in development — please open it on a computer or laptop with a screen at least 1024px wide.",
     "hint": "Your screen is currently too narrow to show the map and analysis panels.",
     "footer": "Investment Explorer · BKPM Republic of Indonesia"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "Looks like you've wandered off the map. The page you're looking for doesn't exist or has moved.",
+    "toMap": "Open Map",
+    "toHome": "Back to Home",
+    "footer": "404 · Wilaya"
   }
 }

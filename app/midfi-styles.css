@@ -515,3 +515,84 @@ body {
     color: var(--ink-4);
   }
 }
+
+/* ── Custom 404 / not-found (issue #37) ─────────────────────────────────────
+   On-brand replacement for Next's default "This page could not be found".
+   Full-screen centered hero with the Wilaya chrome and a way back. */
+.notfound {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  background:
+    radial-gradient(120% 80% at 50% 0%, var(--surface-2) 0%, var(--bg) 55%);
+}
+.notfound-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.notfound-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 460px;
+}
+.notfound-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  color: var(--bkpm-blue);
+  background: var(--bkpm-blue-soft);
+  border: 1px solid var(--bkpm-blue-tint);
+}
+.notfound-figure {
+  font-size: 72px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--bkpm-blue);
+}
+.notfound-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.notfound-body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.notfound-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+.notfound-footer {
+  position: absolute;
+  bottom: 18px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
