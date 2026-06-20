@@ -983,6 +983,16 @@ const HilirisasiTree = forwardRef(function HilirisasiTree({ commodity, setCommod
   const dragging = useHilRef(false);
   const lastXY   = useHilRef({ x: 0, y: 0 });
   const wrapRef  = useHilRef(null);
+  // The value-chain tree is a large SVG that pops in all at once; hold a skeleton
+  // over the canvas for the first couple of frames, then fade it out so the tree
+  // arrives whole and smooth rather than piecemeal (issue #39). Mount-only, so
+  // switching commodity animates via the transform rather than re-flashing.
+  const [treeReady, setTreeReady] = useHil(false);
+  useHilEffect(() => {
+    let raf2;
+    const raf1 = requestAnimationFrame(() => { raf2 = requestAnimationFrame(() => setTreeReady(true)); });
+    return () => { cancelAnimationFrame(raf1); if (raf2) cancelAnimationFrame(raf2); };
+  }, []);
 
   useHilEffect(() => {
     const onMove = e => {
@@ -1087,6 +1097,33 @@ const HilirisasiTree = forwardRef(function HilirisasiTree({ commodity, setCommod
             <span className="chip chip-jade" style={{ fontSize:9 }}>● {u.commNames[commodity] || commodity}</span>
           </div>
         </div>
+      </div>
+
+      {/* Loading skeleton — dotted canvas + brand pill, faded out once the tree
+          has painted so it reveals whole (issue #39). Reuses the per-language
+          `u.loading` string the page already carries. */}
+      <div
+        aria-hidden={treeReady}
+        style={{
+          position:'absolute', inset:0, zIndex:10,
+          background:'var(--bg)',
+          backgroundImage:'radial-gradient(var(--line-strong) 1px, transparent 1px)',
+          backgroundSize:'28px 28px',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          opacity: treeReady ? 0 : 1,
+          pointerEvents: treeReady ? 'none' : 'auto',
+          transition:'opacity 0.45s ease',
+        }}
+      >
+        <span style={{
+          display:'inline-flex', alignItems:'center', gap:9,
+          padding:'9px 16px', background:'var(--surface)', border:'1px solid var(--line)',
+          borderRadius:24, boxShadow:'var(--shadow-2)',
+          color:'var(--ink-2)', fontSize:12.5, fontWeight:500,
+        }}>
+          <Loader2 size={15} strokeWidth={2} className="spin" style={{ color:'var(--terracotta)' }} />
+          {u.loading.replace(/^●\s*/, '')}
+        </span>
       </div>
     </div>
   );

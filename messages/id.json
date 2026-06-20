@@ -52,6 +52,8 @@
     "locate": "Lokasikan saya",
     "resetBearing": "Atur ulang arah",
     "compass": "Kompas",
+    "loading": "Memuat peta…",
+    "loadFailed": "Peta gagal dimuat — periksa NEXT_PUBLIC_MAPBOX_TOKEN",
     "layerNames": {
       "industrial": "Kawasan Industri",
       "kek": "Kawasan Ekonomi Khusus",

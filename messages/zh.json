@@ -52,6 +52,8 @@
     "locate": "定位我",
     "resetBearing": "重置方位",
     "compass": "指南针",
+    "loading": "正在加载地图…",
+    "loadFailed": "地图加载失败 — 请检查 NEXT_PUBLIC_MAPBOX_TOKEN",
     "layerNames": {
       "industrial": "工业园区 (Kawasan Industri)",
       "kek": "经济特区 (KEK)",

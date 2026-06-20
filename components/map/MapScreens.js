@@ -232,6 +232,10 @@ export function MapPage({ hifi = false }) {
   // the assistant filters. Most-recent action wins (see `cardInfo`).
   const [selected, setSelected] = useState(null);
   const [viewLabel, setViewLabel] = useState(t("map.viewDefault"));
+  // The map's own skeleton covers the canvas until tiles + layers settle; we
+  // also hold back the floating chrome (layer panel, controls, scale) until then
+  // so nothing appears half-baked over a still-loading map (issue #39).
+  const [mapReady, setMapReady] = useState(false);
   const mapRef = useRef(null);
 
   // Chat context the assistant sees — kept in sync with what's on screen so its
@@ -380,17 +384,24 @@ export function MapPage({ hifi = false }) {
             layers={active}
             pinFilter={pinFilter}
             onPinClick={onPinClick}
+            onReady={() => setMapReady(true)}
           />
 
-          <LayerPanel active={active} onToggle={(id) => setActive({ ...active, [id]: !active[id] })} hifi={hifi} />
-          <MapControls mapRef={mapRef} />
+          {/* Floating chrome — only once the map is ready, fading in together so
+              it doesn't pop over a still-loading basemap (issue #39). */}
+          {mapReady && (
+            <div style={{ animation: "ui-fade 0.4s ease-out" }}>
+              <LayerPanel active={active} onToggle={(id) => setActive({ ...active, [id]: !active[id] })} hifi={hifi} />
+              <MapControls mapRef={mapRef} />
 
-          <div style={{ position: "absolute", bottom: 16, left: 16, display: "flex", gap: 8, alignItems: "center", zIndex: 3 }}>
-            <div className="card" style={{ padding: "6px 10px", display: "flex", gap: 8, alignItems: "center" }}>
-              <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)" }}>0  500km</span>
-              <div style={{ width: 60, height: 3, background: "linear-gradient(to right, #1a1a2e 50%, #fff 50%)", border: "1px solid #1a1a2e" }} />
+              <div style={{ position: "absolute", bottom: 16, left: 16, display: "flex", gap: 8, alignItems: "center", zIndex: 3 }}>
+                <div className="card" style={{ padding: "6px 10px", display: "flex", gap: 8, alignItems: "center" }}>
+                  <span className="mono" style={{ fontSize: 9, color: "var(--ink-3)" }}>0  500km</span>
+                  <div style={{ width: 60, height: 3, background: "linear-gradient(to right, #1a1a2e 50%, #fff 50%)", border: "1px solid #1a1a2e" }} />
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Opportunity detail card (IMIP-style) — hidden until a pin is clicked
               (human) or the chat filters/highlights a set (AI). Every value is the

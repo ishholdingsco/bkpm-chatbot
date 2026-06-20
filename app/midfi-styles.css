@@ -235,6 +235,27 @@ body {
 /* blinking text caret (e.g. the project-name placeholder on the empty state) */
 @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
 
+/* Skeleton placeholder — a calm shimmer while tiles/data settle (issue #39).
+   Tokenised so it matches the surface palette instead of a generic grey box;
+   used by components/ui/Skeleton.js and the map/hilirisasi loading overlays. */
+.ui-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-3);
+}
+.ui-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.6) 50%, transparent 100%);
+  animation: ui-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes ui-shimmer { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) {
+  .ui-skeleton::after { animation: none; }
+}
+
 /* Switch */
 .ui-switch {
   width: 26px; height: 15px;
