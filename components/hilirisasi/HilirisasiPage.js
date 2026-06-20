@@ -7,7 +7,7 @@
 
 import { useState as useHil, useRef as useHilRef, useEffect as useHilEffect, useMemo, useRef, useCallback, forwardRef, useImperativeHandle } from "react";
 import Link from "next/link";
-import { Search, MessageCircle, ChevronRight, Plus, Minus, Crosshair, ArrowRight, ArrowUpRight, Loader2 } from "lucide-react";
+import { Search, MessageCircle, ChevronRight, Plus, Minus, Crosshair, ArrowRight, ArrowUp, ArrowDown, ArrowUpRight, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 import { Avatar, TopBar, comingSoon, useI18n, LangToggle } from "@/components/ui";
 import { resolveCommodity } from "@/components/hilirisasi/treeActions";
 import { useChat } from "@/components/chat/useChat";
@@ -577,7 +577,7 @@ const UI = {
     valueAdd:'Nilai Tambah', exportRatio:'Rasio Ekspor/Impor',
     from:'DARI', to:'KE', export:'EKSPOR', import:'IMPOR', surplus:'SURPLUS',
     exportLabel:'Ekspor', importLabel:'Impor',
-    balanceLabels:{ surplus:'↑ net ekspor', defisit:'↓ net impor', balanced:'≈ seimbang' },
+    balanceLabels:{ surplus:'net ekspor', defisit:'net impor', balanced:'seimbang' },
     nodes:'node', connections:'koneksi', market:'Pasar', globalMarket:'Pasar global',
     commNames:{ Nikel:'Nikel', Sawit:'Sawit', Kelapa:'Kelapa', 'Rumput Laut':'Rumput Laut' },
     navLabel:'Hilirisasi',
@@ -597,7 +597,7 @@ const UI = {
     valueAdd:'Value Add', exportRatio:'Export / Import Ratio',
     from:'FROM', to:'TO', export:'EXPORT', import:'IMPORT', surplus:'SURPLUS',
     exportLabel:'Export', importLabel:'Import',
-    balanceLabels:{ surplus:'↑ net export', defisit:'↓ net import', balanced:'≈ balanced' },
+    balanceLabels:{ surplus:'net export', defisit:'net import', balanced:'balanced' },
     nodes:'nodes', connections:'connections', market:'Market', globalMarket:'Global market',
     commNames:{ Nikel:'Nickel', Sawit:'Palm Oil', Kelapa:'Coconut', 'Rumput Laut':'Seaweed' },
     navLabel:'Value Chain',
@@ -617,7 +617,7 @@ const UI = {
     valueAdd:'增值倍数', exportRatio:'出口 / 进口比率',
     from:'来自', to:'去往', export:'出口', import:'进口', surplus:'顺差',
     exportLabel:'出口', importLabel:'进口',
-    balanceLabels:{ surplus:'↑ 净出口', defisit:'↓ 净进口', balanced:'≈ 平衡' },
+    balanceLabels:{ surplus:'净出口', defisit:'净进口', balanced:'平衡' },
     nodes:'节点', connections:'连接', market:'市场', globalMarket:'全球市场',
     commNames:{ Nikel:'镍', Sawit:'棕榈油', Kelapa:'椰子', 'Rumput Laut':'海藻' },
     navLabel:'价值链',
@@ -637,7 +637,7 @@ const UI = {
     valueAdd:'Valeur ajoutée', exportRatio:'Ratio Export / Import',
     from:'DE', to:'VERS', export:'EXPORT', import:'IMPORT', surplus:'SURPLUS',
     exportLabel:'Export', importLabel:'Import',
-    balanceLabels:{ surplus:'↑ excédent net', defisit:'↓ déficit net', balanced:'≈ équilibré' },
+    balanceLabels:{ surplus:'excédent net', defisit:'déficit net', balanced:'équilibré' },
     nodes:'nœuds', connections:'connexions', market:'Marché', globalMarket:'Marché mondial',
     commNames:{ Nikel:'Nickel', Sawit:'Huile de palme', Kelapa:'Noix de coco', 'Rumput Laut':'Algues marines' },
     navLabel:'Chaîne de valeur',
@@ -657,7 +657,7 @@ const UI = {
     valueAdd:'Verdiskapning', exportRatio:'Eksport / Import-forhold',
     from:'FRA', to:'TIL', export:'EKSPORT', import:'IMPORT', surplus:'OVERSKUDD',
     exportLabel:'Eksport', importLabel:'Import',
-    balanceLabels:{ surplus:'↑ nettoeksport', defisit:'↓ nettoimport', balanced:'≈ balansert' },
+    balanceLabels:{ surplus:'nettoeksport', defisit:'nettoimport', balanced:'balansert' },
     nodes:'noder', connections:'forbindelser', market:'Marked', globalMarket:'Globalt marked',
     commNames:{ Nikel:'Nikkel', Sawit:'Palmeolje', Kelapa:'Kokosnøtt', 'Rumput Laut':'Sjøgress' },
     navLabel:'Verdikjede',
@@ -677,7 +677,7 @@ const UI = {
     valueAdd:'Nilai Tambah', exportRatio:'Nisbah Eksport / Import',
     from:'DARI', to:'KE', export:'EKSPORT', import:'IMPORT', surplus:'LEBIHAN',
     exportLabel:'Eksport', importLabel:'Import',
-    balanceLabels:{ surplus:'↑ eksport bersih', defisit:'↓ import bersih', balanced:'≈ seimbang' },
+    balanceLabels:{ surplus:'eksport bersih', defisit:'import bersih', balanced:'seimbang' },
     nodes:'nod', connections:'sambungan', market:'Pasaran', globalMarket:'Pasaran global',
     commNames:{ Nikel:'Nikel', Sawit:'Sawit', Kelapa:'Kelapa', 'Rumput Laut':'Rumpai Laut' },
     navLabel:'Rantai Nilai',
@@ -697,7 +697,7 @@ const UI = {
     valueAdd:'القيمة المضافة', exportRatio:'نسبة التصدير / الاستيراد',
     from:'من', to:'إلى', export:'تصدير', import:'استيراد', surplus:'فائض',
     exportLabel:'تصدير', importLabel:'استيراد',
-    balanceLabels:{ surplus:'↑ صافي التصدير', defisit:'↓ صافي الاستيراد', balanced:'≈ متوازن' },
+    balanceLabels:{ surplus:'صافي التصدير', defisit:'صافي الاستيراد', balanced:'متوازن' },
     nodes:'عقدة', connections:'روابط', market:'السوق', globalMarket:'السوق العالمية',
     commNames:{ Nikel:'النيكل', Sawit:'زيت النخيل', Kelapa:'جوز الهند', 'Rumput Laut':'عشب البحر' },
     navLabel:'سلسلة القيمة',
@@ -717,7 +717,7 @@ const UI = {
     valueAdd:'मूल्य वृद्धि', exportRatio:'निर्यात / आयात अनुपात',
     from:'से', to:'तक', export:'निर्यात', import:'आयात', surplus:'अधिशेष',
     exportLabel:'निर्यात', importLabel:'आयात',
-    balanceLabels:{ surplus:'↑ निवल निर्यात', defisit:'↓ निवल आयात', balanced:'≈ संतुलित' },
+    balanceLabels:{ surplus:'निवल निर्यात', defisit:'निवल आयात', balanced:'संतुलित' },
     nodes:'नोड', connections:'संयोजन', market:'बाजार', globalMarket:'वैश्विक बाजार',
     commNames:{ Nikel:'निकेल', Sawit:'पाम तेल', Kelapa:'नारियल', 'Rumput Laut':'समुद्री शैवाल' },
     navLabel:'मूल्य श्रृंखला',
@@ -749,6 +749,13 @@ const BAL_COLOR = {
   defisit:  'var(--err)',
   balanced: 'var(--ink-4)',
 };
+
+// Trade-balance indicator — lucide icon instead of a unicode glyph, matching the
+// rest of the app's iconography (see #11). surplus ↑, defisit ↓, balanced ≈.
+function BalanceIcon({ balance, size = 10, color }) {
+  const Icon = balance === 'surplus' ? TrendingUp : balance === 'defisit' ? TrendingDown : Minus;
+  return <Icon size={size} strokeWidth={2} color={color} style={{ flexShrink: 0 }} />;
+}
 
 // ─── Single tree node — combined display (exp/imp + nilai tambah) ───
 function TreeNode({ node, hovered, onHover, lang = 'id' }) {
@@ -784,13 +791,13 @@ function TreeNode({ node, hovered, onHover, lang = 'id' }) {
       {/* Exp/Imp values row */}
       {node.exp && node.exp !== '—' && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1 }}>
-          <span className="mono" style={{ fontSize: 9, color: EXP_COLOR, lineHeight: 1 }}>▲ {node.exp}</span>
+          <span className="mono" style={{ fontSize: 9, color: EXP_COLOR, lineHeight: 1, display: 'inline-flex', alignItems: 'center', gap: 2 }}><ArrowUp size={9} strokeWidth={2.25} style={{ flexShrink: 0 }} /> {node.exp}</span>
           {node.imp && node.imp !== '—' && (
-            <span className="mono" style={{ fontSize: 9, color: IMP_COLOR, lineHeight: 1 }}>▼ {node.imp}</span>
+            <span className="mono" style={{ fontSize: 9, color: IMP_COLOR, lineHeight: 1, display: 'inline-flex', alignItems: 'center', gap: 2 }}><ArrowDown size={9} strokeWidth={2.25} style={{ flexShrink: 0 }} /> {node.imp}</span>
           )}
           {balColor && (
-            <span className="mono" style={{ fontSize: 8, color: balColor, marginLeft: 'auto', fontWeight: 700 }}>
-              {node.balance === 'surplus' ? '↑' : node.balance === 'defisit' ? '↓' : '≈'}
+            <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center' }}>
+              <BalanceIcon balance={node.balance} size={11} color={balColor} />
             </span>
           )}
         </div>
@@ -869,9 +876,9 @@ function NodeTooltip({ nodeId, nodes, edges, stageLabels, lang = 'id' }) {
     <div className="map-tooltip" style={{ left: x, top: y, minWidth: 200, maxWidth: 260, zIndex: 10 }}>
       <div className="mono" style={{ fontSize: 9, color: 'var(--ink-3)', marginBottom: 3 }}>{stageLabels[node.s].toUpperCase()}</div>
       <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, lineHeight: 1.3, color: 'var(--ink)' }}>{getL(node)}</div>
-      {node.exp && node.exp !== '—' && <div className="mono" style={{ fontSize: 10.5, color: EXP_COLOR, marginBottom: 2 }}>▲ {u.exportLabel}: {node.exp}</div>}
-      {node.imp && node.imp !== '—' && <div className="mono" style={{ fontSize: 10.5, color: IMP_COLOR, marginBottom: 2 }}>▼ {u.importLabel}: {node.imp}</div>}
-      {balColor && node.balance && <div className="mono" style={{ fontSize: 10, color: balColor, marginTop: 2 }}>{u.balanceLabels[node.balance]}</div>}
+      {node.exp && node.exp !== '—' && <div className="mono" style={{ fontSize: 10.5, color: EXP_COLOR, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 4 }}><ArrowUp size={11} strokeWidth={2} style={{ flexShrink: 0 }} /> {u.exportLabel}: {node.exp}</div>}
+      {node.imp && node.imp !== '—' && <div className="mono" style={{ fontSize: 10.5, color: IMP_COLOR, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 4 }}><ArrowDown size={11} strokeWidth={2} style={{ flexShrink: 0 }} /> {u.importLabel}: {node.imp}</div>}
+      {balColor && node.balance && <div className="mono" style={{ fontSize: 10, color: balColor, marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}><BalanceIcon balance={node.balance} size={11} color={balColor} /> {u.balanceLabels[node.balance]}</div>}
       {node.mult && <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
         <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--warn)', color: '#fff', fontSize: 9, fontWeight: 700, fontFamily: 'IBM Plex Mono, monospace', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{node.mult}X</div>
         <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>{u.valueAddFrom}</span>
@@ -1062,12 +1069,12 @@ const HilirisasiTree = forwardRef(function HilirisasiTree({ commodity, setCommod
           </div>
           {/* Ekspor/Export */}
           <div style={{ paddingRight:12, marginRight:12, borderRight:'1px solid var(--line)', display:'flex', flexDirection:'column', justifyContent:'center' }}>
-            <div className="mono" style={{ fontSize:8, color: EXP_COLOR, letterSpacing:'0.06em' }}>▲ {u.export}</div>
+            <div className="mono" style={{ fontSize:8, color: EXP_COLOR, letterSpacing:'0.06em', display:'flex', alignItems:'center', gap:3 }}><ArrowUp size={9} strokeWidth={2.25} style={{ flexShrink:0 }} /> {u.export}</div>
             <div className="mono" style={{ fontSize:13, fontWeight:700, color: EXP_COLOR }}>{summary.ekspor}</div>
           </div>
           {/* Impor/Import */}
           <div style={{ paddingRight:12, marginRight:12, borderRight:'1px solid var(--line)', display:'flex', flexDirection:'column', justifyContent:'center' }}>
-            <div className="mono" style={{ fontSize:8, color: IMP_COLOR, letterSpacing:'0.06em' }}>▼ {u.import}</div>
+            <div className="mono" style={{ fontSize:8, color: IMP_COLOR, letterSpacing:'0.06em', display:'flex', alignItems:'center', gap:3 }}><ArrowDown size={9} strokeWidth={2.25} style={{ flexShrink:0 }} /> {u.import}</div>
             <div className="mono" style={{ fontSize:13, fontWeight:700, color: IMP_COLOR }}>{summary.impor}</div>
           </div>
           {/* Surplus */}
