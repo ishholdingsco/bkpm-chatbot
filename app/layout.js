@@ -17,10 +17,11 @@ const SITE_URL =
     : "http://localhost:3000");
 
 const TITLE = "Wilaya · BKPM Investment Explorer";
-// Default site language is Bahasa Indonesia (the BKPM audience), so the social
-// description is written in ID; see components/ui/i18n.js and issue #8.
+// Social/SEO description is written in English — the primary language for the
+// shareable preview — even though the in-app UI is being localised separately
+// (full ID/EN i18n is tracked in issue #8; see components/ui/i18n.js).
 const DESCRIPTION =
-  "Intelijen investasi Indonesia — atlas langsung kawasan industri, KEK & peluang investasi, dengan analis AI. Prototipe Wilaya untuk BKPM.";
+  "Indonesia investment intelligence — a live atlas of industrial estates, SEZs & investment opportunities, with an AI analyst. The Wilaya prototype for BKPM.";
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
@@ -32,7 +33,7 @@ export const metadata = {
   // Twitter card by app/twitter-image.js) — no need to list images here.
   openGraph: {
     type: "website",
-    locale: "id_ID",
+    locale: "en_US",
     url: "/",
     siteName: "Wilaya · BKPM Investment Explorer",
     title: TITLE,

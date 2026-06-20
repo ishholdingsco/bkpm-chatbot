@@ -9,7 +9,7 @@ import { join } from "node:path";
 // well under WhatsApp's ~300KB sweet-spot for reliable chat previews (#35).
 
 export const alt =
-  "Wilaya · BKPM Investment Explorer — atlas investasi langsung Indonesia";
+  "Wilaya · BKPM Investment Explorer — Indonesia's live investment atlas";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -30,6 +30,15 @@ export default async function Image() {
   );
   const logoSrc = `data:image/png;base64,${logoData}`;
 
+  // Faint Indonesia-map artwork sits at the very bottom of the stack so the
+  // previously-empty paper background carries a subtle sense of place without
+  // competing with the wordmark/headline. ~15KB, keeps the PNG WhatsApp-friendly.
+  const mapData = await readFile(
+    join(process.cwd(), "public/assets/og-map-bg.jpg"),
+    "base64",
+  );
+  const mapSrc = `data:image/jpeg;base64,${mapData}`;
+
   return new ImageResponse(
     (
       <div
@@ -44,6 +53,24 @@ export default async function Image() {
           position: "relative",
         }}
       >
+        {/* Indonesia-map backdrop — bottom-most layer, behind every element */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={mapSrc}
+          alt=""
+          width={1200}
+          height={630}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            opacity: 0.85,
+          }}
+        />
+
         {/* BKPM-blue top accent rule */}
         <div
           style={{
@@ -118,8 +145,8 @@ export default async function Image() {
               color: INK_2,
             }}
           >
-            Intelijen investasi Indonesia — kawasan industri, KEK & peluang
-            dalam satu atlas langsung, dengan analis AI.
+            Indonesia investment intelligence — industrial estates, SEZs &
+            opportunities in one live atlas, with an AI analyst.
           </div>
         </div>
 
