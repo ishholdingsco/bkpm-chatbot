@@ -9,6 +9,7 @@ import economic from "@/data/economic-indicators.json";
 import hazard from "@/data/hazard.json";
 import { MAP_TOOLS } from "@/components/map/mapActions";
 import { TREE_TOOLS } from "@/components/hilirisasi/treeActions";
+import { CANVAS_TOOLS } from "@/components/workspace/canvasActions";
 
 const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
 
@@ -92,6 +93,12 @@ const TREE_TOOLS_INSTRUCTION = `You are looking at the same interactive value-ch
 - focus_node — pan/zoom to a specific product node and highlight its trade tooltip.
 When the user asks to see, show, zoom to, highlight or focus on a product/stage, or to look at another commodity, CALL the matching function instead of only describing it. You may combine set_commodity + focus_node in one turn (switch tree, then focus a node in it). Always also reply with one or two short sentences. Use the node ids/names from the node list in the context.`;
 
+// Added only when the workspace chat enables canvas tools (issue #26 PR-2).
+// Lets the assistant pin artifacts onto the project's shared canvas.
+const CANVAS_TOOLS_INSTRUCTION = `You share a "canvas" with the user — a side rail that collects artifacts for this project. You can CONTROL it by calling the function:
+- add_artifact — pin a card (kind DOC/MODEL/DIAGRAM/MAP) with a title, meta line and optional one-line highlight.
+When the user asks you to draft, sketch, build, model, map, summarise or "pin"/"add to canvas" something worth keeping (a regulation summary, a comparables/valuation model, an SPV or process diagram, a site map), CALL add_artifact — you may call it several times for several artifacts. Always ALSO reply with one or two short sentences telling the user what you added. NEVER write JSON, the word "actions", function names or argument objects in your prose; the system applies the calls.`;
+
 // Build the JSON payload for a DeepSeek chat completion. Tools are attached
 // only when provided, so the workspace chat (no map) behaves exactly as before.
 function deepseekPayload(model, messages, tools) {
@@ -147,7 +154,7 @@ export async function POST(req) {
     return new Response("Invalid JSON body.", { status: 400 });
   }
 
-  const { messages = [], context, lang, mapTools = false, treeTools = false } = body;
+  const { messages = [], context, lang, mapTools = false, treeTools = false, canvasTools = false } = body;
 
   // Reply in the user's active UI language (default Bahasa Indonesia). See #8.
   const LANGUAGE_INSTRUCTION = {
@@ -157,11 +164,12 @@ export async function POST(req) {
   };
   const langNote = LANGUAGE_INSTRUCTION[lang] || LANGUAGE_INSTRUCTION.id;
 
-  // The map view passes mapTools:true and the hilirisasi view treeTools:true so
-  // the assistant can drive whichever surface the user is on.
-  const tools = mapTools === true ? MAP_TOOLS : treeTools === true ? TREE_TOOLS : null;
+  // The map view passes mapTools:true, the hilirisasi view treeTools:true and
+  // the workspace canvasTools:true so the assistant can drive whichever surface
+  // the user is on.
+  const tools = mapTools === true ? MAP_TOOLS : treeTools === true ? TREE_TOOLS : canvasTools === true ? CANVAS_TOOLS : null;
   const toolsEnabled = tools != null;
-  const toolInstruction = mapTools === true ? MAP_TOOLS_INSTRUCTION : treeTools === true ? TREE_TOOLS_INSTRUCTION : null;
+  const toolInstruction = mapTools === true ? MAP_TOOLS_INSTRUCTION : treeTools === true ? TREE_TOOLS_INSTRUCTION : canvasTools === true ? CANVAS_TOOLS_INSTRUCTION : null;
 
   const system = [
     BASE_SYSTEM_PROMPT,
@@ -264,7 +272,7 @@ export async function POST(req) {
                 .map((tc, i) => ({
                   role: "tool",
                   tool_call_id: tc.id || `call_${i}`,
-                  content: "Applied to the map.",
+                  content: "Applied.",
                 })),
             ];
             const followup = await callUpstream(followupMessages, null);

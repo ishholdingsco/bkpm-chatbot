@@ -9,6 +9,7 @@
     "exploreMap": "探索地图",
     "notifications": "通知",
     "cancel": "取消",
+    "save": "保存",
     "soon": "敬请期待",
     "collapse": "收起",
     "expand": "展开",
@@ -90,7 +91,7 @@
     "startWorkspace": "进入工作区"
   },
   "chat": {
-    "assistant": "BKPM 助手",
+    "assistant": "Nusantara",
     "placeholder": "询问法规、结构、可比交易——或用 @ 提及分析师…",
     "attach": "附件",
     "mention": "提及",
@@ -130,6 +131,7 @@
     "showCanvas": "显示画布",
     "threadOptions": "会话选项",
     "renameThread": "重命名会话",
+    "renameThreadPrompt": "会话名称",
     "shareThread": "分享会话",
     "addToCanvas": "添加到画布",
     "archiveThread": "归档会话",
@@ -144,7 +146,17 @@
     "popOutCanvas": "弹出画布",
     "collapseCanvas": "收起画布",
     "canvasHint": "随会话推进由 AI 与分析师固定。编辑会同步到项目记忆。",
+    "canvasEmpty": "暂无构件。让 Nusantara 起草法规摘要、可比模型或结构图——它会显示在这里。",
     "pinFromChat": "从对话固定或上传",
+    "freshThreadMeta": "新会话 · 暂无构件",
+    "chatIntro": "就该项目在印度尼西亚的投资提出任何问题——法规、外资持股、税收优惠、交易架构或选址。让 Nusantara 准备构件，它会固定到画布上。",
+    "tryAsking": "试着问",
+    "chatSuggestions": [
+      "该行业的外资持股上限是多少？",
+      "把相关法规摘要起草到画布",
+      "把与国企伙伴的 SPV 架构草图画到画布",
+      "该项目适用哪些税收优惠？"
+    ],
     "onCall": "待命中 ·",
     "message": "给 {name} 发消息"
   },

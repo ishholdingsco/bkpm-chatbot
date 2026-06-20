@@ -7,6 +7,33 @@
 import { Download, ArrowUpRight } from "lucide-react";
 import { Dialog } from "@/components/ui/controls";
 import { ArtifactCard, useI18n } from "@/components/ui";
+import { downloadPdf, wrap } from "@/components/workspace/pdf";
+
+// Turn an artifact into the lines of a branded one-page PDF. For the regulation
+// DOC we include the actual clause excerpt shown in the reader; other kinds get
+// a title/meta/highlight summary sheet.
+function artifactPdfLines(artifact) {
+  const lines = [
+    { text: "WILAYA — BKPM Investment Explorer", size: 9 },
+    { text: artifact.title, size: 17, gap: 30 },
+    { text: `${artifact.kind} · ${artifact.meta}`, size: 9, gap: 16 },
+  ];
+  if (artifact.highlight) lines.push({ text: `“${artifact.highlight}”`, size: 12, gap: 24 });
+  const body =
+    artifact.kind === "DOC"
+      ? [
+          "PERPRES 10/2021 — Annex II, Section C(7): Smelting & refining of nickel ore.",
+          "Smelting and refining of nickel ore shall be open to foreign capital up to 100%, subject to partnership with national small and medium enterprises (SMEs) for non-core auxiliary services as set forth in BKPM Regulation 4/2021 Section 17.",
+          "Holders shall comply with domestic value-added requirements (DMO 30%) and submit annual reports to BKPM on local hiring and SME engagement metrics.",
+        ]
+      : ["Generated from the Wilaya shared canvas. This is a prototype document for demonstration purposes."];
+  let gap = 26;
+  for (const para of body) {
+    for (const w of wrap(para, 90)) { lines.push({ text: w, size: 11, gap }); gap = 15; }
+    gap = 22; // extra space before the next paragraph
+  }
+  return lines;
+}
 
 const OUTLINE = [
   ["§ C(1) Mining concessions", false],
@@ -117,7 +144,7 @@ export function CanvasFocus({ artifact, onOpenChange }) {
               <span className="chip chip-terra">DOC</span>
               <span className="mono" style={{ fontSize: 10, color: "var(--ink-3)" }}>{t("canvasFocus.pinnedMeta", { meta: artifact.meta })}</span>
               <div className="grow" />
-              <button className="btn btn-sm"><Download size={14} strokeWidth={1.75} /> {t("canvasFocus.downloadPdf")}</button>
+              <button className="btn btn-sm" onClick={() => downloadPdf(artifact.title, artifactPdfLines(artifact))}><Download size={14} strokeWidth={1.75} /> {t("canvasFocus.downloadPdf")}</button>
             </div>
             <DocumentReader />
           </>

@@ -23,10 +23,10 @@ export const DATA = {
   ],
   turns: [
     { who: "user", name: "Aisha Tan", time: "14:00", text: "What's the current Negative Investment List position on nickel-related midstream as of Perpres 49/2021? Foreign cap?" },
-    { who: "ai", name: "BKPM Assistant", time: "14:00", text: "Smelting & refining of nickel ore is OPEN to 100% foreign ownership under the Positive Investment List, conditional on partnership with national SMEs for any non-core services.", cite: ["Perpres 10/2021 §C(7)", "BKPM Reg. 4/2021 §17"], pin: "Perpres clauses" },
+    { who: "ai", name: "Nusantara", time: "14:00", text: "Smelting & refining of nickel ore is OPEN to 100% foreign ownership under the Positive Investment List, conditional on partnership with national SMEs for any non-core services.", cite: ["Perpres 10/2021 §C(7)", "BKPM Reg. 4/2021 §17"], pin: "Perpres clauses" },
     { who: "user", name: "Aisha Tan", time: "14:01", text: "Got it. Can you sketch the typical co-investment structure with state-owned MIND ID? We'd be looking at minority via convertible." },
-    { who: "ai", name: "BKPM Assistant", time: "14:02", text: "Most recent precedents (Vale Indonesia, PT Halmahera Persada Lygend, Konawe) used a 3-tier SPV with offshore HoldCo. Pinned the structure diagram + comp set →", cite: ["Comp set · 4 deals"], pin: "SPV diagram" },
-    { who: "ai", name: "BKPM Assistant", time: "14:02", kind: "suggest", text: "Convertible structuring with MIND ID has IC-level nuance — Rina Pratiwi structured the Konawe deal in 2024. Want me to loop her in?" },
+    { who: "ai", name: "Nusantara", time: "14:02", text: "Most recent precedents (Vale Indonesia, PT Halmahera Persada Lygend, Konawe) used a 3-tier SPV with offshore HoldCo. Pinned the structure diagram + comp set →", cite: ["Comp set · 4 deals"], pin: "SPV diagram" },
+    { who: "ai", name: "Nusantara", time: "14:02", kind: "suggest", text: "Convertible structuring with MIND ID has IC-level nuance — Rina Pratiwi structured the Konawe deal in 2024. Want me to loop her in?" },
   ],
   artifacts: [
     { kind: "DOC", title: "Perpres 10/2021 — Annex II §C(7)", meta: "Regulation · 14 pages", highlight: "100% foreign permitted" },

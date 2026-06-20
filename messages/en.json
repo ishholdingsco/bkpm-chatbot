@@ -9,6 +9,7 @@
     "exploreMap": "Explore the map",
     "notifications": "Notifications",
     "cancel": "Cancel",
+    "save": "Save",
     "soon": "soon",
     "collapse": "Collapse",
     "expand": "Expand",
@@ -90,7 +91,7 @@
     "startWorkspace": "start workspace"
   },
   "chat": {
-    "assistant": "BKPM Assistant",
+    "assistant": "Nusantara",
     "placeholder": "Ask about regulations, structure, comps — or @mention an analyst…",
     "attach": "Attach",
     "mention": "Mention",
@@ -130,6 +131,7 @@
     "showCanvas": "Show canvas",
     "threadOptions": "Thread options",
     "renameThread": "Rename thread",
+    "renameThreadPrompt": "Thread name",
     "shareThread": "Share thread",
     "addToCanvas": "Add to canvas",
     "archiveThread": "Archive thread",
@@ -144,7 +146,17 @@
     "popOutCanvas": "Pop out canvas",
     "collapseCanvas": "Collapse canvas",
     "canvasHint": "Pinned by AI + analyst as the thread evolves. Edits sync to project memory.",
+    "canvasEmpty": "No artifacts yet. Ask Nusantara to draft a regulation summary, a comparables model, or a structure diagram — it will appear here.",
     "pinFromChat": "Pin from chat or upload",
+    "freshThreadMeta": "New thread · no artifacts yet",
+    "chatIntro": "Ask anything about investing in Indonesia for this project — regulations, foreign ownership, tax incentives, deal structuring, or location. Ask Nusantara to prepare an artifact and it will pin it to the canvas.",
+    "tryAsking": "Try asking",
+    "chatSuggestions": [
+      "What's the foreign-ownership cap in this sector?",
+      "Draft a summary of the relevant regulations to the canvas",
+      "Sketch an SPV structure with a state-owned partner to the canvas",
+      "What tax incentives apply to this project?"
+    ],
     "onCall": "On call ·",
     "message": "Message {name}"
   },

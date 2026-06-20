@@ -51,7 +51,7 @@ function stripActionJson(s) {
 // app/api/chat/route.js). Prose never contains NUL, so we can slice frames out.
 const FRAME = "\u0000";
 
-export function useChat({ initialMessages = [], context, lang, mapTools = false, treeTools = false, onAction } = {}) {
+export function useChat({ initialMessages = [], context, lang, mapTools = false, treeTools = false, canvasTools = false, onAction } = {}) {
   const [messages, setMessages] = useState(initialMessages);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -92,7 +92,7 @@ export function useChat({ initialMessages = [], context, lang, mapTools = false,
         res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: apiMessages, context, lang, mapTools, treeTools }),
+          body: JSON.stringify({ messages: apiMessages, context, lang, mapTools, treeTools, canvasTools }),
         });
       } catch {
         throw new ChatError("network error", { retryable: true });
@@ -152,12 +152,15 @@ export function useChat({ initialMessages = [], context, lang, mapTools = false,
       }
       return acc;
     },
-    [context, lang, mapTools, treeTools, setAssistant]
+    [context, lang, mapTools, treeTools, canvasTools, setAssistant]
   );
 
   const send = useCallback(
     async (text) => {
-      const content = (text ?? input).trim();
+      // `text` may be a string (e.g. a suggestion click) or, when wired straight
+      // to a button's onClick, a DOM event — fall back to the input unless it's
+      // really a string.
+      const content = (typeof text === "string" ? text : input).trim();
       if (!content || loadingRef.current) return;
 
       loadingRef.current = true;
