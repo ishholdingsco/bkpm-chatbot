@@ -29,7 +29,7 @@ export default function NotFound() {
           <Link href="/map" className="btn btn-primary">
             <MapIcon size={14} strokeWidth={1.75} /> {t("notFound.toMap")}
           </Link>
-          <Link href="/" className="btn btn-ghost">
+          <Link href="/" className="btn">
             <Home size={14} strokeWidth={1.75} /> {t("notFound.toHome")}
           </Link>
         </div>
