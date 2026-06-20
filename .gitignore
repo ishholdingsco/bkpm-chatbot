@@ -37,6 +37,9 @@ yarn-error.log*
 # archived design mockups: keep sources, ignore heavy debug renders
 content/debug-*.png
 
+# local data-build tooling (python vectorize/build scripts + caches)
+/scripts/
+
 # vercel
 .vercel
 

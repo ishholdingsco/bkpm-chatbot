@@ -12,6 +12,10 @@ import kekData from "@/data/kek.json";
 import opportunitiesData from "@/data/opportunities.json";
 import mineralsData from "@/data/minerals.json";
 import portsData from "@/data/ports.json";
+import logamData from "@/data/mineral-logam.json";
+import iupData from "@/data/iup-tambang.json";
+import kawasanHutanData from "@/data/kawasan-hutan.json";
+import geologiData from "@/data/geologi-litologi.json";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const DEFAULT_STYLE = "mapbox://styles/mapbox/light-v11";
@@ -22,7 +26,12 @@ const DEFAULT_STYLE = "mapbox://styles/mapbox/light-v11";
 export const MB_LAYER_GROUPS = {
   industrial: ["mb-industrial-fill", "mb-industrial-line"],
   kek: ["mb-kek-fill", "mb-kek-line"],
+  iup: ["mb-iup-fill", "mb-iup-line"],
+  hutan: ["mb-hutan-fill", "mb-hutan-line"],
+  geologi: ["mb-geologi-fill", "mb-geologi-line"],
+  featured: ["mb-featured-halo", "mb-featured-hit", "mb-featured-ring"],
   minerals: ["mb-minerals-halo", "mb-minerals-dot"],
+  logam: ["mb-logam-dot"],
   ports: ["mb-ports-dot"],
 };
 
@@ -128,6 +137,69 @@ const MapboxMap = forwardRef(function MapboxMap({
     zoomOut() { mapRef.current?.zoomOut(); },
     // Compass: bring the camera back to north and flat.
     resetNorth() { mapRef.current?.easeTo({ bearing: 0, pitch: 0 }); },
+    // Mining filter (chat `filter_mining`): limit the IUP polygons + metal-mineral
+    // dots to a commodity / province via Mapbox setFilter. `clear` (or no args)
+    // removes the filter so every feature shows again.
+    setMiningFilter({ commodity, province, clear } = {}) {
+      const map = mapRef.current;
+      if (!map) return;
+      // IUP: exact commodity + substring province match on the polygon's own props.
+      let iupFilter = null;
+      if (!clear && (commodity || province)) {
+        iupFilter = ["all"];
+        if (commodity) iupFilter.push(["==", ["get", "commodity"], commodity]);
+        if (province) iupFilter.push(["in", String(province).toLowerCase(), ["downcase", ["get", "prov"]]]);
+      }
+      // logam: commodity only ("Besi" matches the whole Besi family by substring);
+      // coal yields nothing; province doesn't apply (no field).
+      let logamFilter = null;
+      if (!clear && commodity) {
+        if (commodity === "Nikel") logamFilter = ["==", ["get", "commodity"], "Nikel"];
+        else if (commodity === "Besi") logamFilter = ["in", "Besi", ["get", "commodity"]];
+        else logamFilter = ["==", ["get", "commodity"], "__none__"];
+      }
+      ["mb-iup-fill", "mb-iup-line"].forEach((id) => { if (map.getLayer(id)) map.setFilter(id, iupFilter); });
+      if (map.getLayer("mb-logam-dot")) map.setFilter("mb-logam-dot", logamFilter);
+    },
+    // Forest-area control (chat `filter_kawasan_hutan`). Two modes:
+    //  • `data` given → a region-clipped FeatureCollection: swap the source data
+    //    (the only way to show a polygon partially, since Mapbox can't clip a
+    //    fill by an arbitrary box) and drop any function filter.
+    //  • otherwise → restore the full national data and filter by function id.
+    // `clear` restores everything.
+    setHutan({ ids, data, clear } = {}) {
+      const map = mapRef.current;
+      const src = map?.getSource("mb-hutan");
+      if (!src) return;
+      if (data) {
+        ["mb-hutan-fill", "mb-hutan-line"].forEach((id) => { if (map.getLayer(id)) map.setFilter(id, null); });
+        src.setData(data);
+        return;
+      }
+      src.setData(kawasanHutanData);
+      const filter = !clear && Array.isArray(ids) && ids.length
+        ? ["in", ["get", "id"], ["literal", ids]]
+        : null;
+      ["mb-hutan-fill", "mb-hutan-line"].forEach((id) => { if (map.getLayer(id)) map.setFilter(id, filter); });
+    },
+    // Geology-lithology control (chat `filter_geologi`). Same two modes as
+    // setHutan: `data` swaps a region-clipped FeatureCollection (and drops the
+    // class filter); otherwise restore the national data and filter by group id.
+    setGeologi({ ids, data, clear } = {}) {
+      const map = mapRef.current;
+      const src = map?.getSource("mb-geologi");
+      if (!src) return;
+      if (data) {
+        ["mb-geologi-fill", "mb-geologi-line"].forEach((id) => { if (map.getLayer(id)) map.setFilter(id, null); });
+        src.setData(data);
+        return;
+      }
+      src.setData(geologiData);
+      const filter = !clear && Array.isArray(ids) && ids.length
+        ? ["in", ["get", "id"], ["literal", ids]]
+        : null;
+      ["mb-geologi-fill", "mb-geologi-line"].forEach((id) => { if (map.getLayer(id)) map.setFilter(id, filter); });
+    },
     // GPS: fly to the browser's geolocation; silently no-op if denied/unavailable.
     locate() {
       const map = mapRef.current;
@@ -266,6 +338,21 @@ const MapboxMap = forwardRef(function MapboxMap({
 export default MapboxMap;
 
 function addMbOverlays(map, onPinClick) {
+  // Kawasan hutan (forest-function areas) — vectorized from the KLHK raster into
+  // one MultiPolygon per forest function, coloured by the feature's own `color`
+  // (kept from the source raster). Added FIRST so it sits low (beneath the pins
+  // and concessions); starts hidden and is toggled via MB_LAYER_GROUPS.
+  map.addSource("mb-hutan", { type: "geojson", data: kawasanHutanData });
+  map.addLayer({ id: "mb-hutan-fill", type: "fill", source: "mb-hutan", layout: { visibility: "none" }, paint: { "fill-color": ["get", "color"], "fill-opacity": 0.45 } });
+  map.addLayer({ id: "mb-hutan-line", type: "line", source: "mb-hutan", layout: { visibility: "none" }, paint: { "line-color": ["get", "color"], "line-width": 0.4, "line-opacity": 0.5 } });
+
+  // Geology lithology (major rock-type groups, vectorized from the ESDM raster
+  // into one MultiPolygon per group, coloured by the feature's own `color`).
+  // Added next so it also sits low (beneath the pins & concessions).
+  map.addSource("mb-geologi", { type: "geojson", data: geologiData });
+  map.addLayer({ id: "mb-geologi-fill", type: "fill", source: "mb-geologi", layout: { visibility: "none" }, paint: { "fill-color": ["get", "color"], "fill-opacity": 0.42 } });
+  map.addLayer({ id: "mb-geologi-line", type: "line", source: "mb-geologi", layout: { visibility: "none" }, paint: { "line-color": ["get", "color"], "line-width": 0.4, "line-opacity": 0.5 } });
+
   const indFeats = MB_PINS.industrial.map((p, i) => ({
     type: "Feature",
     properties: { name: p.n, kind: "industrial" },
@@ -290,6 +377,14 @@ function addMbOverlays(map, onPinClick) {
     line: { "line-color": "#5a2eaa", "line-width": 1.2, "line-dasharray": [3, 2] },
   });
 
+  // Mining business permit (IUP) concession polygons — REAL boundaries from
+  // ESDM, coloured per-commodity (coal/nickel/iron) via the feature's own
+  // `color` property. Added here (below the point layers) so pins/dots stay on
+  // top; starts hidden and is toggled via the MB_LAYER_GROUPS effect.
+  map.addSource("mb-iup", { type: "geojson", data: iupData });
+  map.addLayer({ id: "mb-iup-fill", type: "fill", source: "mb-iup", layout: { visibility: "none" }, paint: { "fill-color": ["get", "color"], "fill-opacity": 0.35 } });
+  map.addLayer({ id: "mb-iup-line", type: "line", source: "mb-iup", layout: { visibility: "none" }, paint: { "line-color": ["get", "color"], "line-width": 1, "line-opacity": 0.7 } });
+
   const featFeats = MB_PINS.featured.map((p) => ({
     type: "Feature",
     properties: { label: p.label, kind: p.k, ticket: p.ticket || "", province: p.province || "", status: p.status || "" },
@@ -313,6 +408,13 @@ function addMbOverlays(map, onPinClick) {
   map.addSource("mb-minerals", { type: "geojson", data: { type: "FeatureCollection", features: minFeats } });
   map.addLayer({ id: "mb-minerals-halo", type: "circle", source: "mb-minerals", layout: { visibility: "none" }, paint: { "circle-radius": 13, "circle-color": ["get", "color"], "circle-opacity": 0.18, "circle-blur": 0.3 } });
   map.addLayer({ id: "mb-minerals-dot", type: "circle", source: "mb-minerals", layout: { visibility: "none" }, paint: { "circle-radius": 5, "circle-color": ["get", "color"], "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 } });
+
+  // Metal-mineral occurrence points (Ni/Fe, 900+ points from ESDM 50K). The
+  // file is already a GeoJSON FeatureCollection, so it feeds the source as-is.
+  // Coloured per-commodity via the feature's own `color` property; starts
+  // hidden like the other optional point layers.
+  map.addSource("mb-logam", { type: "geojson", data: logamData });
+  map.addLayer({ id: "mb-logam-dot", type: "circle", source: "mb-logam", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 2.2, 9, 5], "circle-color": ["get", "color"], "circle-opacity": 0.85, "circle-stroke-color": "#fff", "circle-stroke-width": 0.7 } });
 
   const portFeats = portsData.ports.map((p) => ({
     type: "Feature",
@@ -356,7 +458,7 @@ function addMbOverlays(map, onPinClick) {
       if (!f) return;
       popup.setLngLat(e.lngLat).setHTML(
         `<div style="font:600 12px/1.3 Inter,system-ui,sans-serif;color:#1a1a2e;">${f.properties.name}</div>
-         <div style="font:500 10px/1.4 'IBM Plex Mono',monospace;color:${tagColor};letter-spacing:0.06em;margin-top:2px;">${tag}</div>`
+         <div style="font:500 10px/1.4 'IBM Plex Mono',monospace;color:${readableInk(tagColor)};letter-spacing:0.06em;margin-top:2px;">${tag}</div>`
       ).addTo(map);
     });
     map.on("mouseleave", layerId, leave);
@@ -365,6 +467,55 @@ function addMbOverlays(map, onPinClick) {
 
   addFillHoverPopup("mb-industrial-fill", "KAWASAN INDUSTRI", "#b07900");
   addFillHoverPopup("mb-kek-fill", "SPECIAL ECONOMIC ZONE", "#7e4dd9");
+
+  // IUP concession polygons get a richer popup: company, commodity + permit,
+  // and the area / activity stage from the real ESDM attributes.
+  map.on("mouseenter", "mb-iup-fill", (e) => {
+    map.getCanvas().style.cursor = "pointer";
+    const f = e.features?.[0];
+    if (!f) return;
+    const p = f.properties;
+    const area = p.area_ha ? `${Number(p.area_ha).toLocaleString("id-ID")} Ha` : "";
+    const meta = [p.kab, p.prov].filter(Boolean).join(", ");
+    popup.setLngLat(e.lngLat).setHTML(
+      `${meta ? `<div style="font:500 9px/1.4 'IBM Plex Mono',monospace;color:#8a8a9a;letter-spacing:0.06em;text-transform:uppercase;">${meta}</div>` : ""}
+       <div style="font:600 12px/1.3 Inter,system-ui,sans-serif;color:#1a1a2e;margin-top:1px;">${p.company || "IUP"}</div>
+       <div style="font:500 10px/1.4 'IBM Plex Mono',monospace;color:${readableInk(p.color || "#5a5048")};letter-spacing:0.06em;margin-top:3px;">${(p.permit || "IUP")} · ${(p.commodity || "").toUpperCase()}${area ? " · " + area : ""}</div>
+       ${p.stage ? `<div style="font:500 9px/1.4 'IBM Plex Mono',monospace;color:#8a8a9a;margin-top:2px;">${p.stage}${p.expiry ? " · s/d " + p.expiry : ""}</div>` : ""}`
+    ).addTo(map);
+  });
+  map.on("mouseleave", "mb-iup-fill", leave);
+  map.on("mousemove", "mb-iup-fill", (e) => popup.setLngLat(e.lngLat));
+
+  // Forest-area polygons get a function-name popup. Each feature is a dissolved
+  // whole class, so there are no per-feature figures — just the function + code.
+  map.on("mouseenter", "mb-hutan-fill", (e) => {
+    map.getCanvas().style.cursor = "pointer";
+    const f = e.features?.[0];
+    if (!f) return;
+    const p = f.properties;
+    popup.setLngLat(e.lngLat).setHTML(
+      `<div style="font:600 12px/1.3 Inter,system-ui,sans-serif;color:#1a1a2e;">${p.fungsi || "Kawasan Hutan"}</div>
+       <div style="font:500 10px/1.4 'IBM Plex Mono',monospace;color:${readableInk(p.color || "#2e7d32")};letter-spacing:0.06em;margin-top:2px;">${(p.code || "")} · KAWASAN HUTAN</div>`
+    ).addTo(map);
+  });
+  map.on("mouseleave", "mb-hutan-fill", leave);
+  map.on("mousemove", "mb-hutan-fill", (e) => popup.setLngLat(e.lngLat));
+
+  // Geology polygons get a lithology-group popup (each feature is a dissolved
+  // whole group, so there are no per-feature figures — just the rock type).
+  map.on("mouseenter", "mb-geologi-fill", (e) => {
+    map.getCanvas().style.cursor = "pointer";
+    const f = e.features?.[0];
+    if (!f) return;
+    const p = f.properties;
+    popup.setLngLat(e.lngLat).setHTML(
+      `<div style="font:600 12px/1.3 Inter,system-ui,sans-serif;color:#1a1a2e;">${p.litologi || "Geologi"}</div>
+       <div style="font:500 10px/1.4 'IBM Plex Mono',monospace;color:${readableInk(p.color || "#7a6e5a")};letter-spacing:0.06em;margin-top:2px;">GEOLOGI · LITOLOGI</div>`
+    ).addTo(map);
+  });
+  map.on("mouseleave", "mb-geologi-fill", leave);
+  map.on("mousemove", "mb-geologi-fill", (e) => popup.setLngLat(e.lngLat));
 
   // Point layers (minerals, ports) share a name + tag hover popup anchored to
   // the feature's own coordinates.
@@ -375,7 +526,7 @@ function addMbOverlays(map, onPinClick) {
       if (!f) return;
       popup.setLngLat(f.geometry.coordinates.slice()).setHTML(
         `<div style="font:600 12px/1.3 Inter,system-ui,sans-serif;color:#1a1a2e;">${f.properties.name}</div>
-         <div style="font:500 10px/1.4 'IBM Plex Mono',monospace;color:${tagColor};letter-spacing:0.06em;margin-top:2px;">${tagFor(f.properties)}</div>`
+         <div style="font:500 10px/1.4 'IBM Plex Mono',monospace;color:${readableInk(tagColor)};letter-spacing:0.06em;margin-top:2px;">${tagFor(f.properties)}</div>`
       ).addTo(map);
     });
     map.on("mouseleave", layerId, leave);
@@ -383,6 +534,50 @@ function addMbOverlays(map, onPinClick) {
 
   addPointHoverPopup("mb-minerals-dot", (p) => (p.commodity || "MINERAL").toUpperCase(), "#c08a2e");
   addPointHoverPopup("mb-ports-dot", (p) => (p.kind || "SEA PORT").toUpperCase(), "#1a1a2e");
+
+  // Metal-mineral points get a detailed popup: commodity + element, the ore /
+  // metal resource estimates, and the grade/notes (kadar) from the survey.
+  map.on("mouseenter", "mb-logam-dot", (e) => {
+    map.getCanvas().style.cursor = "pointer";
+    const f = e.features?.[0];
+    if (!f) return;
+    const p = f.properties;
+    const tag = [p.commodity, p.element].filter(Boolean).join(" · ");
+    const res = p.ore_t ? `Bijih ${formatTon(p.ore_t)}` : "";
+    popup.setLngLat(f.geometry.coordinates.slice()).setHTML(
+      `<div style="font:600 12px/1.3 Inter,system-ui,sans-serif;color:#1a1a2e;">${p.name || p.commodity || "Mineral Logam"}</div>
+       <div style="font:500 10px/1.4 'IBM Plex Mono',monospace;color:${readableInk(p.color || "#2e9e6b")};letter-spacing:0.06em;margin-top:3px;">${tag.toUpperCase()}</div>
+       ${res ? `<div style="font:500 9.5px/1.4 'IBM Plex Mono',monospace;color:#5a5a6a;margin-top:3px;">${res}</div>` : ""}
+       ${p.note ? `<div style="font:400 10px/1.4 Inter,system-ui,sans-serif;color:#8a8a9a;margin-top:4px;max-width:220px;">${p.note}</div>` : ""}`
+    ).addTo(map);
+  });
+  map.on("mouseleave", "mb-logam-dot", leave);
+}
+
+// Darken a fill colour just enough to stay legible as popup text on the white
+// tooltip background. Pale tags (yellow, cream, light grey/green) are otherwise
+// nearly invisible; we scale the RGB channels down — keeping the hue — until the
+// relative luminance drops to a readable level matching the design's accent inks.
+function readableInk(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
+  if (!m) return hex || "#1a1a2e";
+  let r = parseInt(m[1].slice(0, 2), 16);
+  let g = parseInt(m[1].slice(2, 4), 16);
+  let b = parseInt(m[1].slice(4, 6), 16);
+  const lum = () => (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  let guard = 0;
+  while (lum() > 0.5 && guard++ < 24) { r *= 0.86; g *= 0.86; b *= 0.86; }
+  const h = (v) => Math.round(v).toString(16).padStart(2, "0");
+  return `#${h(r)}${h(g)}${h(b)}`;
+}
+
+// Format a tonnage (tonnes) into a compact Indonesian-readable string: juta /
+// ribu ton. Used by the metal-mineral popup's resource figures.
+function formatTon(n) {
+  const v = Number(n) || 0;
+  if (v >= 1e6) return `${(v / 1e6).toFixed(2).replace(".", ",")} jt ton`;
+  if (v >= 1e3) return `${Math.round(v / 1e3).toLocaleString("id-ID")} rb ton`;
+  return `${v.toLocaleString("id-ID")} ton`;
 }
 
 // De-emphasize non-Indonesia using Mapbox's real country-boundaries source.

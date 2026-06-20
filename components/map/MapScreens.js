@@ -9,7 +9,7 @@ import {
   Search, MessageCircle, ArrowUpRight, ArrowRight, Loader2,
 } from "lucide-react";
 import MapboxMap from "@/components/map/MapboxMap";
-import { applyLayerChange, boundsOf, resolveFlyTo, selectOpportunities } from "@/components/map/mapActions";
+import { applyLayerChange, boundsOf, resolveFlyTo, selectOpportunities, selectMining, selectKawasanHutan, selectGeologi } from "@/components/map/mapActions";
 import { useChat } from "@/components/chat/useChat";
 import { useStickToBottom, JumpToLatest } from "@/components/chat/useStickToBottom";
 import { ChatTextarea, SendButton } from "@/components/chat/ChatComposer";
@@ -20,6 +20,10 @@ import industrialData from "@/data/industrial-estates.json";
 import kekData from "@/data/kek.json";
 import mineralsData from "@/data/minerals.json";
 import portsData from "@/data/ports.json";
+import logamData from "@/data/mineral-logam.json";
+import iupData from "@/data/iup-tambang.json";
+import kawasanHutanData from "@/data/kawasan-hutan.json";
+import geologiData from "@/data/geologi-litologi.json";
 import opportunitiesData from "@/data/opportunities.json";
 
 // Counts come straight from the static JSON in data/ so the panel and the map
@@ -30,9 +34,27 @@ import opportunitiesData from "@/data/opportunities.json";
 const LAYERS = [
   { id: "industrial", color: "#f7b500", count: industrialData.estates.length },
   { id: "kek", color: "#7e4dd9", count: kekData.estates.length },
+  { id: "featured", color: "#0055a6", count: opportunitiesData.opportunities.length },
   { id: "minerals", color: "#e8533f", count: mineralsData.deposits.length },
+  { id: "logam", color: "#2e9e6b", count: logamData.features.length },
+  { id: "iup", color: "#5a5048", count: iupData.features.length },
+  { id: "hutan", color: "#1f9d4d", count: kawasanHutanData.features.length },
+  { id: "geologi", color: "#bf9a5e", count: geologiData.features.length },
   { id: "ports", color: "#1a1a2e", count: portsData.ports.length },
 ];
+
+// Legend rows for the kawasan-hutan layer — derived straight from the data so
+// the swatch colours always match what's drawn on the map. Shown bottom-left
+// only while the 'hutan' layer is active (see HutanLegend).
+const HUTAN_LEGEND = kawasanHutanData.features.map((f) => ({
+  id: f.properties.id, fungsi: f.properties.fungsi, code: f.properties.code, color: f.properties.color,
+}));
+
+// Legend rows for the geology layer — derived straight from the data so swatch
+// colours always match the map. Shown only while the 'geologi' layer is active.
+const GEOLOGI_LEGEND = geologiData.features.map((f) => ({
+  id: f.properties.id, litologi: f.properties.litologi, color: f.properties.color,
+}));
 
 function Wordmark({ name, tag = "BKPM", hifi = false, size = 17 }) {
   return <Logo size={size} showTag={!!tag} />;
@@ -101,6 +123,40 @@ function MapControls({ mapRef }) {
   );
 }
 
+// ─── Forest-area legend (bottom-left) — only shown when the 'hutan' layer is on ───
+function HutanLegend() {
+  const { t } = useI18n();
+  return (
+    <div className="card" style={{ position: "absolute", bottom: 16, right: 16, padding: "9px 11px", zIndex: 3, maxWidth: 224 }}>
+      <div className="label" style={{ marginBottom: 7 }}>{t("map.hutanLegend")}</div>
+      {HUTAN_LEGEND.map((c) => (
+        <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 4 }}>
+          <span style={{ width: 12, height: 12, borderRadius: 3, background: c.color, flexShrink: 0, border: "1px solid rgba(0,0,0,0.18)" }} />
+          <span style={{ fontSize: 11, color: "var(--ink-1)", lineHeight: 1.2, minWidth: 0, flex: 1 }}>{c.fungsi}</span>
+          <span className="mono" style={{ fontSize: 8.5, color: "var(--ink-3)", flexShrink: 0 }}>{c.code}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Geology legend (bottom-right) — only shown when the 'geologi' layer is on.
+// `raised` lifts it above the forest legend when both layers are active. ───
+function GeologiLegend({ raised = false }) {
+  const { t } = useI18n();
+  return (
+    <div className="card" style={{ position: "absolute", bottom: raised ? 188 : 16, right: 16, padding: "9px 11px", zIndex: 3, maxWidth: 224 }}>
+      <div className="label" style={{ marginBottom: 7 }}>{t("map.geologiLegend")}</div>
+      {GEOLOGI_LEGEND.map((c) => (
+        <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 4 }}>
+          <span style={{ width: 12, height: 12, borderRadius: 3, background: c.color, flexShrink: 0, border: "1px solid rgba(0,0,0,0.18)" }} />
+          <span style={{ fontSize: 11, color: "var(--ink-1)", lineHeight: 1.2, minWidth: 0, flex: 1 }}>{c.litologi}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Chat sidebar (collapsible, contextual to map) — LIVE via DeepSeek ───
 // Presentational: the chat state + map-action wiring live in MapPage so the
 // assistant's tool calls can drive the same `active` / map the panel reflects.
@@ -118,7 +174,9 @@ function MapChat({ open, onToggle, hifi, activeLayers, viewLabel, chat }) {
       <button
         className={"btn " + (hifi ? "hifi" : "")}
         onClick={onToggle}
-        style={{ position: "absolute", bottom: 20, right: 20, zIndex: 4, background: "#1a1a2e", color: "#fff", borderColor: "#1a1a2e", padding: "10px 14px", borderRadius: 24, boxShadow: "0 6px 16px rgba(20,20,40,0.2)" }}
+        // Sits below the zoom/locate/compass controls (top-right) so it never
+        // collides with the forest legend in the bottom-right (see HutanLegend).
+        style={{ position: "absolute", top: 210, right: 16, zIndex: 4, background: "#1a1a2e", color: "#fff", borderColor: "#1a1a2e", padding: "10px 14px", borderRadius: 24, boxShadow: "0 6px 16px rgba(20,20,40,0.2)" }}
       >
         <MessageCircle size={15} strokeWidth={1.75} /> {t("map.askAboutMap")}
       </button>
@@ -224,7 +282,7 @@ export function MapPage({ hifi = false }) {
   const { t, lang } = useI18n();
   const [chatOpen, setChatOpen] = useState(true);
   const [active, setActive] = useState({
-    industrial: true, kek: true, minerals: true, ports: true,
+    industrial: true, kek: true, featured: true, minerals: true, logam: false, iup: false, hutan: false, geologi: false, ports: true,
   });
   const [pinFilter, setPinFilter] = useState(null);
   // A single opportunity the human clicked on the map. Drives the top card the
@@ -272,9 +330,57 @@ export function MapPage({ hifi = false }) {
 
     const fly = batch.find((a) => a?.name === "fly_to");
     const filt = batch.find((a) => a?.name === "filter_opportunities");
+    const mine = batch.find((a) => a?.name === "filter_mining");
+    const hut = batch.find((a) => a?.name === "filter_kawasan_hutan");
+    const geo = batch.find((a) => a?.name === "filter_geologi");
 
     const region = fly ? resolveFlyTo(fly.args || {}) : null;
     if (region?.label) setViewLabel(region.label);
+
+    // Mining filter: show the matched layer(s), push the Mapbox setFilter, and
+    // collect coords so the camera frames the result (below).
+    let mineCoords = null;
+    if (mine) {
+      const sel = selectMining(mine.args || {});
+      if (sel.clear) {
+        mapRef.current?.setMiningFilter({ clear: true });
+      } else {
+        if (sel.layers.length) setActive((prev) => sel.layers.reduce((acc, l) => ({ ...acc, [l]: true }), prev));
+        mapRef.current?.setMiningFilter({ commodity: sel.commodity, province: sel.province });
+        if (sel.label) setViewLabel(sel.label);
+        if (sel.coords?.length) mineCoords = sel.coords;
+      }
+    }
+
+    // Kawasan-hutan filter: show the forest layer, push the Mapbox setFilter by
+    // forest function, and keep its bbox so the camera frames the matched zones.
+    let hutFrame = null;
+    if (hut) {
+      const sel = selectKawasanHutan(hut.args || {});
+      if (sel.clear) {
+        mapRef.current?.setHutan({ clear: true });
+      } else {
+        setActive((prev) => ({ ...prev, hutan: true }));
+        mapRef.current?.setHutan({ ids: sel.ids, data: sel.data });
+        if (sel.label) setViewLabel(sel.label);
+        hutFrame = sel.frame;
+      }
+    }
+
+    // Geology filter: show the geology layer, push the Mapbox setFilter by
+    // lithology group, and keep its bbox so the camera frames the matched zones.
+    let geoFrame = null;
+    if (geo) {
+      const sel = selectGeologi(geo.args || {});
+      if (sel.clear) {
+        mapRef.current?.setGeologi({ clear: true });
+      } else {
+        setActive((prev) => ({ ...prev, geologi: true }));
+        mapRef.current?.setGeologi({ ids: sel.ids, data: sel.data });
+        if (sel.label) setViewLabel(sel.label);
+        geoFrame = sel.frame;
+      }
+    }
 
     let selCoords = null;
     if (filt) {
@@ -294,9 +400,20 @@ export function MapPage({ hifi = false }) {
       const rb = region?.bounds || (region?.center ? boundsOf([region.center]) : null);
       const within = rb ? selCoords.filter((c) => inBounds(c, rb)) : selCoords;
       frameCoords(within.length ? within : selCoords);
+    } else if (mineCoords?.length) {
+      // If a region also arrived, keep the concessions that fall inside it.
+      const rb = region?.bounds || (region?.center ? boundsOf([region.center]) : null);
+      const within = rb ? mineCoords.filter((c) => inBounds(c, rb)) : mineCoords;
+      frameCoords(within.length ? within : mineCoords);
     } else if (region) {
       if (region.bounds) mapRef.current?.fitBounds(region.bounds, { padding: 56, maxZoom: 9 });
       else mapRef.current?.flyTo({ center: region.center, zoom: region.zoom });
+    } else if (hutFrame) {
+      if (hutFrame.bounds) mapRef.current?.fitBounds(hutFrame.bounds, { padding: 56, maxZoom: 8 });
+      else mapRef.current?.flyTo({ center: hutFrame.center, zoom: hutFrame.zoom });
+    } else if (geoFrame) {
+      if (geoFrame.bounds) mapRef.current?.fitBounds(geoFrame.bounds, { padding: 56, maxZoom: 8 });
+      else mapRef.current?.flyTo({ center: geoFrame.center, zoom: geoFrame.zoom });
     }
   }, []);
 
@@ -393,6 +510,8 @@ export function MapPage({ hifi = false }) {
             <div style={{ animation: "ui-fade 0.4s ease-out" }}>
               <LayerPanel active={active} onToggle={(id) => setActive({ ...active, [id]: !active[id] })} hifi={hifi} />
               <MapControls mapRef={mapRef} />
+              {active.hutan && <HutanLegend />}
+              {active.geologi && <GeologiLegend raised={active.hutan} />}
 
               <div style={{ position: "absolute", bottom: 16, left: 16, display: "flex", gap: 8, alignItems: "center", zIndex: 3 }}>
                 <div className="card" style={{ padding: "6px 10px", display: "flex", gap: 8, alignItems: "center" }}>

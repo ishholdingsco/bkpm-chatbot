@@ -58,13 +58,25 @@
     "layerNames": {
       "industrial": "Kawasan Industri",
       "kek": "Kawasan Ekonomi Khusus",
-      "minerals": "Endapan Mineral & Sumber Daya",
+      "featured": "Peluang Investasi BKPM",
+      "minerals": "Deposit Unggulan (kurasi)",
+      "logam": "Mineral Logam (Ni / Fe)",
+      "iup": "Wilayah IUP Tambang",
+      "hutan": "Kawasan Hutan",
+      "geologi": "Geologi (Litologi)",
       "ports": "Pelabuhan laut"
     },
+    "hutanLegend": "Fungsi Kawasan Hutan",
+    "geologiLegend": "Jenis Batuan",
     "layerDesc": {
       "industrial": "{n} terpetakan",
       "kek": "{n} terpetakan",
-      "minerals": "{n} terpetakan",
+      "featured": "{n} peluang",
+      "minerals": "{n} pilihan",
+      "logam": "{n} titik",
+      "iup": "{n} konsesi",
+      "hutan": "{n} fungsi",
+      "geologi": "{n} jenis batuan",
       "ports": "{n} terpetakan"
     },
     "oppsInView": "PELUANG DALAM PANDANGAN",

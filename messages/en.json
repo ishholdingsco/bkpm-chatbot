@@ -58,13 +58,25 @@
     "layerNames": {
       "industrial": "Kawasan Industri",
       "kek": "Kawasan Ekonomi Khusus",
-      "minerals": "Mineral & Resource Deposits",
+      "featured": "BKPM Investment Opportunities",
+      "minerals": "Featured Deposits (curated)",
+      "logam": "Metal Minerals (Ni / Fe)",
+      "iup": "Mining Permit Areas (IUP)",
+      "hutan": "Forest Areas",
+      "geologi": "Geology (Lithology)",
       "ports": "Sea ports"
     },
+    "hutanLegend": "Forest Functions",
+    "geologiLegend": "Rock Types",
     "layerDesc": {
       "industrial": "{n} mapped",
       "kek": "{n} mapped",
-      "minerals": "{n} mapped",
+      "featured": "{n} opportunities",
+      "minerals": "{n} curated",
+      "logam": "{n} points",
+      "iup": "{n} concessions",
+      "hutan": "{n} functions",
+      "geologi": "{n} rock types",
       "ports": "{n} mapped"
     },
     "oppsInView": "OPPORTUNITIES IN VIEW",

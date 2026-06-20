@@ -1,14 +1,14 @@
 {
   "_meta": {
-    "title": "Mineral & Resource Deposits / Mining Clusters",
-    "source": "ESDM Minerba / company disclosures — major deposit clusters",
+    "title": "Featured Deposits (curated) — multi-commodity highlights",
+    "source": "Hand-curated by the team from well-known major deposits (general refs: ESDM Minerba + company disclosures). NOT a downloaded dataset — see mineral-logam.json for raw ESDM occurrence data.",
     "retrieved": "2026-06-19",
-    "disclaimer": "Prototype data. Cluster centroids are approximate and indicative, not concession boundaries. Verify against ESDM MODI / WIUP data before real use.",
+    "disclaimer": "Prototype data, EDITORIAL CURATION. 12 flagship deposits across commodities (Ni, coal, gold, copper, bauxite, tin); coordinates are approximate cluster/belt centroids, not concession boundaries. Indicative only — verify against ESDM MODI / WIUP before real use.",
     "coordinates": "[longitude, latitude]"
   },
   "deposits": [
-    { "name": "Sulawesi nickel belt (Morowali–Konawe)", "commodity": "Nickel", "code": "Ni", "province": "Sulawesi Tengah / Tenggara", "coordinates": [122.20, -3.50], "color": "#e8533f", "note": "Largest Ni laterite belt; feeds IMIP/VDNI smelters" },
-    { "name": "Halmahera nickel district (Weda Bay–Obi)", "commodity": "Nickel", "code": "Ni", "province": "Maluku Utara", "coordinates": [128.00, 0.40], "color": "#e8533f", "note": "HPAL battery-grade nickel" },
+    { "name": "Sulawesi nickel belt (Morowali–Konawe)", "commodity": "Nickel", "code": "Ni", "province": "Sulawesi Tengah / Tenggara", "coordinates": [122.237, -3.369], "color": "#e8533f", "note": "Largest Ni laterite belt; feeds IMIP/VDNI smelters" },
+    { "name": "Halmahera nickel district (Weda Bay–Obi)", "commodity": "Nickel", "code": "Ni", "province": "Maluku Utara", "coordinates": [128.0, 0.52], "color": "#e8533f", "note": "HPAL battery-grade nickel" },
     { "name": "Grasberg (Freeport)", "commodity": "Copper–Gold", "code": "Cu·Au", "province": "Papua Tengah", "coordinates": [137.11, -4.06], "color": "#c08a2e", "note": "One of the world's largest Cu-Au mines" },
     { "name": "Batu Hijau / Elang (Amman)", "commodity": "Copper–Gold", "code": "Cu·Au", "province": "Nusa Tenggara Barat", "coordinates": [116.87, -8.96], "color": "#c08a2e" },
     { "name": "Tujuh Bukit (Tumpang Pitu)", "commodity": "Gold–Copper", "code": "Au·Cu", "province": "Jawa Timur", "coordinates": [114.05, -8.55], "color": "#c08a2e" },

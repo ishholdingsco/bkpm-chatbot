@@ -58,13 +58,25 @@
     "layerNames": {
       "industrial": "工业园区 (Kawasan Industri)",
       "kek": "经济特区 (KEK)",
-      "minerals": "矿产与资源矿床",
+      "featured": "BKPM 投资机会",
+      "minerals": "精选矿床（人工筛选）",
+      "logam": "金属矿产（镍 / 铁）",
+      "iup": "采矿许可区 (IUP)",
+      "hutan": "森林区域",
+      "geologi": "地质（岩性）",
       "ports": "海港"
     },
+    "hutanLegend": "森林功能区",
+    "geologiLegend": "岩石类型",
     "layerDesc": {
       "industrial": "已标注 {n} 个",
       "kek": "已标注 {n} 个",
-      "minerals": "已标注 {n} 个",
+      "featured": "{n} 个机会",
+      "minerals": "{n} 个精选",
+      "logam": "{n} 个点",
+      "iup": "{n} 个矿区",
+      "hutan": "{n} 类功能",
+      "geologi": "{n} 类岩石",
       "ports": "已标注 {n} 个"
     },
     "oppsInView": "视野内的机会",
