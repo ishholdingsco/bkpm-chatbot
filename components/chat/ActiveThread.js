@@ -281,7 +281,7 @@ export function ActiveThread() {
   const [handoffOpen, setHandoffOpen] = useState(false);
 
   const context = `User is in the Wilaya workspace, project "${DATA.projects[0].name}" (${DATA.projects[0].short}), thread "${DATA.threads[0].name}". They are a foreign institutional investor (Khazanah Nasional) doing diligence on nickel midstream co-investment with state-owned MIND ID.`;
-  const { messages, input, setInput, send, loading } = useChat({ initialMessages: SEED_MESSAGES, context, lang });
+  const { messages, input, setInput, send, loading, retrying } = useChat({ initialMessages: SEED_MESSAGES, context, lang });
   const { containerRef, onScroll, scrollToBottom, isFollowing } = useStickToBottom(messages);
   const composerRef = useRef(null);
   // Sending always snaps to the bottom and re-engages following.
@@ -352,7 +352,7 @@ export function ActiveThread() {
 
           <div ref={containerRef} onScroll={onScroll} className="scroll col grow" style={{ padding: "20px 28px", gap: 18 }}>
             {messages.map((m, i) => (
-              <ChatTurn key={i} turn={m} loading={loading && i === messages.length - 1} />
+              <ChatTurn key={i} turn={m} loading={loading && i === messages.length - 1} retrying={retrying && i === messages.length - 1} />
             ))}
           </div>
 

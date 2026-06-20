@@ -95,6 +95,8 @@
     "slash": "Slash",
     "referHuman": "Refer to human",
     "send": "send",
+    "reconnecting": "Reconnecting…",
+    "failed": "⚠️ Couldn't reach the assistant after several tries. Check your connection or the DeepSeek API key, then try again.",
     "toLatest": "Jump to latest",
     "suggestHandoff": "AI · suggested handoff",
     "askRina": "Yes, ask Rina",

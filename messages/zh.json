@@ -95,6 +95,8 @@
     "slash": "命令",
     "referHuman": "转交人工",
     "send": "发送",
+    "reconnecting": "正在重新连接…",
+    "failed": "⚠️ 多次尝试后仍无法连接助手。请检查网络连接或 DeepSeek API 密钥后重试。",
     "toLatest": "回到最新消息",
     "suggestHandoff": "AI · 建议转交",
     "askRina": "好，问 Rina",

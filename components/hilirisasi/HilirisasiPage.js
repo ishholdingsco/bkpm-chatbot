@@ -1180,7 +1180,7 @@ function buildHilirisasiContext(commodity) {
 function HilirisasiChat({ open, onToggle, hifi, commodity, lang = 'id', chat }) {
   const u = UI[lang] || UI.en;
   const { t } = useI18n();
-  const { messages, input, setInput, send, loading } = chat;
+  const { messages, input, setInput, send, loading, retrying } = chat;
   const { containerRef, onScroll, scrollToBottom, isFollowing } = useStickToBottom(messages);
   const composerRef = useRef(null);
   // Sending (composer or a suggestion) snaps to the bottom and re-engages following.
@@ -1234,7 +1234,7 @@ function HilirisasiChat({ open, onToggle, hifi, commodity, lang = 'id', chat }) 
                 <Markdown>{m.content}</Markdown>
               ) : loading ? (
                 <span style={{ display:'inline-flex', alignItems:'center', gap:7, color:'var(--ink-3)' }}>
-                  <Loader2 size={14} strokeWidth={2} className="spin" /> {u.loading}
+                  <Loader2 size={14} strokeWidth={2} className="spin" /> {retrying ? t("chat.reconnecting") : u.loading}
                 </span>
               ) : ''}
             </div>
