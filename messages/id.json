@@ -95,6 +95,8 @@
     "slash": "Slash",
     "referHuman": "Rujuk ke manusia",
     "send": "kirim",
+    "reconnecting": "Menyambungkan ulang…",
+    "failed": "⚠️ Tidak dapat terhubung ke asisten setelah beberapa percobaan. Periksa koneksi Anda atau API key DeepSeek, lalu coba lagi.",
     "toLatest": "Ke pesan terbaru",
     "suggestHandoff": "AI · sarankan alih tangan",
     "askRina": "Ya, tanya Rina",

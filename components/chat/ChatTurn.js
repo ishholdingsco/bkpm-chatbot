@@ -12,17 +12,18 @@ function Dot({ color = "currentColor", size = 6 }) {
   return <span style={{ display: "inline-block", width: size, height: size, borderRadius: "50%", background: color, flexShrink: 0 }} />;
 }
 
-// "AI is thinking" placeholder shown while a reply streams in.
-function Thinking() {
+// "AI is thinking" placeholder shown while a reply streams in. While a failed
+// request is being retried it shows a quieter "reconnecting" hint instead.
+function Thinking({ retrying }) {
   const { t } = useI18n();
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "var(--ink-3)" }}>
-      <Loader2 size={14} strokeWidth={2} className="spin" /> {t("common.thinking")}
+      <Loader2 size={14} strokeWidth={2} className="spin" /> {t(retrying ? "chat.reconnecting" : "common.thinking")}
     </span>
   );
 }
 
-export function ChatTurn({ turn, loading }) {
+export function ChatTurn({ turn, loading, retrying }) {
   const { t } = useI18n();
   const isUser = turn.who ? turn.who === "user" : turn.role === "user";
   const isSuggest = turn.kind === "suggest";
@@ -53,7 +54,7 @@ export function ChatTurn({ turn, loading }) {
         {isUser && <Avatar name={DATA.user.short} color={DATA.user.color} size="sm" />}
       </div>
       <div style={{ fontSize: 13.5, lineHeight: 1.55, maxWidth: 640, background: isUser ? "var(--surface-3)" : "transparent", padding: isUser ? "10px 14px" : "4px 0", borderRadius: 8, color: "var(--ink)", whiteSpace: isUser ? "pre-wrap" : "normal" }}>
-        {isUser ? text : text ? <Markdown>{text}</Markdown> : loading ? <Thinking /> : ""}
+        {isUser ? text : text ? <Markdown>{text}</Markdown> : loading ? <Thinking retrying={retrying} /> : ""}
       </div>
       {turn.cite && (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
