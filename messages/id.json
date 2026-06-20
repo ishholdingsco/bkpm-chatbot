@@ -293,5 +293,12 @@
     "body": "Wilaya saat ini dioptimalkan untuk layar desktop. Tampilan untuk ponsel & tablet sedang dikembangkan — silakan akses lewat komputer atau laptop dengan lebar layar minimal 1024px.",
     "hint": "Lebar layar Anda saat ini terlalu kecil untuk menampilkan peta dan panel analisis.",
     "footer": "Investment Explorer · BKPM Republik Indonesia"
+  },
+  "notFound": {
+    "title": "Halaman tidak ditemukan",
+    "body": "Sepertinya Anda tersesat dari peta. Halaman yang Anda cari tidak ada atau sudah dipindahkan.",
+    "toMap": "Buka Peta",
+    "toHome": "Ke Beranda",
+    "footer": "404 · Wilaya"
   }
 }
